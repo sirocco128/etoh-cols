@@ -2,6 +2,21 @@
 
 วันที่ตรวจ Sprint 0 (workspace rebuild จาก LLMs runbook): 3 กันยายน 2569 (2026-09-03)
 
+## สถานะล่าสุด (2026-09-04 — overnight automation)
+
+| Gate | ผล |
+|------|-----|
+| `npm run check` | ผ่าน (lint · typecheck · **52** tests · build) |
+| Staging smoke `:3001` | ผ่าน |
+| `npm run uat:auto` | **18/18 routes PASS** — ดู `docs/UAT-AUTO-RESULTS.md` |
+| Next.js dev `:3000` | ขึ้นแล้ว |
+| Strapi develop `:1337` | ขึ้นแล้ว (local) |
+| Sprint 2 staging demo intake | applied → `.env.staging` |
+| Cursor backup | https://cursor.com/codebase/tong128/premium-giftset-web |
+| GitLab remote | **รอ login** — ไม่มี token ในเครื่อง (`docs/GIT-REMOTES.md`) |
+
+**Human / stakeholder ยังต้องทำหลังตื่น:** UAT checklist เซ็นชื่อ · กรอก intake จริง · `glab auth login --web` · remote staging domain
+
 ## สถานะล่าสุด (2026-09-03 — UX + handoff เรียบร้อย)
 
 | Gate | ผล |

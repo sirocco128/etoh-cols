@@ -27,6 +27,7 @@
     "staging:up": "node scripts/staging-up.mjs",
     "staging:down": "docker compose -f docker-compose.staging.yml down",
     "staging:smoke": "node scripts/staging-smoke.mjs",
+    "uat:auto": "node scripts/uat-auto.mjs",
     "build:standalone": "npm run build && node scripts/prepare-standalone.mjs",
     "cms:setup": "node scripts/cms-local-setup.mjs"
   },

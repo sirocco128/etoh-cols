@@ -135,6 +135,7 @@ UAT **FAIL** → log issues in GitLab with label `uat-blocker`.
 ```bash
 npm run check
 npm run staging:smoke
+npm run uat:auto
 npm run sprint2:preflight
 npm run check:demo
 ```
