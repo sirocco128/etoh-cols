@@ -16,7 +16,7 @@ B2B website for corporate gift-set manufacturing (Next.js 15 App Router, Node.js
 | Local staging stack | ✅ `docker-compose.staging.yml` — ดู `docs/STAGING-DEPLOY.md` |
 | Sprint 2 intake automation | ✅ `intake/` + `npm run sprint2:preflight` / `sprint2:apply-intake` |
 
-Quality gates ล่าสุด: `lint` · `typecheck` · **50** tests · `build` — ดูรายละเอียดใน [VERIFICATION.md](VERIFICATION.md)
+Quality gates ล่าสุด: `lint` · `typecheck` · **52** tests · `build` — ดูรายละเอียดใน [VERIFICATION.md](VERIFICATION.md)
 
 ## Quick start
 
