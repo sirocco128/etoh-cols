@@ -1,0 +1,58 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+
+# standalone / build artifacts
+.tmp/
+dist/
+build/
+coverage/
+
+# data & secrets
+.data/
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs / debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / IDE
+.DS_Store
+*.pem
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# typescript
+*.tsbuildinfo
+
+# lighthouse
+.lighthouseci/
+
+# test output
+.tmp/tests/
+
+# strapi blueprints (if someone installs here by mistake)
+strapi/.tmp/
+strapi/build/
+strapi/dist/
+strapi/.cache/
+strapi/node_modules/
+
+# cms/ skeleton is committed; runtime ignores live in cms/.gitignore
+# (node_modules, .env, .tmp, .cache, build, exports, uploads, …)
+
+.env.cms.local
+cms/.env
+.env.staging
+intake/sprint2-intake.json

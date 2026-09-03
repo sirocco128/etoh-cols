@@ -1,0 +1,29 @@
+# Local Postgres for Sprint 1 Strapi CMS (P1-CMS-001 local path).
+# Strapi itself runs on the host from ./cms after bootstrap — see docs/SPRINT1-LOCAL-CMS.md
+#
+#   docker compose up -d postgres
+#   npm run cms:bootstrap
+#   cd cms && npm install && npm run develop
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: giftset-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: giftset
+      POSTGRES_USER: giftset
+      POSTGRES_PASSWORD: giftset
+    volumes:
+      - giftset_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U giftset -d giftset"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  giftset_pgdata:

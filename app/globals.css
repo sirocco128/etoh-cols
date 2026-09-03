@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-forest: #14352a;
+  --color-forest-light: #1e4a3a;
+  --color-forest-mist: #e9f0ea;
+  --color-brass: #b08a3e;
+  --color-brass-soft: #d9c08a;
+  --color-ink: #22282c;
+  --color-paper: #ffffff;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .prose-custom {
+    @apply text-ink leading-relaxed;
+  }
+
+  .prose-custom h2 {
+    @apply mt-8 mb-3 text-2xl font-bold text-forest;
+  }
+
+  .prose-custom h3 {
+    @apply mt-6 mb-2 text-xl font-semibold text-forest;
+  }
+
+  .prose-custom h4 {
+    @apply mt-5 mb-2 text-lg font-semibold text-forest;
+  }
+
+  .prose-custom p {
+    @apply mb-4 text-base text-ink/85;
+  }
+
+  .prose-custom blockquote {
+    @apply my-4 border-l-4 border-brass bg-forest-mist/60 py-3 pl-4 pr-3 text-ink/80 italic;
+  }
+
+  .prose-custom li {
+    @apply mb-2 text-ink/85;
+  }
+
+  .prose-custom code {
+    @apply rounded bg-forest-mist px-1.5 py-0.5 font-mono text-sm text-forest;
+  }
+
+  .prose-custom table {
+    @apply my-4 w-full border-collapse text-sm;
+  }
+
+  .prose-custom th,
+  .prose-custom td {
+    @apply border border-forest/15 px-3 py-2 text-left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer utilities {
+  /* Room for MobileStickyCta on small screens (bar ~3.5rem + safe area) */
+  .pb-mobile-cta {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .pb-mobile-cta {
+      padding-bottom: 0;
+    }
+  }
+}

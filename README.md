@@ -1,0 +1,133 @@
+# Premium Gift Set Starter — v1.1 Production
+
+B2B website for corporate gift-set manufacturing (Next.js 15 App Router, Node.js 22+).
+
+## สถานะโปรเจกต์ (2026-09-03)
+
+| ช่วง | สถานะ |
+|------|--------|
+| Sprint 0 — baseline (Next.js, RFQ, SEO, Docker, CI) | ✅ ครบ |
+| Sprint 1 — local CMS (Postgres + Strapi skeleton) | ✅ ครบ |
+| Option A — publish / revalidate smoke | ✅ ครบ (local) |
+| Option B — Sprint 2 intake docs + `check:demo` | ✅ ครบ (รอข้อมูลจริง) |
+| Option C — P2 quote tools (feature flag) | ✅ stub ครบ |
+| UX polish + messaging clarity | ✅ ครบ |
+| Production deploy / brand / Legal / OBS | ⏸ รอ stakeholder — ดู `docs/P1-ISSUES.md` |
+| Local staging stack | ✅ `docker-compose.staging.yml` — ดู `docs/STAGING-DEPLOY.md` |
+| Sprint 2 intake automation | ✅ `intake/` + `npm run sprint2:preflight` / `sprint2:apply-intake` |
+
+Quality gates ล่าสุด: `lint` · `typecheck` · **50** tests · `build` — ดูรายละเอียดใน [VERIFICATION.md](VERIFICATION.md)
+
+## Quick start
+
+```bash
+cp .env.example .env.local
+npm ci
+npm run db:migrate
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Quality gates
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run lhci
+```
+
+All-in-one:
+
+```bash
+npm run check
+```
+
+Demo placeholder scan (report-only until Sprint 2 migration):
+
+```bash
+npm run check:demo
+# STRICT_NO_DEMO=1 npm run check:demo   # fail CI when demo markers remain
+```
+
+## Docker
+
+```bash
+docker build -t premium-giftset:v1.1 .
+docker run --rm \
+  --env-file .env.local \
+  -e RUN_DB_MIGRATIONS=true \
+  -v premium-giftset-data:/app/.data \
+  -p 3000:3000 \
+  premium-giftset:v1.1
+
+curl -f 'http://127.0.0.1:3000/api/health?deep=1'
+```
+
+## PM2 (VM)
+
+```bash
+npm ci
+npm run build:standalone
+npm install -g pm2
+export RUNTIME_STRICT=true
+npm run validate:runtime
+npm run db:migrate
+pm2 start ecosystem.config.cjs
+```
+
+Start with `WEB_CONCURRENCY=1` when using SQLite. Do not share SQLite across hosts.
+
+## Environment
+
+Copy `.env.example` to `.env.local`. Defaults keep `NEXT_PUBLIC_ALLOW_INDEXING=false` and `CMS_MODE=mock`.
+
+- `npm run validate:env` — build-time indexing guard (§14.2)
+- `npm run validate:runtime` — runtime guard when `RUNTIME_STRICT=true` or indexing is on (§14.3)
+
+Never enable search indexing with demo/placeholder content.
+
+### Local CMS (optional)
+
+```bash
+docker compose up -d postgres
+npm run cms:bootstrap
+npm run cms:setup          # guided local Strapi + env hints
+cd cms && npm install && npm run develop
+```
+
+Set in `.env.local`: `CMS_MODE=strapi`, `STRAPI_API_TOKEN=…`, `REVALIDATE_SECRET=…`  
+If Strapi is partially configured, set `STRAPI_FALLBACK_TO_MOCK=true` to avoid build failures.
+
+## P2 quote tools (optional)
+
+```bash
+NEXT_PUBLIC_ENABLE_P2_QUOTE_TOOLS=true
+```
+
+See [docs/P2-QUOTE-TOOLS.md](docs/P2-QUOTE-TOOLS.md).
+
+## Docs
+
+| เอกสาร | 用途 |
+|--------|------|
+| [docs/LLMs.txt](docs/LLMs.txt) | Full implementation handoff / runbook |
+| [VERIFICATION.md](VERIFICATION.md) | Quality gates & smoke results |
+| [docs/UX-POLISH.md](docs/UX-POLISH.md) | UX polish checklist |
+| [docs/SPRINT1-LOCAL-CMS.md](docs/SPRINT1-LOCAL-CMS.md) | Local Strapi + lead backup |
+| [docs/SPRINT2-CONTENT-INTAKE.md](docs/SPRINT2-CONTENT-INTAKE.md) | Stakeholder intake (PENDING) |
+| [docs/SPRINT2-MIGRATION.md](docs/SPRINT2-MIGRATION.md) | Go-live migration steps |
+| [docs/P1-ISSUES.md](docs/P1-ISSUES.md) | P1 blockers vs local-ready work |
+| [docs/STAGING-DEPLOY.md](docs/STAGING-DEPLOY.md) | Local + remote staging deploy |
+| [intake/README.md](intake/README.md) | Sprint 2 intake JSON workflow |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
+| [SECURITY.md](SECURITY.md) | Security baseline summary |
+
+## Retry worker
+
+```bash
+curl -X POST https://www.example.com/api/jobs/retry-quotes \
+  -H 'Authorization: Bearer <CRON_SECRET>'
+```

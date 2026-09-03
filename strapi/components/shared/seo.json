@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_shared_seos",
+  "info": {
+    "displayName": "SEO",
+    "description": "Shared SEO metadata component",
+    "icon": "search"
+  },
+  "options": {},
+  "attributes": {
+    "seoTitle": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "metaDescription": {
+      "type": "text",
+      "required": true,
+      "minLength": 120,
+      "maxLength": 160
+    },
+    "canonicalPath": {
+      "type": "string",
+      "required": true,
+      "regex": "^/"
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "noIndex": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

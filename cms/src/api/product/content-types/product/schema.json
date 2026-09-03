@@ -1,0 +1,70 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Product",
+    "description": "Premium gift set product catalog entry"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "richtext",
+      "required": true
+    },
+    "material": {
+      "type": "string"
+    },
+    "minOrder": {
+      "type": "integer",
+      "default": 30,
+      "min": 1
+    },
+    "priceRange": {
+      "type": "string"
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::gift-set-category.gift-set-category",
+      "inversedBy": "products"
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo",
+      "required": true
+    },
+    "priceMin": {
+      "type": "decimal",
+      "min": 0
+    },
+    "priceMax": {
+      "type": "decimal",
+      "min": 0
+    },
+    "currency": {
+      "type": "enumeration",
+      "enum": ["THB"],
+      "default": "THB"
+    }
+  }
+}

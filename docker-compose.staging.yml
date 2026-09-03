@@ -1,0 +1,74 @@
+# Staging stack — Next.js web + Postgres (Strapi runs on host from ./cms)
+#
+# Prerequisites:
+#   cp .env.staging.example .env.staging   # or: npm run sprint2:apply-intake -- --target .env.staging
+#   npm run db:migrate                     # once on host before first web start (or set RUN_DB_MIGRATIONS=true)
+#
+#   docker compose -f docker-compose.staging.yml up -d --build
+#   npm run staging:smoke
+#
+# Strapi (optional, on host):
+#   docker compose up -d postgres
+#   npm run cms:bootstrap && cd cms && npm run develop
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: giftset-staging-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: giftset_staging
+      POSTGRES_USER: giftset
+      POSTGRES_PASSWORD: giftset_staging
+    volumes:
+      - giftset_staging_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U giftset -d giftset_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${STAGING_PUBLIC_SITE_URL:-http://localhost:3001}
+        NEXT_PUBLIC_ALLOW_INDEXING: "false"
+        CMS_MODE: ${STAGING_CMS_MODE:-mock}
+        STRAPI_URL: ${STAGING_STRAPI_URL:-http://host.docker.internal:1337}
+        STRAPI_FALLBACK_TO_MOCK: "true"
+    container_name: giftset-staging-web
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    env_file:
+      - path: .env.staging
+        required: false
+    environment:
+      NODE_ENV: production
+      RUN_DB_MIGRATIONS: "true"
+      NEXT_PUBLIC_ALLOW_INDEXING: "false"
+      CMS_MODE: ${STAGING_CMS_MODE:-mock}
+      STRAPI_URL: ${STAGING_STRAPI_URL:-http://host.docker.internal:1337}
+      STRAPI_FALLBACK_TO_MOCK: "true"
+    volumes:
+      - giftset_staging_leads:/app/.data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health?deep=1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  giftset_staging_pgdata:
+  giftset_staging_leads:
