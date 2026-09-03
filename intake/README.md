@@ -13,6 +13,9 @@ Stakeholders fill **`sprint2-intake.json`** (copy from `sprint2-intake.template.
 cp intake/sprint2-intake.template.json intake/sprint2-intake.json
 # Edit intake/sprint2-intake.json — set value + status (RECEIVED / APPROVED)
 
+# Staging rehearsal (demo values — committed reference file):
+npm run sprint2:staging-demo
+
 npm run sprint2:preflight          # report missing / demo markers
 npm run sprint2:preflight -- --strict   # exit 1 if not ready for cutover
 

@@ -121,7 +121,8 @@ See [docs/P2-QUOTE-TOOLS.md](docs/P2-QUOTE-TOOLS.md).
 | [docs/SPRINT2-MIGRATION.md](docs/SPRINT2-MIGRATION.md) | Go-live migration steps |
 | [docs/P1-ISSUES.md](docs/P1-ISSUES.md) | P1 blockers vs local-ready work |
 | [docs/STAGING-DEPLOY.md](docs/STAGING-DEPLOY.md) | Local + remote staging deploy |
-| [intake/README.md](intake/README.md) | Sprint 2 intake JSON workflow |
+| [docs/UAT-CHECKLIST.md](docs/UAT-CHECKLIST.md) | UAT sign-off template |
+| [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + GitLab setup |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
 | [SECURITY.md](SECURITY.md) | Security baseline summary |
 

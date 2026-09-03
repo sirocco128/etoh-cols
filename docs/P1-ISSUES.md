@@ -173,10 +173,17 @@ Status legend:
 
 | Field | Value |
 | --- | --- |
-| Status | **BLOCKED** |
+| Status | **BLOCKED** (live sign-off) / **LOCAL DONE** (checklist + automation) |
 | Runbook | §33.7 |
+| Checklist | [UAT-CHECKLIST.md](./UAT-CHECKLIST.md) |
 
-**Needed from stakeholders**
+**Local prep DONE**
+
+- Role-based UAT checklist (routes, RFQ, CMS, SEO, a11y, ops)
+- Pre-UAT commands: `npm run check`, `staging:smoke`, `sprint2:preflight`
+- Staging demo intake: `npm run sprint2:staging-demo`
+
+**Still BLOCKED for formal UAT**
 
 - Named UAT participants (Marketing, Sales, Editor, Legal/DPO, IT)
 - Schedule and sign-off criteria

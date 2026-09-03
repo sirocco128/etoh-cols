@@ -23,6 +23,7 @@
     "check:demo": "node scripts/check-demo-placeholders.mjs",
     "sprint2:preflight": "node scripts/sprint2-preflight.mjs",
     "sprint2:apply-intake": "node scripts/apply-sprint2-intake.mjs",
+    "sprint2:staging-demo": "node scripts/sprint2-staging-demo.mjs",
     "staging:up": "node scripts/staging-up.mjs",
     "staging:down": "docker compose -f docker-compose.staging.yml down",
     "staging:smoke": "node scripts/staging-smoke.mjs",
