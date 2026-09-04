@@ -222,15 +222,26 @@ export async function run1688StrapiSync(options: {
       continue;
     }
     const documentId = productDocumentId(found);
-    await patchProduct(base, token, documentId, {
+    const prices = {
       priceMin: row.range.priceMin,
       priceMax: row.range.priceMax,
       priceRange: row.range.priceRange,
       minOrder: row.range.minOrder,
       currency: "THB",
-      sourcePlatform: "alibaba1688",
-      sourceOfferId: row.offerId,
-    });
+    };
+    try {
+      await patchProduct(base, token, documentId, {
+        ...prices,
+        sourcePlatform: "alibaba1688",
+        sourceOfferId: row.offerId,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/sourcePlatform|sourceOfferId|unrecognized|Invalid key/i.test(message)) {
+        throw error;
+      }
+      await patchProduct(base, token, documentId, prices);
+    }
     row.updated = true;
   }
 

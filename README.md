@@ -114,9 +114,9 @@ See [docs/P2-QUOTE-TOOLS.md](docs/P2-QUOTE-TOOLS.md).
 Copy `data/1688-offers.example.json` to `data/1688-offers.json`, fill real offer IDs / factory CNY / weight / dimensions. Restart Strapi after schema sync so `sourcePlatform` / `sourceOfferId` exist.
 
 ```bash
-npm run 1688:sync -- --dry-run
-npm run 1688:sync                 # writes priceMin / priceMax / priceRange to Strapi
-npm run 1688:sync -- --fetch      # also pull live 1688 prices (App Key required)
+npm run alibaba:sync -- --dry-run
+npm run alibaba:sync                 # writes priceMin / priceMax / priceRange to Strapi
+npm run alibaba:sync -- --fetch      # also pull live 1688 prices (App Key required)
 ```
 
 Requires local Strapi admin in `.env.cms.local`. Estimates include China→Thailand freight (SmartGift rate cards). Not a quote.
