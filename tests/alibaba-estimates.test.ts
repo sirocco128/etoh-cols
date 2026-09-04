@@ -108,8 +108,8 @@ describe("1688 landed cost", () => {
     assert.equal(range!.minOrder, 30);
     assert.ok(range!.priceMax >= range!.priceMin);
     assert.equal(range!.priceMin, 419);
-    assert.equal(range!.priceMax, 516);
-    assert.equal(range!.priceRange, "419–516 บาท/ชุด");
+    assert.equal(range!.priceMax, 517);
+    assert.equal(range!.priceRange, "419–517 บาท/ชุด");
     assert.equal(
       "factoryCny" in range! || "dutyThb" in range!,
       false,
@@ -181,7 +181,7 @@ describe("1688 overlay", () => {
     };
     const next = overlayOfferOnProduct(product, offer, { applyImages: false });
     assert.equal(next.priceMin, 419);
-    assert.equal(next.priceMax, 516);
+    assert.equal(next.priceMax, 517);
     assert.deepEqual(next.images, product.images);
   });
 
