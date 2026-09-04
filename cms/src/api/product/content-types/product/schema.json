@@ -65,6 +65,14 @@
       "type": "enumeration",
       "enum": ["THB"],
       "default": "THB"
+    },
+    "sourcePlatform": {
+      "type": "enumeration",
+      "enum": ["cms", "alibaba1688"],
+      "default": "cms"
+    },
+    "sourceOfferId": {
+      "type": "string"
     }
   }
 }

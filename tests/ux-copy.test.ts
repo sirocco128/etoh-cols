@@ -21,6 +21,7 @@ describe("ux-copy (buyer-facing strings)", () => {
       assert.ok(copy.length > 20);
       assert.doesNotMatch(copy, BUYER_JARGON);
       assert.match(copy, /ประมาณ|โดยประมาณ/);
+      assert.match(copy, /จีน/);
     }
   });
 

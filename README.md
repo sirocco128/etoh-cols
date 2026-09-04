@@ -109,6 +109,18 @@ NEXT_PUBLIC_ENABLE_P2_QUOTE_TOOLS=true
 
 See [docs/P2-QUOTE-TOOLS.md](docs/P2-QUOTE-TOOLS.md).
 
+## 1688 factory cost → Strapi (optional)
+
+Copy `data/1688-offers.example.json` to `data/1688-offers.json`, fill real offer IDs / factory CNY / weight / dimensions. Restart Strapi after schema sync so `sourcePlatform` / `sourceOfferId` exist.
+
+```bash
+npm run 1688:sync -- --dry-run
+npm run 1688:sync                 # writes priceMin / priceMax / priceRange to Strapi
+npm run 1688:sync -- --fetch      # also pull live 1688 prices (App Key required)
+```
+
+Requires local Strapi admin in `.env.cms.local`. Estimates include China→Thailand freight (SmartGift rate cards). Not a quote.
+
 ## Docs
 
 | เอกสาร | 用途 |

@@ -25,6 +25,9 @@ import {
   adaptProducts,
   type MediaResolveOptions,
 } from "@/lib/strapi-adapter";
+import { alibabaEstimatesEnabled, overlayOffersOnProducts } from "@/lib/alibaba/overlay";
+import { loadOffersFromFile } from "@/lib/alibaba/offers";
+import type { AlibabaOffer } from "@/lib/alibaba/types";
 
 type CmsMode = "mock" | "strapi";
 
@@ -59,6 +62,25 @@ function mediaOptions(): MediaResolveOptions {
     strapiUrl: getStrapiUrl(),
     remoteImageUrls: process.env.NEXT_IMAGE_REMOTE_URLS ?? "",
   };
+}
+
+let cachedOffers: AlibabaOffer[] | null = null;
+
+function offersForOverlay(): AlibabaOffer[] {
+  if (!alibabaEstimatesEnabled()) return [];
+  if (cachedOffers) return cachedOffers;
+  try {
+    cachedOffers = loadOffersFromFile();
+  } catch {
+    cachedOffers = [];
+  }
+  return cachedOffers;
+}
+
+function withAlibabaEstimates(products: Product[]): Product[] {
+  return overlayOffersOnProducts(products, offersForOverlay(), {
+    remoteImageUrls: process.env.NEXT_IMAGE_REMOTE_URLS ?? "",
+  });
 }
 
 function authHeaders(): HeadersInit {
@@ -226,7 +248,7 @@ export async function getCategoryBySlug(
 }
 
 export async function getProducts(): Promise<Product[]> {
-  return withFallback(
+  const products = await withFallback(
     "products",
     async () => {
       const records = await fetchAllPages(
@@ -239,16 +261,18 @@ export async function getProducts(): Promise<Product[]> {
     },
     mockProducts,
   );
+  return withAlibabaEstimates(products);
 }
 
 export async function getProductBySlug(
   slug: string,
 ): Promise<Product | null> {
   if (getCmsMode() === "mock") {
-    return mockProducts.find((item) => item.slug === slug) ?? null;
+    const product = mockProducts.find((item) => item.slug === slug) ?? null;
+    return product ? withAlibabaEstimates([product])[0] ?? null : null;
   }
 
-  return withFallback(
+  const product = await withFallback(
     `product:${slug}`,
     async () => {
       const query = new URLSearchParams({
@@ -267,6 +291,7 @@ export async function getProductBySlug(
     },
     mockProducts.find((item) => item.slug === slug) ?? null,
   );
+  return product ? withAlibabaEstimates([product])[0] ?? null : null;
 }
 
 export async function getArticles(): Promise<Article[]> {

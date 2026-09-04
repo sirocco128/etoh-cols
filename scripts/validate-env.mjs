@@ -185,6 +185,15 @@ if (!truthy(process.env.REAL_ASSETS_APPROVED)) {
   errors.push("REAL_ASSETS_APPROVED must be true when indexing is enabled.");
 }
 
+if (
+  truthy(process.env.ALIBABA_PUBLIC_IMAGES) &&
+  !truthy(process.env.ALIBABA_IMAGES_LICENSED)
+) {
+  errors.push(
+    "ALIBABA_IMAGES_LICENSED must be true when ALIBABA_PUBLIC_IMAGES=true (indexing on).",
+  );
+}
+
 if (truthy(process.env.SITE_ENABLE_LOCAL_BUSINESS_SCHEMA)) {
   const requiredAddress = [
     "SITE_STREET_ADDRESS",

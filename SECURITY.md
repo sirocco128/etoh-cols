@@ -34,8 +34,10 @@ Summary of the security baseline (runbook §25). Full detail lives in `docs/LLMs
 - `IP_HASH_SECRET`
 - `QUOTE_WEBHOOK_SECRET`
 - `CRON_SECRET`
+- `ALIBABA_APP_SECRET`
+- `ALIBABA_ACCESS_TOKEN`
 
-Use GitLab protected/masked variables or a cloud secret manager. Separate secrets per environment; rotate after staff/vendor access changes.
+1688/Alibaba credentials and landed-cost flags are server-only (never `NEXT_PUBLIC_*`). Catalog images stay on `STRAPI_URL` + `NEXT_IMAGE_REMOTE_URLS`; alicdn URLs are not public unless both `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are true.
 
 ## Lead / PII data
 

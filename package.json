@@ -31,7 +31,8 @@
     "build:standalone": "npm run build && node scripts/prepare-standalone.mjs",
     "cms:setup": "node scripts/cms-local-setup.mjs",
     "cms:seed": "node scripts/seed-strapi-content.mjs",
-    "images:stock": "node scripts/fetch-stock-images.mjs"
+    "images:stock": "node scripts/fetch-stock-images.mjs",
+    "1688:sync": "node scripts/sync-1688-strapi.mjs"
   },
   "dependencies": {
     "next": "15.5.25",
