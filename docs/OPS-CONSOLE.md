@@ -7,6 +7,7 @@ Local staff UI for RFQ leads and a lightweight CRM. **Not** Strapi CMS and **not
 - Login: http://localhost:3000/ops/login
 - Quotes: http://localhost:3000/ops/quotes
 - Customers: http://localhost:3000/ops/customers
+- Factory photos: http://localhost:3000/ops/catalog-images — Gemini searches live 1688 / Alibaba listings and stores images in SQLite (not the public catalog)
 
 ## Env
 

@@ -35,6 +35,9 @@ export default async function OpsLayout({
                 <Link href="/ops/customers" className="hover:text-brass-soft">
                   ลูกค้า
                 </Link>
+                <Link href="/ops/catalog-images" className="hover:text-brass-soft">
+                  รูปโรงงาน
+                </Link>
                 <Link href="/" className="hover:text-brass-soft">
                   เว็บสาธารณะ
                 </Link>

@@ -4,8 +4,10 @@ const ALICD_HOSTS = new Set([
   "img.alicdn.com",
   "sc01.alicdn.com",
   "sc02.alicdn.com",
+  "sc03.alicdn.com",
   "sc04.alicdn.com",
   "ae01.alicdn.com",
+  "s.alicdn.com",
 ]);
 
 const MAX_IMAGES = 8;
@@ -53,6 +55,28 @@ export function extractOfferImages(input: unknown, cap = MAX_IMAGES): string[] {
   return found.slice(0, cap);
 }
 
+const ALICD_IN_TEXT =
+  /https?:\/\/(?:cbu0[12]|img|sc0[1-4]|ae01|s)\.alicdn\.com\/[^\s"'<>\\)]+/gi;
+
+/** Pull alicdn https URLs out of HTML or model text. */
+export function extractOfferImagesFromHtml(html: string, cap = MAX_IMAGES): string[] {
+  const matches = html.match(ALICD_IN_TEXT) ?? [];
+  return extractOfferImages(matches, cap);
+}
+
+function looksLikeSiteChrome(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (/-tps-\d+-\d+\.(png|gif|webp|jpg|jpeg)/.test(lower)) return true;
+  const thumb = lower.match(/_(\d{1,4})x(\d{1,4})\./);
+  if (thumb) {
+    const w = Number(thumb[1]);
+    const h = Number(thumb[2]);
+    if (w > 0 && h > 0 && (w < 200 || h < 200)) return true;
+  }
+  if (lower.includes("/@img/imgextra/") && lower.endsWith(".png")) return true;
+  return false;
+}
+
 function normalizeImageUrl(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -72,7 +96,9 @@ function normalizeImageUrl(raw: string): string | null {
     if (parsed.protocol !== "https:") return null;
     if (!isAllowlistedAlicdnHost(parsed.hostname)) return null;
     parsed.hash = "";
-    return parsed.toString();
+    const normalized = parsed.toString();
+    if (looksLikeSiteChrome(normalized)) return null;
+    return normalized;
   } catch {
     return null;
   }

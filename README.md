@@ -121,6 +121,15 @@ npm run alibaba:sync -- --fetch      # also pull live 1688 prices (App Key requi
 
 Requires local Strapi admin in `.env.cms.local`. Estimates include China→Thailand freight (SmartGift rate cards). Not a quote.
 
+## Gemini → real 1688 / Alibaba photos (ops)
+
+At `/ops/catalog-images`, staff search with Gemini (OpenRouter web search, domains limited to 1688.com / alibaba.com / alicdn). Only listing URLs and alicdn images that pass the allowlist are shown. Saving downloads the file into object storage (MinIO or `.data/objects/images`) and a SQLite row (`catalog_source_images`). Photos stay **ops-internal** until `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are both true.
+
+```bash
+npm run db:migrate
+# then open http://localhost:3000/ops/catalog-images
+```
+
 ## Docs
 
 | เอกสาร | 用途 |

@@ -43,6 +43,7 @@ describe("migration-idempotent (§31 required)", () => {
       assert.match(second.stdout, /Applied 0 new file/);
       assert.match(second.stdout, /skip\s+001_create_quote_requests\.sql/);
       assert.match(second.stdout, /skip\s+002_customers_and_lead_workflow\.sql/);
+      assert.match(second.stdout, /skip\s+011_catalog_source_images\.sql/);
 
       const db = new DatabaseSync(sqlitePath);
       try {
@@ -58,6 +59,15 @@ describe("migration-idempotent (§31 required)", () => {
           .prepare("PRAGMA table_info(customers)")
           .all() as Array<{ name: string }>;
         assert.ok(customers.length >= 10);
+
+        const catalogImages = db
+          .prepare("PRAGMA table_info(catalog_source_images)")
+          .all() as Array<{ name: string }>;
+        const catalogNames = new Set(catalogImages.map((c) => c.name));
+        assert.ok(catalogNames.has("image_id"));
+        assert.ok(catalogNames.has("source_page_url"));
+        assert.ok(catalogNames.has("source_image_url"));
+        assert.ok(catalogNames.has("local_path"));
       } finally {
         db.close();
       }

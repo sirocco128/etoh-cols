@@ -37,7 +37,7 @@ Summary of the security baseline (runbook §25). Full detail lives in `docs/LLMs
 - `ALIBABA_APP_SECRET`
 - `ALIBABA_ACCESS_TOKEN`
 
-1688/Alibaba credentials and landed-cost flags are server-only (never `NEXT_PUBLIC_*`). Catalog images stay on `STRAPI_URL` + `NEXT_IMAGE_REMOTE_URLS`; alicdn URLs are not public unless both `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are true.
+1688/Alibaba credentials and landed-cost flags are server-only (never `NEXT_PUBLIC_*`). Catalog images stay on `STRAPI_URL` + `NEXT_IMAGE_REMOTE_URLS`; alicdn URLs are not public unless both `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are true. Ops Gemini search stores copies in object storage and serves them only to authenticated `/ops` sessions via `/api/ops/catalog-images/*`.
 
 ## Lead / PII data
 
