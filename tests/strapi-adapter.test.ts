@@ -52,6 +52,37 @@ describe("strapi-adapter (§31.4)", () => {
     assert.equal(product!.categorySlug, "tumbler-set");
   });
 
+  it("maps plugin-seo fields (metaTitle / canonicalURL / metaRobots)", () => {
+    const product = adaptProduct(
+      {
+        id: 11,
+        name: "เซ็ตไอที",
+        slug: "it-powerbank-set",
+        description: "รายละเอียดสินค้าทดสอบสำหรับองค์กรไอที",
+        minOrder: 50,
+        priceMin: 420,
+        priceMax: 690,
+        currency: "THB",
+        images: [{ url: "/uploads/it.jpg" }],
+        category: { slug: "it-set" },
+        seo: {
+          metaTitle: "เซ็ตไอที Powerbank สายชาร์จ",
+          metaDescription:
+            "เซ็ตของขวัญไอที Powerbank พร้อมสายชาร์จ 3-in-1 สกรีนโลโก้สำหรับองค์กร ขั้นต่ำ 50 ชุด ราคาโดยประมาณ 420–690 บาท ขอใบเสนอราคาได้ฟรีทันที",
+          canonicalURL: "https://example.com/products/it-powerbank-set",
+          metaRobots: "noindex, nofollow",
+          metaImage: { url: "/uploads/it-og.jpg" },
+        },
+      },
+      { strapiUrl: "https://cms.example.com", allowlistOrigins },
+    );
+    assert.ok(product);
+    assert.equal(product!.seo.seoTitle, "เซ็ตไอที Powerbank สายชาร์จ");
+    assert.equal(product!.seo.canonicalPath, "/products/it-powerbank-set");
+    assert.equal(product!.seo.noIndex, true);
+    assert.match(product!.seo.ogImage || "", /it-og\.jpg/);
+  });
+
   it("resolves relative media URLs against STRAPI_URL", () => {
     const url = resolveMediaUrl("/uploads/file.jpg", {
       strapiUrl: "https://cms.example.com",

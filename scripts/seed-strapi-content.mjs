@@ -37,14 +37,19 @@ if (!EMAIL || !PASSWORD) {
   process.exit(1);
 }
 
-function seo(seoTitle, metaDescription, canonicalPath) {
+function seo(metaTitle, metaDescription, canonicalURL) {
   let meta = metaDescription.trim();
   while (meta.length < 120) meta += " สำหรับองค์กร";
   if (meta.length > 160) meta = meta.slice(0, 160);
-  if (seoTitle.length > 60) {
-    throw new Error(`SEO title too long: ${seoTitle}`);
+  if (metaTitle.length > 60) {
+    throw new Error(`SEO title too long: ${metaTitle}`);
   }
-  return { seoTitle, metaDescription: meta, canonicalPath, noIndex: false };
+  return {
+    metaTitle,
+    metaDescription: meta,
+    canonicalURL,
+    metaRobots: "index, follow",
+  };
 }
 
 /** Extra catalog beyond lib/data.ts so every category has products. */
@@ -470,7 +475,16 @@ async function main() {
       slug: cat.slug,
       description: cat.description,
       heroImage: media[cat.hero],
-      seo: { ...cat.seo, ogImage: media[cat.hero] },
+      seo: {
+        ...cat.seo,
+        metaImage: media[cat.hero],
+        openGraph: {
+          ogTitle: cat.seo.metaTitle,
+          ogDescription: cat.seo.metaDescription.slice(0, 200),
+          ogImage: media[cat.hero],
+          ogType: "website",
+        },
+      },
     };
     const row = await upsertBySlug(token, "gift-set-categories", "slug", cat.slug, data);
     categoryIds[cat.slug] = row.documentId || String(row.id);
@@ -490,7 +504,16 @@ async function main() {
       currency: "THB",
       images: product.images.map((f) => media[f]),
       category: categoryIds[product.categorySlug],
-      seo: { ...product.seo, ogImage: media[product.images[0]] },
+      seo: {
+        ...product.seo,
+        metaImage: media[product.images[0]],
+        openGraph: {
+          ogTitle: product.seo.metaTitle,
+          ogDescription: product.seo.metaDescription.slice(0, 200),
+          ogImage: media[product.images[0]],
+          ogType: "website",
+        },
+      },
     };
     const row = await upsertBySlug(token, "products", "slug", product.slug, data);
     console.log(`  product ${product.slug} → ${row.documentId || row.id}`);
@@ -536,7 +559,16 @@ async function main() {
       body: article.body,
       cover: media[article.cover],
       author: article.author,
-      seo: { ...article.seo, ogImage: media[article.cover] },
+      seo: {
+        ...article.seo,
+        metaImage: media[article.cover],
+        openGraph: {
+          ogTitle: article.seo.metaTitle,
+          ogDescription: article.seo.metaDescription.slice(0, 200),
+          ogImage: media[article.cover],
+          ogType: "article",
+        },
+      },
     };
     const row = await upsertBySlug(token, "articles", "slug", article.slug, data);
     console.log(`  article ${article.slug} → ${row.documentId || row.id}`);

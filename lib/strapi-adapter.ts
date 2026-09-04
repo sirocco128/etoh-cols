@@ -237,21 +237,50 @@ function extractMediaUrls(
   return urls;
 }
 
+function toCanonicalPath(value: unknown, fallbackPath: string): string {
+  const raw = cleaned(value, 500);
+  if (!raw) return fallbackPath.startsWith("/") ? fallbackPath : `/${fallbackPath}`;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      return url.pathname || fallbackPath;
+    } catch {
+      return fallbackPath;
+    }
+  }
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
+
 function adaptSeo(
   raw: unknown,
   fallbackPath: string,
   ogFallback?: string,
+  mediaOptions?: MediaResolveOptions,
 ): SeoFields {
   const entity = unwrapEntity(raw) ?? (raw as Record<string, unknown> | null);
+  const openGraph = unwrapEntity(entity?.openGraph) ?? null;
+  const robots = cleaned(entity?.metaRobots, 120).toLowerCase();
+  const mediaOg =
+    (mediaOptions
+      ? resolveMediaUrl(entity?.metaImage, mediaOptions) ||
+        resolveMediaUrl(openGraph?.ogImage, mediaOptions) ||
+        resolveMediaUrl(entity?.ogImage, mediaOptions)
+      : undefined) || undefined;
+
   const candidate = {
     seoTitle: cleaned(entity?.seoTitle ?? entity?.metaTitle, 60),
     metaDescription: cleaned(
       entity?.metaDescription ?? entity?.description,
       160,
     ),
-    canonicalPath: cleaned(entity?.canonicalPath ?? fallbackPath, 500),
-    ogImage: ogFallback,
-    noIndex: Boolean(entity?.noIndex),
+    canonicalPath: toCanonicalPath(
+      entity?.canonicalPath ?? entity?.canonicalURL,
+      fallbackPath,
+    ),
+    ogImage: mediaOg || ogFallback,
+    noIndex:
+      Boolean(entity?.noIndex) ||
+      robots.includes("noindex"),
   };
 
   const parsed = seoSchema.safeParse(candidate);
@@ -334,6 +363,7 @@ export function adaptProduct(
       entity.seo,
       `/products/${slug}`,
       images[0],
+      options,
     );
 
     const priceRange =
@@ -382,7 +412,7 @@ export function adaptCategory(
       throw new StrapiAdapterError("Category name/description required");
     }
 
-    const seo = adaptSeo(entity.seo, `/giftset/${slug}`, heroImage);
+    const seo = adaptSeo(entity.seo, `/giftset/${slug}`, heroImage, options);
 
     return {
       name,
@@ -422,7 +452,7 @@ export function adaptArticle(
       throw new StrapiAdapterError("Article fields incomplete");
     }
 
-    const seo = adaptSeo(entity.seo, `/blog/${slug}`, cover);
+    const seo = adaptSeo(entity.seo, `/blog/${slug}`, cover, options);
 
     return {
       title,

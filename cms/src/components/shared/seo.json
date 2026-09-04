@@ -1,13 +1,13 @@
 {
   "collectionName": "components_shared_seos",
   "info": {
-    "displayName": "SEO",
-    "description": "Shared SEO metadata component",
+    "displayName": "seo",
+    "description": "Shared SEO metadata (compatible with @strapi-community/plugin-seo)",
     "icon": "search"
   },
   "options": {},
   "attributes": {
-    "seoTitle": {
+    "metaTitle": {
       "type": "string",
       "required": true,
       "maxLength": 60
@@ -15,22 +15,35 @@
     "metaDescription": {
       "type": "text",
       "required": true,
-      "minLength": 120,
+      "minLength": 50,
       "maxLength": 160
     },
-    "canonicalPath": {
-      "type": "string",
-      "required": true,
-      "regex": "^/"
-    },
-    "ogImage": {
+    "metaImage": {
       "type": "media",
       "multiple": false,
+      "required": false,
       "allowedTypes": ["images"]
     },
-    "noIndex": {
-      "type": "boolean",
-      "default": false
+    "openGraph": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.open-graph"
+    },
+    "keywords": {
+      "type": "text"
+    },
+    "metaRobots": {
+      "type": "string"
+    },
+    "metaViewport": {
+      "type": "string"
+    },
+    "canonicalURL": {
+      "type": "string",
+      "required": true
+    },
+    "structuredData": {
+      "type": "json"
     }
   }
 }

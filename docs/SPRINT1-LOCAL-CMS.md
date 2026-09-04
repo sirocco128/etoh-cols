@@ -180,3 +180,14 @@ npm run cms:seed
 
 Creates/publishes: 4 categories · 5 products · 6 FAQs · 3 portfolios · 2 articles (+ media uploads).  
 Idempotent by slug (FAQs replaced each run).
+
+### SEO plugin (editor helper)
+
+```bash
+cd cms && npm install @strapi-community/plugin-seo
+# enabled in cms/config/plugins.ts → seo.enabled
+```
+
+- Admin menu **SEO** → overview + SERP / social preview on Product / Category / Article
+- Component `shared.seo` uses plugin field names (`metaTitle`, `canonicalURL`, …)
+- Next.js still builds metadata + JSON-LD via adapter (`metaTitle` → `seoTitle`); do **not** put production structured data only in CMS `structuredData` JSON
