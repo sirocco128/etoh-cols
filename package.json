@@ -29,7 +29,8 @@
     "staging:smoke": "node scripts/staging-smoke.mjs",
     "uat:auto": "node scripts/uat-auto.mjs",
     "build:standalone": "npm run build && node scripts/prepare-standalone.mjs",
-    "cms:setup": "node scripts/cms-local-setup.mjs"
+    "cms:setup": "node scripts/cms-local-setup.mjs",
+    "cms:seed": "node scripts/seed-strapi-content.mjs"
   },
   "dependencies": {
     "next": "15.5.25",

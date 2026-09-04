@@ -171,3 +171,12 @@ curl -sS -X POST http://127.0.0.1:3000/api/revalidate \
 
 Helper: `CMS_ADMIN_EMAIL=... CMS_ADMIN_PASSWORD=... npm run cms:setup`  
 Local admin credentials (if used) belong in `.env.cms.local` only — never commit.
+
+### Seed full demo catalog
+
+```bash
+npm run cms:seed
+```
+
+Creates/publishes: 4 categories · 5 products · 6 FAQs · 3 portfolios · 2 articles (+ media uploads).  
+Idempotent by slug (FAQs replaced each run).
