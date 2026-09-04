@@ -28,8 +28,14 @@ import {
 import { alibabaEstimatesEnabled, overlayOffersOnProducts } from "@/lib/alibaba/overlay";
 import { loadOffersFromFile } from "@/lib/alibaba/offers";
 import type { AlibabaOffer } from "@/lib/alibaba/types";
+import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
+import {
+  getNexterpProductBySlug,
+  listNexterpCategories,
+  listNexterpProducts,
+} from "@/lib/nexterp-products";
 
-type CmsMode = "mock" | "strapi";
+type CmsMode = "mock" | "strapi" | "mysql";
 
 const REVALIDATE = {
   categories: 3600,
@@ -41,7 +47,13 @@ const REVALIDATE = {
 
 function getCmsMode(): CmsMode {
   const mode = (process.env.CMS_MODE || "mock").trim().toLowerCase();
-  return mode === "strapi" ? "strapi" : "mock";
+  if (mode === "strapi") return "strapi";
+  if (mode === "mysql" || mode === "nexterp") return "mysql";
+  // Auto-use MySQL when explicitly enabled even if CMS_MODE left as mock
+  if (isNexterpMysqlEnabled() && (process.env.CMS_MODE || "").trim() === "") {
+    return "mysql";
+  }
+  return "mock";
 }
 
 function fallbackEnabled(): boolean {
@@ -225,6 +237,16 @@ async function withFallback<T>(
 }
 
 export async function getCategories(): Promise<Category[]> {
+  if (getCmsMode() === "mysql") {
+    try {
+      return await listNexterpCategories();
+    } catch (error) {
+      console.error("[nexterp] categories failed", error);
+      if (fallbackEnabled()) return mockCategories;
+      throw error;
+    }
+  }
+
   return withFallback(
     "categories",
     async () => {
@@ -248,6 +270,17 @@ export async function getCategoryBySlug(
 }
 
 export async function getProducts(): Promise<Product[]> {
+  if (getCmsMode() === "mysql") {
+    try {
+      const products = await listNexterpProducts({ limit: 240 });
+      return withAlibabaEstimates(products);
+    } catch (error) {
+      console.error("[nexterp] products failed", error);
+      if (fallbackEnabled()) return withAlibabaEstimates(mockProducts);
+      throw error;
+    }
+  }
+
   const products = await withFallback(
     "products",
     async () => {
@@ -267,6 +300,23 @@ export async function getProducts(): Promise<Product[]> {
 export async function getProductBySlug(
   slug: string,
 ): Promise<Product | null> {
+  if (getCmsMode() === "mysql") {
+    try {
+      const product = await getNexterpProductBySlug(slug);
+      if (product) return withAlibabaEstimates([product])[0] ?? null;
+      // Keep demo SKUs available while browsing MySQL catalog
+      const demo = mockProducts.find((item) => item.slug === slug) ?? null;
+      return demo ? withAlibabaEstimates([demo])[0] ?? null : null;
+    } catch (error) {
+      console.error("[nexterp] product failed", error);
+      if (fallbackEnabled()) {
+        const demo = mockProducts.find((item) => item.slug === slug) ?? null;
+        return demo ? withAlibabaEstimates([demo])[0] ?? null : null;
+      }
+      throw error;
+    }
+  }
+
   if (getCmsMode() === "mock") {
     const product = mockProducts.find((item) => item.slug === slug) ?? null;
     return product ? withAlibabaEstimates([product])[0] ?? null : null;

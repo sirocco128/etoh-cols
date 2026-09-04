@@ -1,6 +1,6 @@
 /**
  * SQLite customer repository for local CRM / ops console.
- * Upserts from RFQ submissions; not a NextERP integration.
+ * When NEXTERP_MYSQL_ENABLED=true, also mirrors customers into MySQL staging.
  */
 
 import { getDb } from "@/lib/database";
@@ -11,6 +11,14 @@ import type {
   UpdateCustomerParams,
   UpsertCustomerFromQuoteParams,
 } from "@/lib/customer-types";
+import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
+import {
+  getMysqlCustomerByEmail,
+  getMysqlCustomerById,
+  listMysqlCustomers,
+  updateMysqlCustomer,
+  upsertMysqlCustomerFromQuote,
+} from "@/lib/nexterp-customers";
 
 type CustomerRow = {
   id: number;
@@ -40,6 +48,13 @@ function mapRow(row: CustomerRow): CustomerRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function mirrorMysqlUpsert(params: UpsertCustomerFromQuoteParams): void {
+  if (!isNexterpMysqlEnabled()) return;
+  void upsertMysqlCustomerFromQuote(params).catch((error) => {
+    console.error("[nexterp] customer mirror failed", error);
+  });
 }
 
 export function upsertCustomerFromQuote(
@@ -73,6 +88,7 @@ export function upsertCustomerFromQuote(
     const row = db
       .prepare(`SELECT * FROM customers WHERE id = ?`)
       .get(Number(result.lastInsertRowid)) as CustomerRow;
+    mirrorMysqlUpsert(params);
     return mapRow(row);
   }
 
@@ -97,6 +113,7 @@ export function upsertCustomerFromQuote(
   const row = db
     .prepare(`SELECT * FROM customers WHERE id = ?`)
     .get(existing.id) as CustomerRow;
+  mirrorMysqlUpsert(params);
   return mapRow(row);
 }
 
