@@ -16,9 +16,26 @@ import type {
 } from "@/lib/quote-repository-types";
 import type {
   DecorationMethod,
+  LeadStatus,
   QuoteRequestRecord,
   WebhookStatus,
 } from "@/lib/quote-types";
+import { LEAD_STATUSES } from "@/lib/quote-types";
+
+export type ListQuotesOptions = {
+  q?: string;
+  leadStatus?: LeadStatus | "all";
+  customerId?: number;
+  limit?: number;
+  offset?: number;
+};
+
+export type UpdateQuoteOpsParams = {
+  requestId: string;
+  leadStatus?: LeadStatus;
+  salesNotes?: string | null;
+  customerId?: number | null;
+};
 
 export type {
   ClaimDueOutboxOptions,
@@ -62,6 +79,8 @@ type QuoteRow = {
   webhook_last_attempt_at: string | null;
   webhook_next_attempt_at: string | null;
   raw_payload: string;
+  customer_id: number | null;
+  sales_notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -93,7 +112,7 @@ function mapRow(row: QuoteRow): QuoteRequestRecord {
     utmContent: row.utm_content,
     ipHash: row.ip_hash,
     userAgent: row.user_agent,
-    leadStatus: row.lead_status,
+    leadStatus: row.lead_status as LeadStatus,
     webhookStatus: row.webhook_status as WebhookStatus,
     webhookAttemptCount: row.webhook_attempt_count,
     webhookError: row.webhook_error,
@@ -101,6 +120,8 @@ function mapRow(row: QuoteRow): QuoteRequestRecord {
     webhookLastAttemptAt: row.webhook_last_attempt_at,
     webhookNextAttemptAt: row.webhook_next_attempt_at,
     rawPayload: row.raw_payload,
+    customerId: row.customer_id ?? null,
+    salesNotes: row.sales_notes ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -319,6 +340,117 @@ export class SqliteQuoteRepository implements QuoteRepository {
       throw error;
     }
   }
+
+  list(options: ListQuotesOptions = {}): QuoteRequestRecord[] {
+    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+    const offset = Math.max(options.offset ?? 0, 0);
+    const leadStatus = options.leadStatus ?? "all";
+    const q = (options.q || "").trim();
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+
+    if (leadStatus !== "all") {
+      where.push("lead_status = ?");
+      params.push(leadStatus);
+    }
+    if (options.customerId != null) {
+      where.push("customer_id = ?");
+      params.push(options.customerId);
+    }
+    if (q) {
+      where.push(
+        `(request_id LIKE ? OR company LIKE ? OR email LIKE ? OR name LIKE ? OR phone LIKE ?)`,
+      );
+      const like = `%${q}%`;
+      params.push(like, like, like, like, like);
+    }
+
+    const sql = `SELECT * FROM quote_requests
+      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    const rows = getDb().prepare(sql).all(...params) as QuoteRow[];
+    return rows.map(mapRow);
+  }
+
+  count(options: Omit<ListQuotesOptions, "limit" | "offset"> = {}): number {
+    const leadStatus = options.leadStatus ?? "all";
+    const q = (options.q || "").trim();
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+
+    if (leadStatus !== "all") {
+      where.push("lead_status = ?");
+      params.push(leadStatus);
+    }
+    if (options.customerId != null) {
+      where.push("customer_id = ?");
+      params.push(options.customerId);
+    }
+    if (q) {
+      where.push(
+        `(request_id LIKE ? OR company LIKE ? OR email LIKE ? OR name LIKE ? OR phone LIKE ?)`,
+      );
+      const like = `%${q}%`;
+      params.push(like, like, like, like, like);
+    }
+
+    const row = getDb()
+      .prepare(
+        `SELECT COUNT(*) AS c FROM quote_requests
+         ${where.length ? `WHERE ${where.join(" AND ")}` : ""}`,
+      )
+      .get(...params) as { c: number };
+    return row.c;
+  }
+
+  updateOps(params: UpdateQuoteOpsParams): QuoteRequestRecord | null {
+    const existing = this.getByRequestId(params.requestId);
+    if (!existing) return null;
+
+    if (
+      params.leadStatus != null &&
+      !(LEAD_STATUSES as readonly string[]).includes(params.leadStatus)
+    ) {
+      throw new Error("invalid_lead_status");
+    }
+
+    const now = new Date().toISOString();
+    getDb()
+      .prepare(
+        `UPDATE quote_requests SET
+          lead_status = ?,
+          sales_notes = ?,
+          customer_id = ?,
+          updated_at = ?
+         WHERE request_id = ?`,
+      )
+      .run(
+        params.leadStatus ?? existing.leadStatus,
+        params.salesNotes !== undefined
+          ? params.salesNotes
+          : existing.salesNotes,
+        params.customerId !== undefined
+          ? params.customerId
+          : existing.customerId,
+        now,
+        params.requestId,
+      );
+
+    return this.getByRequestId(params.requestId);
+  }
+
+  linkCustomer(requestId: string, customerId: number): void {
+    const now = new Date().toISOString();
+    getDb()
+      .prepare(
+        `UPDATE quote_requests SET customer_id = ?, updated_at = ?
+         WHERE request_id = ?`,
+      )
+      .run(customerId, now, requestId);
+  }
 }
 
 let defaultRepo: QuoteRepository | null = null;
@@ -361,4 +493,32 @@ export function claimDueOutbox(
   options: ClaimDueOutboxOptions,
 ): QuoteRequestRecord[] {
   return getQuoteRepository().claimDueOutbox(options);
+}
+
+export function listQuoteRequests(
+  options?: ListQuotesOptions,
+): QuoteRequestRecord[] {
+  return (getQuoteRepository() as SqliteQuoteRepository).list(options);
+}
+
+export function countQuoteRequests(
+  options?: Omit<ListQuotesOptions, "limit" | "offset">,
+): number {
+  return (getQuoteRepository() as SqliteQuoteRepository).count(options);
+}
+
+export function updateQuoteOps(
+  params: UpdateQuoteOpsParams,
+): QuoteRequestRecord | null {
+  return (getQuoteRepository() as SqliteQuoteRepository).updateOps(params);
+}
+
+export function linkQuoteCustomer(
+  requestId: string,
+  customerId: number,
+): void {
+  (getQuoteRepository() as SqliteQuoteRepository).linkCustomer(
+    requestId,
+    customerId,
+  );
 }

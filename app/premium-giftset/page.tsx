@@ -95,7 +95,7 @@ export default async function PremiumGiftSetPage() {
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
             <Image
-              src="/images/hero-giftset.svg"
+              src="/images/hero-giftset.jpg"
               alt="ตัวอย่าง Premium Gift Set ในกล่ององค์กร"
               fill
               className="object-cover"

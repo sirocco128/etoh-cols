@@ -19,9 +19,25 @@ export const WEBHOOK_STATUSES = [
 
 export type WebhookStatus = (typeof WEBHOOK_STATUSES)[number];
 
-export const LEAD_STATUSES = ["new"] as const;
+export const LEAD_STATUSES = [
+  "new",
+  "contacted",
+  "quoted",
+  "won",
+  "lost",
+  "archived",
+] as const;
 
-export type LeadStatus = (typeof LEAD_STATUSES)[number] | string;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
+  new: "ใหม่",
+  contacted: "ติดต่อแล้ว",
+  quoted: "ส่งใบเสนอราคาแล้ว",
+  won: "ปิดการขาย",
+  lost: "ไม่สำเร็จ",
+  archived: "เก็บถาวร",
+};
 
 export type QuoteRequestInput = {
   name: string;
@@ -115,6 +131,8 @@ export type QuoteRequestRecord = {
   webhookLastAttemptAt: string | null;
   webhookNextAttemptAt: string | null;
   rawPayload: string;
+  customerId: number | null;
+  salesNotes: string | null;
   createdAt: string;
   updatedAt: string;
 };

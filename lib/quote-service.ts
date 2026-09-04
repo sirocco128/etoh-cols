@@ -1,9 +1,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { parseQuoteFormData } from "@/lib/quote-schema";
+import { upsertCustomerFromQuote } from "@/lib/customer-repository";
 import {
   claimDueOutbox,
   consumeRateLimit,
   insertQuoteRequest,
+  linkQuoteCustomer,
   updateWebhookStatus,
 } from "@/lib/quote-repository";
 import type {
@@ -335,6 +337,19 @@ export async function submitQuotePayload(
     rawPayload: JSON.stringify(input),
     consentAt: submittedAt,
   });
+
+  try {
+    const customer = upsertCustomerFromQuote({
+      company: input.company,
+      email: input.email,
+      phone: input.phone,
+      contactName: input.name,
+      quoteSubmittedAt: submittedAt,
+    });
+    linkQuoteCustomer(requestId, customer.id);
+  } catch {
+    // CRM upsert must not block RFQ acceptance
+  }
 
   if (!webhookUrl) {
     return { ok: true, requestId };

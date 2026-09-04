@@ -107,7 +107,7 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
                   <Link href={`/products/${product.slug}`} className="group block">
                     <div className="relative aspect-square overflow-hidden rounded-2xl bg-forest-mist">
                       <Image
-                        src={product.images[0] || "/images/product-placeholder.svg"}
+                        src={product.images[0] || "/images/product-placeholder.jpg"}
                         alt={product.name}
                         fill
                         className="object-cover"

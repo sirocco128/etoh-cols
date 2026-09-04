@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { Navbar } from "@/components/Navbar";
+import { SiteChrome } from "@/components/SiteChrome";
 import { buildMetadata } from "@/lib/metadata";
 import {
   buildLocalBusinessJsonLd,
@@ -38,13 +39,20 @@ export default function RootLayout({
         >
           ข้ามไปยังเนื้อหาหลัก
         </a>
-        <EnvironmentBanner />
-        <Navbar />
-        <main id="main-content" className="flex-1 pb-mobile-cta">
-          {children}
-        </main>
-        <Footer />
-        <MobileStickyCta />
+        <SiteChrome
+          chrome={
+            <>
+              <EnvironmentBanner />
+              <Navbar />
+            </>
+          }
+        >
+          <main id="main-content" className="flex-1 pb-mobile-cta">
+            {children}
+          </main>
+        </SiteChrome>
+        <SiteChrome chrome={<Footer />}>{null}</SiteChrome>
+        <SiteChrome chrome={<MobileStickyCta />}>{null}</SiteChrome>
         <JsonLd data={organization} />
         {localBusiness ? <JsonLd data={localBusiness} /> : null}
       </body>

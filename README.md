@@ -123,6 +123,7 @@ See [docs/P2-QUOTE-TOOLS.md](docs/P2-QUOTE-TOOLS.md).
 | [docs/STAGING-DEPLOY.md](docs/STAGING-DEPLOY.md) | Local + remote staging deploy |
 | [docs/UAT-CHECKLIST.md](docs/UAT-CHECKLIST.md) | UAT sign-off template |
 | [docs/UAT-AUTO-RESULTS.md](docs/UAT-AUTO-RESULTS.md) | Automated route crawl results |
+| [docs/OPS-CONSOLE.md](docs/OPS-CONSOLE.md) | ลูกค้า + ใบเสนอราคา (local ops) |
 | [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + GitLab setup |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
 | [SECURITY.md](SECURITY.md) | Security baseline summary |

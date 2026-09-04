@@ -30,7 +30,8 @@
     "uat:auto": "node scripts/uat-auto.mjs",
     "build:standalone": "npm run build && node scripts/prepare-standalone.mjs",
     "cms:setup": "node scripts/cms-local-setup.mjs",
-    "cms:seed": "node scripts/seed-strapi-content.mjs"
+    "cms:seed": "node scripts/seed-strapi-content.mjs",
+    "images:stock": "node scripts/fetch-stock-images.mjs"
   },
   "dependencies": {
     "next": "15.5.25",

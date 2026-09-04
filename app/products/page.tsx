@@ -43,7 +43,7 @@ export default async function ProductsPage() {
               <Link href={`/products/${product.slug}`} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-forest-mist">
                   <Image
-                    src={product.images[0] || "/images/product-placeholder.svg"}
+                    src={product.images[0] || "/images/product-placeholder.jpg"}
                     alt={product.name}
                     fill
                     className="object-cover transition duration-500 group-hover:scale-105"

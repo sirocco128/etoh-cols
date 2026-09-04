@@ -69,7 +69,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div>
             <div className="relative aspect-square overflow-hidden rounded-3xl bg-forest-mist">
               <Image
-                src={product.images[0] || "/images/product-placeholder.svg"}
+                src={product.images[0] || "/images/product-placeholder.jpg"}
                 alt={product.name}
                 fill
                 priority

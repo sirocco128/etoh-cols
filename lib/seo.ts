@@ -7,7 +7,7 @@ export type BreadcrumbItem = {
   path: string;
 };
 
-const DEFAULT_OG = "/images/og-default.svg";
+const DEFAULT_OG = "/images/og-default.jpg";
 
 /**
  * Serialize JSON-LD safely for embedding in <script type="application/ld+json">.

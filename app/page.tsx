@@ -17,7 +17,7 @@ export default async function HomePage() {
     <>
       <section className="relative isolate min-h-[100svh] overflow-hidden bg-forest text-paper">
         <Image
-          src="/images/hero-giftset.svg"
+          src="/images/hero-giftset.jpg"
           alt="ชุดของขวัญองค์กรพรีเมียมในกล่องบรรจุภัณฑ์สีเข้ม"
           fill
           priority
@@ -118,7 +118,7 @@ export default async function HomePage() {
                     <Link href={`/products/${product.slug}`} className="group block">
                       <div className="relative aspect-square overflow-hidden rounded-2xl bg-paper">
                         <Image
-                          src={product.images[0] || "/images/product-placeholder.svg"}
+                          src={product.images[0] || "/images/product-placeholder.jpg"}
                           alt={product.name}
                           fill
                           className="object-cover transition duration-500 group-hover:scale-105"

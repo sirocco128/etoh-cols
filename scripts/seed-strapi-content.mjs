@@ -59,7 +59,7 @@ const CATEGORIES = [
     slug: "eco-giftset",
     description:
       "ชุดของขวัญองค์กรจากวัสดุรีไซเคิลและวัสดุธรรมชาติ เช่น สมุดรีไซเคิล หลอดไม้ไผ่ และถุงผ้า เหมาะกับงาน ESG และแคมเปญรักษ์โลก",
-    hero: "category-eco.svg",
+    hero: "category-eco.jpg",
     seo: seo(
       "Gift Set เพื่อสิ่งแวดล้อม",
       "สั่งผลิต Gift Set รักษ์โลกจากวัสดุรีไซเคิล วัสดุธรรมชาติ สมุดรีไซเคิล หลอดไม้ไผ่ และถุงผ้า สำหรับองค์กรที่เน้น ESG อย่างยั่งยืน",
@@ -71,7 +71,7 @@ const CATEGORIES = [
     slug: "team-building-set",
     description:
       "เซ็ตของที่ระลึกสำหรับทริปบริษัทและงานทีมบิลดิ้ง ประกอบด้วยเสื้อ หมวก กระเป๋า กระบอกน้ำ และของใช้ตามธีมงาน",
-    hero: "category-team.svg",
+    hero: "category-team.jpg",
     seo: seo(
       "Gift Set ทริปบริษัท ทีมบิลดิ้ง",
       "ออกแบบชุดของขวัญทริปบริษัทและทีมบิลดิ้ง สกรีนโลโก้ เสื้อ หมวก กระเป๋า กระบอกน้ำ ตามธีมงานองค์กรของคุณได้ตามงบประมาณที่ตั้งไว้",
@@ -83,7 +83,7 @@ const CATEGORIES = [
     slug: "tumbler-set",
     description:
       "เซ็ตกระบอกน้ำหรือแก้วสแตนเลสคู่กับสมุด ปากกา และกล่องจั่วปัง เหมาะเป็นของขวัญองค์กรที่ใช้ได้จริงทุกวัน",
-    hero: "category-tumbler.svg",
+    hero: "category-tumbler.jpg",
     seo: seo(
       "ชุดแก้วสแตนเลสเก็บอุณหภูมิ",
       "รับผลิตชุดแก้วสแตนเลสเก็บอุณหภูมิ พร้อมสมุด ปากกา และกล่องจั่วปัง สกรีนโลโก้องค์กร ขั้นต่ำเริ่มต้นได้ตามที่ต้องการ",
@@ -95,7 +95,7 @@ const CATEGORIES = [
     slug: "it-set",
     description:
       "ชุดของขวัญองค์กรด้านเทคโนโลยี เช่น Powerbank สายชาร์จ และอุปกรณ์พกพา สำหรับพนักงานใหม่หรือคู่ค้า",
-    hero: "category-it.svg",
+    hero: "category-it.jpg",
     seo: seo(
       "Gift Set อุปกรณ์ไอที",
       "สั่งทำ Gift Set อุปกรณ์ไอที Powerbank สายชาร์จ และแกเจ็ตพกพา พร้อมสกรีนโลโก้สำหรับองค์กรและงานอีเวนต์อย่างมืออาชีพ",
@@ -115,7 +115,7 @@ const PRODUCTS = [
     priceRange: "350–590 บาท/ชุด",
     priceMin: 350,
     priceMax: 590,
-    images: ["product-tumbler.svg", "product-tumbler-set.svg"],
+    images: ["product-tumbler.jpg", "product-tumbler-set.jpg"],
     categorySlug: "tumbler-set",
     seo: seo(
       "เซ็ตกระบอกน้ำ สมุด ปากกา",
@@ -133,7 +133,7 @@ const PRODUCTS = [
     priceRange: "180–320 บาท/ชุด",
     priceMin: 180,
     priceMax: 320,
-    images: ["product-eco.svg", "product-eco-set.svg"],
+    images: ["product-eco.jpg", "product-eco-set.jpg"],
     categorySlug: "eco-giftset",
     seo: seo(
       "เซ็ตรักษ์โลก ถุงผ้า หลอดไม้ไผ่",
@@ -151,7 +151,7 @@ const PRODUCTS = [
     priceRange: "420–690 บาท/ชุด",
     priceMin: 420,
     priceMax: 690,
-    images: ["product-it.svg", "product-it-set.svg"],
+    images: ["product-it.jpg", "product-it-set.jpg"],
     categorySlug: "it-set",
     seo: seo(
       "เซ็ตไอที Powerbank สายชาร์จ",
@@ -169,7 +169,7 @@ const PRODUCTS = [
     priceRange: "280–480 บาท/ชุด",
     priceMin: 280,
     priceMax: 480,
-    images: ["product-placeholder.svg", "hero-giftset.svg"],
+    images: ["product-placeholder.jpg", "hero-giftset.jpg"],
     categorySlug: "team-building-set",
     seo: seo(
       "เซ็ตทีมบิลดิ้ง เสื้อ หมวก",
@@ -187,7 +187,7 @@ const PRODUCTS = [
     priceRange: "390–650 บาท/ชุด",
     priceMin: 390,
     priceMax: 650,
-    images: ["product-tumbler-set-2.svg", "product-placeholder.svg"],
+    images: ["product-tumbler-set-2.jpg", "product-placeholder.jpg"],
     categorySlug: "tumbler-set",
     seo: seo(
       "Welcome Kit สำนักงานองค์กร",
@@ -244,7 +244,7 @@ const PORTFOLIOS = [
     industry: "เทคโนโลยี",
     summary:
       "ออกแบบและผลิต Welcome Kit สำหรับพนักงานใหม่ ประกอบสมุด กระบอกน้ำ และของใช้สำนักงานในกล่องจั่วปังพร้อมโลโก้บริษัท",
-    image: "portfolio-welcome.svg",
+    image: "portfolio-welcome.jpg",
     services: ["ออกแบบเซ็ต", "สกรีนโลโก้", "แพ็กแยกรายบุคคล"],
     quantity: 500,
     completedAt: "2025-11-15",
@@ -257,7 +257,7 @@ const PORTFOLIOS = [
     industry: "การเงิน",
     summary:
       "เซ็ตของขวัญปีใหม่สำหรับคู่ค้าองค์กร เน้นภาพลักษณ์พรีเมียม บรรจุภัณฑ์แข็งแรง และข้อความแบรนด์สุภาพ",
-    image: "portfolio-newyear.svg",
+    image: "portfolio-newyear.jpg",
     services: ["คัดสรรวัสดุ", "พิมพ์ UV", "จัดส่งตามจุด"],
     quantity: 1200,
     completedAt: "2025-12-20",
@@ -270,7 +270,7 @@ const PORTFOLIOS = [
     industry: "พลังงาน",
     summary:
       "ชุดของแจกงาน ESG จากวัสดุรักษ์โลก ถุงผ้า หลอดไม้ไผ่ และสมุดรีไซเคิล พร้อมข้อความแคมเปญองค์กร",
-    image: "portfolio-esg.svg",
+    image: "portfolio-esg.jpg",
     services: ["เซ็ตรักษ์โลก", "สกรีนโลโก้", "แพ็กงานอีเวนต์"],
     quantity: 800,
     completedAt: "2026-03-01",
@@ -292,7 +292,7 @@ const ARTICLES = [
 <ul><li>กำหนดงบต่อชุดและจำนวนขั้นต่ำ</li><li>เลือกรูปแบบการตกแต่งโลโก้ที่เหมาะสม</li><li>เผื่อเวลาผลิตและจัดส่งล่วงหน้า</li></ul>
 <h3>สรุป</h3>
 <p>เมื่อมีวัตถุประสงค์ งบ และกำหนดส่งชัดเจน การขอใบเสนอราคาจะรวดเร็วและตรงความต้องการมากขึ้น</p>`,
-    cover: "article-guide.svg",
+    cover: "article-guide.jpg",
     author: "ทีมคอนเทนต์ GiftPro Asia",
     seo: seo(
       "คู่มือเลือกสินค้าพรีเมียมองค์กร",
@@ -310,7 +310,7 @@ const ARTICLES = [
 <h3>เช็คลิสต์สั้น ๆ</h3>
 <ul><li>รายชื่อผู้รับและที่อยู่จัดส่ง</li><li>งบต่อชุดรวมค่าแพ็กและขนส่ง</li><li>ไฟล์โลโก้และข้อความอวยพร</li></ul>
 <p>ส่งโจทย์ผ่านแบบฟอร์มขอใบเสนอราคาได้ทันที ทีมขายจะช่วยคัดเซ็ตให้ตรงงบ</p>`,
-    cover: "article-cover.svg",
+    cover: "article-cover.jpg",
     author: "ทีมคอนเทนต์ GiftPro Asia",
     seo: seo(
       "วางแผนของขวัญปีใหม่องค์กร",
