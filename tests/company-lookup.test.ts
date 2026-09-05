@@ -87,6 +87,38 @@ describe("company tax ID lookup", () => {
     }
   });
 
+  it("uses MOC when the Revenue Department is slower than the wait window", async () => {
+    const result = await lookupCompanyByTaxId(COMPANY.taxId, {
+      preferRdMs: 40,
+      fetchImpl: async (input) => {
+        const url = String(input);
+        if (url.includes("rd.go.th")) {
+          await new Promise((resolve) => setTimeout(resolve, 180));
+          return {
+            ok: true,
+            text: async () => RD_VAT_SOAP,
+          } as Response;
+        }
+        return {
+          ok: true,
+          text: async () => "",
+          json: async () => ({
+            juristicNameTH: "บริษัท เทราบิส จำกัด",
+            juristicNameEN: "TERABIS COMPANY LIMITED",
+            juristicStatus: "ยังดำเนินกิจการ",
+            addressDetail: {
+              province: "กรุงเทพมหานคร",
+              district: "ทุ่งครุ",
+              subDistrict: "ทุ่งครุ",
+            },
+          }),
+        } as Response;
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) assert.equal(result.source, "dbd_moc");
+  });
+
   it("surfaces a Thai message when the DBD source is down", async () => {
     const result = await lookupCompanyByTaxId(COMPANY.taxId, {
       fetchImpl: async () => {

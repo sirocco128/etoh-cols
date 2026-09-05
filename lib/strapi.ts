@@ -28,6 +28,7 @@ import {
 import { alibabaEstimatesEnabled, overlayOffersOnProducts } from "@/lib/alibaba/overlay";
 import { loadOffersFromFile } from "@/lib/alibaba/offers";
 import type { AlibabaOffer } from "@/lib/alibaba/types";
+import { cache } from "react";
 import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
 import { getStrapiApiUrl } from "@/lib/strapi-url";
 import {
@@ -237,7 +238,7 @@ async function withFallback<T>(
   }
 }
 
-export async function getCategories(): Promise<Category[]> {
+async function loadCategories(): Promise<Category[]> {
   if (getCmsMode() === "mysql") {
     try {
       return await listNexterpCategories();
@@ -263,6 +264,8 @@ export async function getCategories(): Promise<Category[]> {
   );
 }
 
+export const getCategories = cache(loadCategories);
+
 export async function getCategoryBySlug(
   slug: string,
 ): Promise<Category | null> {
@@ -270,7 +273,7 @@ export async function getCategoryBySlug(
   return all.find((item) => item.slug === slug) ?? null;
 }
 
-export async function getProducts(): Promise<Product[]> {
+async function loadProducts(): Promise<Product[]> {
   if (getCmsMode() === "mysql") {
     try {
       const products = await listNexterpProducts({ limit: 240 });
@@ -298,7 +301,9 @@ export async function getProducts(): Promise<Product[]> {
   return withAlibabaEstimates(products);
 }
 
-export async function getProductBySlug(
+export const getProducts = cache(loadProducts);
+
+async function loadProductBySlug(
   slug: string,
 ): Promise<Product | null> {
   if (getCmsMode() === "mysql") {
@@ -345,7 +350,9 @@ export async function getProductBySlug(
   return product ? withAlibabaEstimates([product])[0] ?? null : null;
 }
 
-export async function getArticles(): Promise<Article[]> {
+export const getProductBySlug = cache(loadProductBySlug);
+
+async function loadArticles(): Promise<Article[]> {
   return withFallback(
     "articles",
     async () => {
@@ -361,7 +368,9 @@ export async function getArticles(): Promise<Article[]> {
   );
 }
 
-export async function getArticleBySlug(
+export const getArticles = cache(loadArticles);
+
+async function loadArticleBySlug(
   slug: string,
 ): Promise<Article | null> {
   if (getCmsMode() === "mock") {
@@ -389,7 +398,9 @@ export async function getArticleBySlug(
   );
 }
 
-export async function getFaqs(): Promise<Faq[]> {
+export const getArticleBySlug = cache(loadArticleBySlug);
+
+async function loadFaqs(): Promise<Faq[]> {
   return withFallback(
     "faqs",
     async () => {
@@ -405,7 +416,9 @@ export async function getFaqs(): Promise<Faq[]> {
   );
 }
 
-export async function getPortfolios(): Promise<Portfolio[]> {
+export const getFaqs = cache(loadFaqs);
+
+async function loadPortfolios(): Promise<Portfolio[]> {
   return withFallback(
     "portfolios",
     async () => {
@@ -420,3 +433,5 @@ export async function getPortfolios(): Promise<Portfolio[]> {
     mockPortfolios,
   );
 }
+
+export const getPortfolios = cache(loadPortfolios);

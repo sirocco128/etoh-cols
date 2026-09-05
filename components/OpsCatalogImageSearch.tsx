@@ -120,6 +120,11 @@ export function OpsCatalogImageSearch({
             {searching ? "กำลังค้นเว็บ…" : "ค้นรูปจากเว็บโรงงาน"}
           </button>
         </div>
+        {searching ? (
+          <p className="mt-3 text-sm text-ink/70" role="status">
+            กำลังให้ผู้ช่วยค้นหน้ารายการจริง — อาจใช้เวลาไม่เกินหนึ่งนาที ไม่ใช่หน้าเว็บค้าง
+          </p>
+        ) : null}
         <label className="mt-3 block text-sm" htmlFor="catalog-product-slug">
           <span className="font-medium">ผูกกับสินค้าในแคตตาล็อก (ไม่บังคับ)</span>
           <select

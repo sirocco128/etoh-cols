@@ -44,7 +44,7 @@ export function CompanyLookupField({
     if (!isValidThaiTaxId(digits) || lastLookup.current === digits) return;
     lastLookup.current = digits;
     setPending(true);
-    setStatus("กำลังค้นหาบริษัทจากเลขทะเบียน…");
+    setStatus("กำลังค้นหาบริษัทจากเลขทะเบียน… ถ้าช้า กรอกชื่อเองได้");
     try {
       const response = await fetch(
         `/api/company-lookup?taxId=${encodeURIComponent(digits)}`,

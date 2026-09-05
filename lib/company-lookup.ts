@@ -196,7 +196,7 @@ async function lookupRdVat(
   </soap:Body>
 </soap:Envelope>`;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8_000);
+  const timer = setTimeout(() => controller.abort(), 4_000);
   try {
     const response = await fetchImpl(RD_VAT_URL, {
       method: "POST",
@@ -231,9 +231,9 @@ async function lookupMoc(
         "User-Agent": "terabis-quote-form",
       },
     },
-    fetchImpl,
-    10_000,
-  )) as MocJuristic;
+        fetchImpl,
+        6_000,
+      )) as MocJuristic;
   return fromMoc(payload, taxId);
 }
 
@@ -255,9 +255,9 @@ async function lookupDbdOpenApi(
         "Consumer-Key": key,
       },
     },
-    fetchImpl,
-    10_000,
-  )) as Record<string, unknown>;
+        fetchImpl,
+        6_000,
+      )) as Record<string, unknown>;
   const data =
     payload && typeof payload.data === "object"
       ? (payload.data as Record<string, unknown>)
@@ -281,6 +281,8 @@ export async function lookupCompanyByTaxId(
   options?: {
     fetchImpl?: FetchLike;
     localRecord?: CompanyRecord | null;
+    /** Wait this long for Revenue Department before accepting MOC (default 1.2s). */
+    preferRdMs?: number;
   },
 ): Promise<CompanyLookupResult> {
   const taxId = normalizeThaiTaxId(raw);
@@ -298,6 +300,7 @@ export async function lookupCompanyByTaxId(
 
   const fetchImpl = options?.fetchImpl ?? fetch;
   const errors: string[] = [];
+  const preferRdMs = Math.max(0, options?.preferRdMs ?? 1_200);
 
   const rdTask = lookupRdVat(taxId, fetchImpl).catch((error) => {
     errors.push(error instanceof Error ? error.message : "rd");
@@ -308,11 +311,21 @@ export async function lookupCompanyByTaxId(
     return null;
   });
 
-  const rd = await rdTask;
-  if (rd) return { ok: true, ...rd };
+  let waitTimer: ReturnType<typeof setTimeout> | undefined;
+  const rdQuick = await Promise.race([
+    rdTask,
+    new Promise<null>((resolve) => {
+      waitTimer = setTimeout(() => resolve(null), preferRdMs);
+    }),
+  ]);
+  if (waitTimer) clearTimeout(waitTimer);
+  if (rdQuick) return { ok: true, ...rdQuick };
 
   const moc = await mocTask;
   if (moc) return { ok: true, ...moc };
+
+  const rd = await rdTask;
+  if (rd) return { ok: true, ...rd };
 
   try {
     const dbd = await lookupDbdOpenApi(taxId, fetchImpl);
