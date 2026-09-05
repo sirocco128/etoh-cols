@@ -435,3 +435,10 @@ async function loadPortfolios(): Promise<Portfolio[]> {
 }
 
 export const getPortfolios = cache(loadPortfolios);
+
+export async function getPortfolioBySlug(
+  slug: string,
+): Promise<Portfolio | null> {
+  const all = await getPortfolios();
+  return all.find((item) => item.slug === slug) ?? null;
+}

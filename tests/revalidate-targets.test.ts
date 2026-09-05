@@ -50,8 +50,17 @@ describe("revalidate-targets (§31 required)", () => {
     });
 
     assert.deepEqual(mapRevalidateTargets("portfolio"), {
-      paths: ["/portfolio"],
+      paths: ["/portfolio", "/sitemap.xml"],
       tags: ["portfolios"],
+    });
+
+    assert.deepEqual(mapRevalidateTargets("portfolio", { slug: "employee-welcome-kit" }), {
+      paths: [
+        "/portfolio",
+        "/sitemap.xml",
+        "/portfolio/employee-welcome-kit",
+      ],
+      tags: ["portfolios", "portfolio:employee-welcome-kit"],
     });
   });
 });

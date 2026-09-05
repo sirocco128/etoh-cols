@@ -30,6 +30,7 @@ export function Navbar() {
             <NavLink
               key={link.href}
               href={link.href}
+              title={link.hint}
               className="text-sm font-medium text-ink/80 transition hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass dark:text-paper/80 dark:hover:text-brass-soft"
               activeClassName="text-forest underline decoration-brass decoration-2 underline-offset-8 dark:text-brass-soft"
             >

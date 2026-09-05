@@ -64,8 +64,10 @@ export function mapRevalidateTargets(
       tags.push("faqs");
       break;
     case "portfolio":
-      paths.push("/portfolio");
+      paths.push("/portfolio", "/sitemap.xml");
+      if (slug) paths.push(`/portfolio/${slug}`);
       tags.push("portfolios");
+      if (slug) tags.push(`portfolio:${slug}`);
       break;
     default: {
       const _exhaustive: never = model;

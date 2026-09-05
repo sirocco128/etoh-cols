@@ -36,9 +36,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) {
-    return { title: "ไม่พบสินค้า" };
-  }
+  if (!product) notFound();
   return metadataFromSeo(
     resolveSeoFields(product.seo.canonicalPath, product.seo),
     {

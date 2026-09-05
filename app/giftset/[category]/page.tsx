@@ -31,7 +31,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category: slug } = await params;
   const category = await getCategoryBySlug(slug);
-  if (!category) return { title: "ไม่พบหมวดหมู่" };
+  if (!category) notFound();
   return metadataFromSeo(
     resolveSeoFields(category.seo.canonicalPath, category.seo),
     {

@@ -58,6 +58,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <p className="mt-3 text-base leading-relaxed text-ink/65 dark:text-paper/70">
             {CATALOG_SUBTITLE}
           </p>
+          <p className="mt-2 text-sm text-ink/55 dark:text-paper/60">
+            หน้านี้เป็นรายการเลือกเซ็ตแล้วขอราคา ไม่ใช่สมุดพลิกดู
+          </p>
           <p className="mt-4">
             <Link
               href="/catalog"

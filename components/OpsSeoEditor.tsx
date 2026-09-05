@@ -17,6 +17,7 @@ function kindLabel(kind: PageRow["kind"]): string {
   if (kind === "product") return "สินค้า";
   if (kind === "category") return "หมวด";
   if (kind === "article") return "บทความ";
+  if (kind === "portfolio") return "ผลงาน";
   return "หน้า";
 }
 

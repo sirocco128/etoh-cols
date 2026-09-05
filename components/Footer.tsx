@@ -5,8 +5,8 @@ import { site } from "@/lib/site";
 
 const SERVICE_LINKS = [
   { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
-  { href: "/products", label: "สินค้าพรีเมียม" },
-  { href: "/catalog", label: "สมุดแคตตาล็อก" },
+  { href: "/products", label: "สินค้าพรีเมียม — เลือกขอราคา" },
+  { href: "/catalog", label: "สมุดแคตตาล็อก — พลิกดู" },
   { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
   { href: "/portfolio", label: "ผลงาน" },

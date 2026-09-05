@@ -57,6 +57,10 @@ export const CATALOG_SUBTITLE =
 
 export const FLIP_CATALOG_NAV = "สมุดแคตตาล็อก";
 
+export const PRODUCTS_NAV_HINT = "เลือกเซ็ตแล้วขอราคา";
+
+export const CATALOG_NAV_HINT = "พลิกดูแคตตาล็อก ไม่ใช่รายการขอราคา";
+
 export const FLIP_CATALOG_TITLE = "สมุดแคตตาล็อกของขวัญองค์กร";
 
 export const FLIP_CATALOG_LEAD =

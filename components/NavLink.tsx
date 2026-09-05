@@ -10,6 +10,7 @@ type NavLinkProps = {
   children: React.ReactNode;
   className?: string;
   activeClassName?: string;
+  title?: string;
   onClick?: () => void;
 };
 
@@ -18,6 +19,7 @@ export function NavLink({
   children,
   className = "",
   activeClassName = "",
+  title,
   onClick,
 }: NavLinkProps) {
   const pathname = usePathname() || "/";
@@ -26,6 +28,7 @@ export function NavLink({
   return (
     <Link
       href={href}
+      title={title}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={cn(className, active && activeClassName)}

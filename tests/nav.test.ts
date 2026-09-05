@@ -30,6 +30,18 @@ describe("nav helpers (UX)", () => {
       links.find((l) => l.href === "/premium-giftset")?.label,
       "ชุดของขวัญองค์กร",
     );
+    assert.equal(
+      links.find((l) => l.href === "/catalog")?.label,
+      "สมุดพลิกดู",
+    );
+    assert.match(
+      links.find((l) => l.href === "/products")?.hint || "",
+      /ขอราคา/,
+    );
+    assert.match(
+      links.find((l) => l.href === "/catalog")?.hint || "",
+      /พลิกดู/,
+    );
   });
 
   it("appends quote basket link when P2 tools enabled", () => {

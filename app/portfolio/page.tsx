@@ -43,7 +43,8 @@ export default async function PortfolioPage() {
       ) : (
         <ul className="mt-10 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {portfolios.map((item) => (
-            <li key={item.slug} className="group">
+            <li key={item.slug}>
+              <Link href={`/portfolio/${item.slug}`} className="group block">
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-mist">
                 <Image
                   src={item.image}
@@ -58,7 +59,9 @@ export default async function PortfolioPage() {
                   {item.industry}
                 </p>
               ) : null}
-              <h2 className="mt-2 text-xl font-semibold text-forest">{item.title}</h2>
+              <h2 className="mt-2 text-xl font-semibold text-forest group-hover:underline">
+                {item.title}
+              </h2>
               <p className="mt-1 text-sm text-ink/60">ลูกค้า: {item.client}</p>
               <p className="mt-3 text-sm leading-relaxed text-ink/75">{item.summary}</p>
               {item.services?.length ? (
@@ -69,6 +72,8 @@ export default async function PortfolioPage() {
               {item.quantity ? (
                 <p className="mt-1 text-xs text-ink/60">จำนวน: {item.quantity} เซ็ต</p>
               ) : null}
+              <p className="mt-3 text-sm font-medium text-forest">ดูรายละเอียด</p>
+              </Link>
             </li>
           ))}
         </ul>

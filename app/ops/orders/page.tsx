@@ -12,7 +12,13 @@ import {
 import { paymentStatusLabelForOrder } from "@/lib/order-service";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 import { TagChips } from "@/components/TagChips";
+import { OpsPager } from "@/components/OpsPager";
 import { formatThaiDateTime, formatThb } from "@/lib/th-billing";
+import {
+  OPS_LIST_PAGE_SIZE,
+  opsPageWindow,
+  parseOpsPage,
+} from "@/lib/ops-pagination";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,6 +28,7 @@ type SearchParams = Promise<{
   payment?: string;
   fulfillment?: string;
   tag?: string;
+  page?: string;
 }>;
 
 export default async function OpsOrdersPage({
@@ -48,15 +55,23 @@ export default async function OpsOrdersPage({
   const tag = (sp.tag || "").trim();
 
   const repo = getOrderRepository();
+  const total = repo.countOrders({ q, paymentStatus, fulfillmentStatus, tag });
+  const pageWindow = opsPageWindow(total, parseOpsPage(sp.page), OPS_LIST_PAGE_SIZE);
   const orders = repo.listOrders({
     q,
     paymentStatus,
     fulfillmentStatus,
     tag,
-    limit: 100,
+    limit: pageWindow.pageSize,
+    offset: pageWindow.offset,
   });
-  const total = repo.countOrders({ q, paymentStatus, fulfillmentStatus, tag });
   const knownTags = listDistinctOpsTags();
+  const filterParams = {
+    q,
+    payment: paymentStatus === "all" ? undefined : paymentStatus,
+    fulfillment: fulfillmentStatus === "all" ? undefined : fulfillmentStatus,
+    tag: tag || undefined,
+  };
 
   return (
     <div>
@@ -116,7 +131,34 @@ export default async function OpsOrdersPage({
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto">
+      {orders.length === 0 ? (
+        <p className="mt-6 rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">
+          ยังไม่มีออเดอร์ — เปิดจากใบเสนอราคาที่ส่งแล้ว
+        </p>
+      ) : (
+        <>
+          <ul className="mt-6 space-y-3 md:hidden">
+            {orders.map((row) => (
+              <li key={row.orderId} className="rounded-xl border border-forest/10 p-4">
+                <Link
+                  href={`/ops/orders/${row.orderId}`}
+                  className="font-mono text-xs text-forest underline-offset-2 hover:underline"
+                >
+                  {row.orderId}
+                </Link>
+                <p className="mt-1 font-medium">{row.company}</p>
+                <p className="text-xs text-ink/65">{row.email}</p>
+                <p className="mt-2 text-sm text-ink/75">
+                  {formatThb(row.totalAmount)} · {paymentStatusLabelForOrder(row)}
+                </p>
+                <p className="mt-1 text-xs text-ink/55">
+                  {FULFILLMENT_LABELS[row.fulfillmentStatus]} · {formatThaiDateTime(row.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 hidden overflow-x-auto md:block">
         <table className="w-full min-w-[800px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-forest/15 text-forest">
@@ -131,14 +173,7 @@ export default async function OpsOrdersPage({
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-8 text-center text-ink/60">
-                  ยังไม่มีออเดอร์ — เปิดจากใบเสนอราคาที่ส่งแล้ว
-                </td>
-              </tr>
-            ) : (
-              orders.map((row) => (
+              {orders.map((row) => (
                 <tr
                   key={row.orderId}
                   className="border-b border-forest/10 hover:bg-paper/80"
@@ -170,11 +205,13 @@ export default async function OpsOrdersPage({
                     {formatThaiDateTime(row.createdAt)}
                   </td>
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
-      </div>
+          </div>
+          <OpsPager pathname="/ops/orders" params={filterParams} window={pageWindow} />
+        </>
+      )}
     </div>
   );
 }

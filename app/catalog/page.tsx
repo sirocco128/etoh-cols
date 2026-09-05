@@ -56,11 +56,11 @@ export default async function CatalogPage() {
             {FLIP_CATALOG_LEAD}
           </p>
           <p className="mt-3 text-sm text-ink/55 dark:text-paper/60">
-            ดูเป็น{" "}
+            หน้านี้พลิกดูแคตตาล็อก ไม่ใช่รายการขอราคา ดูเป็น{" "}
             <Link href="/products" className="font-medium text-forest underline-offset-4 hover:underline">
-              รายการสินค้า
+              สินค้าพรีเมียม
             </Link>{" "}
-            ก็ได้ ข้อมูลชุดเดียวกัน
+            เมื่อพร้อมเลือกเซ็ต
           </p>
         </FadeIn>
 

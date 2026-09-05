@@ -2,6 +2,10 @@
 
 Local staff UI for RFQ leads and a lightweight CRM. **Not** Strapi CMS and **not** NextERP.
 
+วงจรปฏิบัติการทั้งเส้น (ขอใบเสนอราคา → มัดจำ → สั่งโรงงานจีน → รับของ → ใบกำกับ → ส่งมอบ): [SOP-CYCLE.md](./SOP-CYCLE.md)
+
+เช็กลิสต์ลงมือทำทีละขั้น (ช่องติ๊ก + ปุ่มในหน้าจอ): [SOP-CHECKLIST.md](./SOP-CHECKLIST.md)
+
 ## URL
 
 - Login: http://localhost:3000/ops/login

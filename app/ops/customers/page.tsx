@@ -21,6 +21,12 @@ import {
 import { purchaseKindLabelsForCustomers } from "@/lib/customer-sales-history";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 import { TagChips } from "@/components/TagChips";
+import { OpsPager } from "@/components/OpsPager";
+import {
+  OPS_LIST_PAGE_SIZE,
+  opsPageWindow,
+  parseOpsPage,
+} from "@/lib/ops-pagination";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +41,7 @@ type SearchParams = Promise<{
   province?: string;
   orders?: string;
   kind?: string;
+  page?: string;
 }>;
 
 export default async function OpsCustomersPage({
@@ -86,16 +93,44 @@ export default async function OpsCustomersPage({
     taxReady,
     province,
     hasOrders,
-    limit: 100,
   };
-  const customersAll = listCustomers(filters);
-  const kindLabels = purchaseKindLabelsForCustomers(customersAll.map((c) => c.id));
   const kindLabelFilter =
     kindFilter === "all" ? null : PRODUCT_KIND_LABELS[kindFilter];
-  const customers = kindLabelFilter
-    ? customersAll.filter((c) => (kindLabels.get(c.id) || []).includes(kindLabelFilter))
-    : customersAll;
-  const total = kindLabelFilter ? customers.length : countCustomers(filters);
+  const requestedPage = parseOpsPage(sp.page);
+
+  let customers;
+  let total: number;
+  let pageWindow;
+  if (kindLabelFilter) {
+    const customersAll = listCustomers({ ...filters, limit: 500, offset: 0 });
+    const kindLabels = purchaseKindLabelsForCustomers(customersAll.map((c) => c.id));
+    const filtered = customersAll.filter((c) =>
+      (kindLabels.get(c.id) || []).includes(kindLabelFilter),
+    );
+    total = filtered.length;
+    pageWindow = opsPageWindow(total, requestedPage, OPS_LIST_PAGE_SIZE);
+    customers = filtered.slice(pageWindow.offset, pageWindow.offset + pageWindow.pageSize);
+  } else {
+    total = countCustomers(filters);
+    pageWindow = opsPageWindow(total, requestedPage, OPS_LIST_PAGE_SIZE);
+    customers = listCustomers({
+      ...filters,
+      limit: pageWindow.pageSize,
+      offset: pageWindow.offset,
+    });
+  }
+  const kindLabels = purchaseKindLabelsForCustomers(customers.map((c) => c.id));
+  const filterParams = {
+    q,
+    status: status === "all" ? undefined : status,
+    type: typeRaw === "all" ? undefined : typeRaw,
+    source: sourceRaw === "all" ? undefined : sourceRaw,
+    tag: tag || undefined,
+    tax: taxReady === "all" ? undefined : taxReady,
+    province: province || undefined,
+    orders: hasOrders === "all" ? undefined : hasOrders,
+    kind: kindFilter === "all" ? undefined : kindFilter,
+  };
   const knownTags = listDistinctOpsTags();
   const exportQs = new URLSearchParams(
     Object.entries({
@@ -209,7 +244,34 @@ export default async function OpsCustomersPage({
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto">
+      <div className="mt-6 space-y-3 md:hidden">
+        {customers.length === 0 ? (
+          <p className="rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">
+            ยังไม่มีลูกค้า — ส่งคำขอที่แบบฟอร์มติดต่อ หรือกดเพิ่มลูกค้า
+          </p>
+        ) : (
+          customers.map((c) => (
+            <article key={c.id} className="rounded-xl border border-forest/10 p-4">
+              <Link
+                href={`/ops/customers/${c.id}`}
+                className="font-medium text-forest underline-offset-2 hover:underline"
+              >
+                {c.company}
+              </Link>
+              <p className="mt-1 text-xs text-ink/55">{c.email}</p>
+              <p className="mt-2 text-sm text-ink/75">
+                {c.contactName || "—"} · {CUSTOMER_TYPE_LABELS[c.customerType]}
+              </p>
+              <p className="mt-1 text-xs text-ink/55">
+                คำขอ {c.quoteCount} · ออเดอร์ {c.orderCount} · ภาษี{" "}
+                {isCustomerTaxReady(c) ? "ครบ" : "ยังไม่ครบ"}
+              </p>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-x-auto md:block">
         <table className="w-full min-w-[800px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-forest/15 text-forest">
@@ -268,6 +330,9 @@ export default async function OpsCustomersPage({
           </tbody>
         </table>
       </div>
+      {customers.length > 0 ? (
+        <OpsPager pathname="/ops/customers" params={filterParams} window={pageWindow} />
+      ) : null}
     </div>
   );
 }

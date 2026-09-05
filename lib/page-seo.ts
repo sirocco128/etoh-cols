@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import {
   articles,
   categories,
+  portfolios,
   products,
   type SeoFields,
 } from "@/lib/data";
+import { clampSeoTitle, fitSeoDescription } from "@/lib/seo-limits";
 import { metadataFromSeo } from "@/lib/seo";
 import { normalizeSeoPath } from "@/lib/seo-path";
 import { getSeoOverride } from "@/lib/seo-repository";
@@ -20,7 +22,8 @@ export type SeoPageKind =
   | "theme"
   | "product"
   | "category"
-  | "article";
+  | "article"
+  | "portfolio";
 
 export type CatalogSeoPage = {
   path: string;
@@ -243,6 +246,19 @@ function catalogEntityPages(): CatalogSeoPage[] {
       kind: "article" as const,
       keywords: [article.title],
       seo: article.seo,
+    })),
+    ...portfolios.map((item) => ({
+      path: `/portfolio/${item.slug}`,
+      label: item.title,
+      kind: "portfolio" as const,
+      keywords: [item.title, "ผลงานองค์กร", "สกรีนโลโก้"],
+      seo: {
+        seoTitle: clampSeoTitle(`${item.title} ผลงานองค์กร`),
+        metaDescription: fitSeoDescription(item.summary),
+        canonicalPath: `/portfolio/${item.slug}`,
+        ogImage: item.image,
+        keywords: `${item.title}, ผลงานองค์กร, สกรีนโลโก้`,
+      },
     })),
   ];
 }

@@ -1,16 +1,28 @@
 /** Shared primary navigation (desktop + mobile). */
-export const PRIMARY_NAV_LINKS = [
+export type NavLinkItem = {
+  href: string;
+  label: string;
+  hint?: string;
+};
+
+export const PRIMARY_NAV_LINKS: NavLinkItem[] = [
   { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
-  { href: "/products", label: "สินค้าพรีเมียม" },
-  { href: "/catalog", label: "สมุดแคตตาล็อก" },
+  {
+    href: "/products",
+    label: "สินค้าพรีเมียม",
+    hint: "เลือกเซ็ตแล้วขอราคา",
+  },
+  {
+    href: "/catalog",
+    label: "สมุดพลิกดู",
+    hint: "พลิกดูแคตตาล็อก ไม่ใช่รายการขอราคา",
+  },
   { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
   { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/portfolio", label: "ผลงาน" },
   { href: "/blog", label: "บทความ" },
-] as const;
-
-export type NavLinkItem = { href: string; label: string };
+];
 
 export function withOptionalBasketLink(
   enableP2QuoteTools: boolean,

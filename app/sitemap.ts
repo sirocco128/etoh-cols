@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import {
   getArticles,
   getCategories,
+  getPortfolios,
   getProducts,
 } from "@/lib/strapi";
 import { IDEA_THEMES, ideaThemePath } from "@/lib/seo-themes";
@@ -40,10 +41,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           : 0.7,
   }));
 
-  const [categories, products, articles] = await Promise.all([
+  const [categories, products, articles, portfolios] = await Promise.all([
     getCategories(),
     getProducts(),
     getArticles(),
+    getPortfolios(),
   ]);
 
   const dynamicEntries: MetadataRoute.Sitemap = [
@@ -72,6 +74,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         : article.publishedAt
           ? new Date(article.publishedAt)
           : now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...portfolios.map((item) => ({
+      url: `${base}/portfolio/${item.slug}`,
+      lastModified: item.completedAt ? new Date(item.completedAt) : now,
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),

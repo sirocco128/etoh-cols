@@ -131,11 +131,17 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                 <NavLink
                   key={link.href}
                   href={link.href}
+                  title={link.hint}
                   onClick={close}
                   className="rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
                   activeClassName="bg-forest-mist text-forest"
                 >
-                  {link.label}
+                  <span className="block">{link.label}</span>
+                  {link.hint ? (
+                    <span className="mt-0.5 block text-xs font-normal text-ink/55">
+                      {link.hint}
+                    </span>
+                  ) : null}
                 </NavLink>
               ))}
               <NavLink

@@ -14,6 +14,8 @@ import {
   FLIP_CATALOG_LEAD,
   FLIP_CATALOG_NAV,
   FLIP_CATALOG_PRINT_HINT,
+  PRODUCTS_NAV_HINT,
+  CATALOG_NAV_HINT,
   QUOTE_BASKET_FAB,
   MOCKUP_RETAIL_HEADING,
   MOCKUP_RETAIL_HINT,
@@ -84,6 +86,8 @@ describe("ux-copy (buyer-facing strings)", () => {
     assert.match(CATALOG_SUBTITLE, /สกรีนโลโก้/);
     assert.match(QUOTE_BASKET_FAB, /ตะกร้า/);
     assert.equal(FLIP_CATALOG_NAV, "สมุดแคตตาล็อก");
+    assert.match(PRODUCTS_NAV_HINT, /ขอราคา/);
+    assert.match(CATALOG_NAV_HINT, /พลิกดู/);
     assert.doesNotMatch(FLIP_CATALOG_LEAD, BUYER_JARGON);
     assert.match(FLIP_CATALOG_LEAD, /กลุ่มเดียวกัน/);
     assert.match(FLIP_CATALOG_CLOSING_BODY, /ไม่มีการชำระเงิน/);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { Article, Faq, Product, SeoFields } from "@/lib/data";
+import type { Article, Faq, Portfolio, Product, SeoFields } from "@/lib/data";
 import { isPlaceholderEmail, isPlaceholderLine, isPlaceholderPhone } from "@/lib/company";
 import { getSiteConfig, type SiteConfig } from "@/lib/site";
 
@@ -239,6 +239,26 @@ export function buildBlogPostingJsonLd(
       site,
       article.seo.canonicalPath || `/blog/${article.slug}`,
     ),
+  };
+}
+
+export function buildCreativeWorkJsonLd(
+  item: Portfolio,
+  site: SiteConfig = getSiteConfig(),
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: item.title,
+    description: item.summary,
+    image: absoluteUrl(site, item.image),
+    about: item.industry || undefined,
+    dateCreated: item.completedAt || undefined,
+    creator: {
+      "@type": "Organization",
+      name: site.name,
+    },
+    url: absoluteUrl(site, `/portfolio/${item.slug}`),
   };
 }
 
