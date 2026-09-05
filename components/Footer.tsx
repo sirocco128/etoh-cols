@@ -1,22 +1,39 @@
 import Link from "next/link";
+import { formatRegisteredAddress } from "@/lib/company";
+import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 
 const SERVICE_LINKS = [
   { href: "/premium-giftset", label: "Premium Gift Set" },
   { href: "/products", label: "สินค้าพรีเมียม" },
+  { href: "/catalog", label: "สมุดแคตตาล็อก" },
+  { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
+  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/portfolio", label: "ผลงาน" },
   { href: "/blog", label: "บทความ" },
   { href: "/contact", label: "ติดต่อขอใบเสนอราคา" },
+  { href: "/orders", label: "ออเดอร์ / ชำระเงิน" },
+  { href: "/issues", label: "แจ้งปัญหา" },
 ] as const;
 
 const INFO_LINKS = [
+  { href: "/about", label: "เกี่ยวกับเรา" },
+  { href: "/orders", label: "ออเดอร์ของฉัน" },
+  { href: "/issues", label: "แจ้งปัญหาสินค้า" },
   { href: "/privacy", label: "นโยบายความเป็นส่วนตัว" },
   { href: "/terms", label: "ข้อกำหนดการใช้งาน" },
 ] as const;
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const contact = getPublicContact(site);
+  const address = formatRegisteredAddress({
+    streetAddress: site.localBusiness.streetAddress,
+    locality: site.localBusiness.locality,
+    region: site.localBusiness.region,
+    postalCode: site.localBusiness.postalCode,
+  });
 
   return (
     <footer className="mt-auto border-t border-forest/10 bg-forest text-paper">
@@ -28,6 +45,11 @@ export function Footer() {
           </p>
           {site.legalName ? (
             <p className="mt-4 text-xs text-paper/60">นิติบุคคล: {site.legalName}</p>
+          ) : null}
+          {site.taxId ? (
+            <p className="mt-1 text-xs text-paper/60">
+              เลขประจำตัวผู้เสียภาษี: {site.taxId}
+            </p>
           ) : null}
         </div>
 
@@ -51,37 +73,40 @@ export function Footer() {
             ติดต่อ
           </p>
           <ul className="mt-4 space-y-2 text-sm text-paper/85">
-            <li>
-              <a href={site.phoneHref} className="hover:text-brass-soft">
-                โทร {site.phoneDisplay}
-              </a>
-            </li>
-            <li>
-              <a href={`mailto:${site.email}`} className="hover:text-brass-soft">
-                {site.email}
-              </a>
-            </li>
-            <li>
-              <a
-                href={site.lineUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-brass-soft"
-              >
-                LINE OA {site.lineId}
-              </a>
-            </li>
-            {site.localBusiness.streetAddress ? (
-              <li className="pt-2 text-paper/70">
-                {[
-                  site.localBusiness.streetAddress,
-                  site.localBusiness.locality,
-                  site.localBusiness.region,
-                  site.localBusiness.postalCode,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+            {contact.showPhone ? (
+              <li>
+                <a href={site.phoneHref} className="hover:text-brass-soft">
+                  โทร {site.phoneDisplay}
+                </a>
               </li>
+            ) : null}
+            {contact.showEmail ? (
+              <li>
+                <a href={`mailto:${site.email}`} className="hover:text-brass-soft">
+                  {site.email}
+                </a>
+              </li>
+            ) : null}
+            {contact.showLine ? (
+              <li>
+                <a
+                  href={site.lineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-brass-soft"
+                >
+                  LINE OA {site.lineId}
+                </a>
+              </li>
+            ) : (
+              <li>
+                <Link href="/contact" className="hover:text-brass-soft">
+                  ส่งคำขอผ่านแบบฟอร์ม
+                </Link>
+              </li>
+            )}
+            {address ? (
+              <li className="pt-2 text-paper/70">{address}</li>
             ) : null}
             {site.localBusiness.openingHours ? (
               <li className="text-paper/70">

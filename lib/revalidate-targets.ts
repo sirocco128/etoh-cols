@@ -34,16 +34,22 @@ export function mapRevalidateTargets(
 
   switch (model) {
     case "product":
-      paths.push("/", "/products", "/sitemap.xml");
+      paths.push("/", "/products", "/catalog", "/sitemap.xml");
       if (slug) paths.push(`/products/${slug}`);
-      if (categorySlug) paths.push(`/giftset/${categorySlug}`);
+      if (categorySlug) {
+        paths.push(`/giftset/${categorySlug}`);
+        paths.push(`/catalog/${categorySlug}`);
+      }
       tags.push("products");
       if (slug) tags.push(`product:${slug}`);
       if (categorySlug) tags.push(`category:${categorySlug}`);
       break;
     case "gift-set-category":
-      paths.push("/", "/premium-giftset", "/sitemap.xml");
-      if (slug) paths.push(`/giftset/${slug}`);
+      paths.push("/", "/premium-giftset", "/catalog", "/sitemap.xml");
+      if (slug) {
+        paths.push(`/giftset/${slug}`);
+        paths.push(`/catalog/${slug}`);
+      }
       tags.push("categories");
       if (slug) tags.push(`category:${slug}`);
       break;

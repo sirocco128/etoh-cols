@@ -11,9 +11,11 @@ describe("revalidate-targets (§31 required)", () => {
     assert.deepEqual(targets.paths, [
       "/",
       "/products",
+      "/catalog",
       "/sitemap.xml",
       "/products/tumbler-set",
       "/giftset/eco-giftset",
+      "/catalog/eco-giftset",
     ]);
     assert.deepEqual(targets.tags, [
       "products",
@@ -32,7 +34,7 @@ describe("revalidate-targets (§31 required)", () => {
     assert.deepEqual(
       mapRevalidateTargets("gift-set-category", { slug: "eco-giftset" }),
       {
-        paths: ["/", "/premium-giftset", "/sitemap.xml", "/giftset/eco-giftset"],
+        paths: ["/", "/premium-giftset", "/catalog", "/sitemap.xml", "/giftset/eco-giftset", "/catalog/eco-giftset"],
         tags: ["categories", "category:eco-giftset"],
       },
     );

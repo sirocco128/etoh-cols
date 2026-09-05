@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
 import { JsonLd } from "@/components/JsonLd";
+import { ProductCard } from "@/components/ProductCard";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { metadataFromSeo } from "@/lib/metadata";
+import { resolveSeoFields } from "@/lib/page-seo";
 import {
   getCategories,
   getCategoryBySlug,
@@ -30,9 +32,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { category: slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "ไม่พบหมวดหมู่" };
-  return metadataFromSeo(category.seo, {
-    openGraphType: "website",
-  });
+  return metadataFromSeo(
+    resolveSeoFields(category.seo.canonicalPath, category.seo),
+    {
+      openGraphType: "website",
+    },
+  );
 }
 
 export default async function GiftsetCategoryPage({ params }: PageProps) {
@@ -66,14 +71,23 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
             <h1 className="text-3xl font-bold text-forest sm:text-4xl">{category.name}</h1>
             <p className="mt-4 leading-relaxed text-ink/80">{category.description}</p>
             <p className="mt-3 text-sm text-ink/65">
-              เลือกเซ็ตด้านล่างเพื่อดูรายละเอียด หรือขอใบเสนอราคาทั้งหมวดได้ทันที
+              ทุกเซ็ตในหมวดนี้สกรีนโลโก้ได้ และสั่งผลิตตามออเดอร์
+              เลือกเซ็ตด้านล่าง หรือขอใบเสนอราคาทั้งหมวดได้ทันที
             </p>
-            <Link
-              href="/contact"
-              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-brass px-6 text-sm font-semibold text-forest"
-            >
-              ขอใบเสนอราคาหมวดนี้
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/contact"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-brass px-6 text-sm font-semibold text-forest"
+              >
+                ขอใบเสนอราคาหมวดนี้
+              </Link>
+              <Link
+                href={`/catalog/${category.slug}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+              >
+                เปิดสมุดพลิกกลุ่มนี้
+              </Link>
+            </div>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest-mist">
             <Image
@@ -101,30 +115,10 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
             />
           ) : (
             <>
-              <ul className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
                 <li key={product.slug}>
-                  <Link href={`/products/${product.slug}`} className="group block">
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-forest-mist">
-                      <Image
-                        src={product.images[0] || "/images/product-placeholder.jpg"}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width:768px) 100vw, 33vw"
-                      />
-                    </div>
-                    <h3 className="mt-4 font-semibold text-forest group-hover:text-brass">
-                      {product.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-ink/70">
-                      ประมาณ {product.priceRange || "สอบถามราคา"} · สั่งขั้นต่ำ{" "}
-                      {product.minOrder} เซ็ต
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-brass">
-                      ดูรายละเอียดและขอราคา →
-                    </p>
-                  </Link>
+                  <ProductCard product={product} />
                 </li>
               ))}
               </ul>

@@ -14,6 +14,24 @@ describe("nav helpers (UX)", () => {
     assert.equal(isNavActive("/products", "/"), false);
   });
 
+  it("includes ideas and about in the primary nav", () => {
+    const links = withOptionalBasketLink(false);
+    assert.equal(links.some((l) => l.href === "/about"), true);
+    assert.equal(
+      links.find((l) => l.href === "/about")?.label,
+      "เกี่ยวกับเรา",
+    );
+    assert.equal(links.some((l) => l.href === "/ideas"), true);
+    assert.equal(
+      links.find((l) => l.href === "/ideas")?.label,
+      "ไอเดียชุดของขวัญ",
+    );
+    assert.equal(
+      links.find((l) => l.href === "/catalog")?.label,
+      "สมุดแคตตาล็อก",
+    );
+  });
+
   it("appends quote basket link when P2 tools enabled", () => {
     const off = withOptionalBasketLink(false);
     const on = withOptionalBasketLink(true);

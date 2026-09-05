@@ -48,7 +48,12 @@ export type QuoteRequestInput = {
   consent: boolean;
   budgetPerSet?: number;
   neededDate?: string;
+  streetAddress?: string;
   province?: string;
+  district?: string;
+  subdistrict?: string;
+  zip?: string;
+  taxId?: string;
   productInterest?: string;
   productSlug?: string;
   decorationMethod: DecorationMethod;
@@ -74,7 +79,12 @@ export type QuoteLeadPayload = {
   quantity: number;
   budgetPerSet?: number | null;
   neededDate?: string | null;
+  streetAddress?: string | null;
   province?: string | null;
+  district?: string | null;
+  subdistrict?: string | null;
+  zip?: string | null;
+  taxId?: string | null;
   productInterest?: string | null;
   productSlug?: string | null;
   decorationMethod: DecorationMethod;

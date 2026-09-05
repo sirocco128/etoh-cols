@@ -21,6 +21,10 @@ import type {
   PublicPriceRange,
   UnitLandedBreakdown,
 } from "@/lib/alibaba/types";
+import {
+  DEFAULT_PACKAGING_MAX_THB,
+  DEFAULT_PACKAGING_MIN_THB,
+} from "@/lib/product-price-options";
 
 export function defaultLandedCostConfig(
   overrides: Partial<LandedCostConfig> = {},
@@ -77,9 +81,12 @@ export function computeUnitLanded(
   const factoryThb = factoryCny * fx;
   const inlandThb = (inlandCny * fx) / qty;
   const freightThb = freight.thb / qty;
-  const landedCostThb = factoryThb + inlandThb + freightThb;
+  const goodsThb = factoryThb + inlandThb;
+  const landedCostThb = goodsThb + freightThb;
   const sof = smallOrderFactor(qty);
   const markup = markupForLandedCost(landedCostThb);
+  const markupExFreight = markupForLandedCost(goodsThb);
+  const sellExFreightThb = Math.round(goodsThb * sof * markupExFreight);
   const sellThb = Math.round(landedCostThb * sof * markup);
 
   return {
@@ -91,6 +98,7 @@ export function computeUnitLanded(
     sof,
     markup,
     sellThb,
+    sellExFreightThb,
     mode,
     tier: freight.tier,
     shipmentCbm: freight.billedCbm,
@@ -121,9 +129,21 @@ export function computePublicPriceRange(
     priceMax = swap;
   }
 
+  let priceExFreightMin = low.sellExFreightThb;
+  let priceExFreightMax = high.sellExFreightThb;
+  if (priceExFreightMax < priceExFreightMin) {
+    const swap = priceExFreightMin;
+    priceExFreightMin = priceExFreightMax;
+    priceExFreightMax = swap;
+  }
+
   return {
     priceMin,
     priceMax,
+    priceExFreightMin,
+    priceExFreightMax,
+    packagingMin: DEFAULT_PACKAGING_MIN_THB,
+    packagingMax: DEFAULT_PACKAGING_MAX_THB,
     priceRange: `${priceMin}–${priceMax} บาท/ชุด`,
     minOrder,
     currency: "THB",

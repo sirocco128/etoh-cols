@@ -10,19 +10,44 @@
   --color-brass-soft: #d9c08a;
   --color-ink: #22282c;
   --color-paper: #ffffff;
+  --background: #ffffff;
+  --foreground: #22282c;
+  --card: #ffffff;
+  --muted: #e9f0ea;
+  --border: rgba(20, 53, 42, 0.12);
+  --ring: #b08a3e;
+  --primary: #14352a;
+  --primary-foreground: #ffffff;
+  --accent: #b08a3e;
+  --accent-foreground: #14352a;
+}
+
+.dark {
+  --color-forest-mist: #1a332b;
+  --color-ink: #e8eee9;
+  --color-paper: #10211b;
+  --background: #10211b;
+  --foreground: #e8eee9;
+  --card: #163028;
+  --muted: #1a332b;
+  --border: rgba(255, 255, 255, 0.1);
+  --primary: #d9c08a;
+  --primary-foreground: #14352a;
 }
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
   body {
-    @apply bg-paper font-sans text-ink antialiased;
+    @apply font-sans antialiased;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-brass);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
@@ -68,6 +93,33 @@
   .prose-custom td {
     @apply border border-forest/15 px-3 py-2 text-left;
   }
+
+  .bg-premium-mesh {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(900px 420px at 8% -12%, rgba(176, 138, 62, 0.16), transparent 52%),
+      radial-gradient(640px 280px at 100% 0%, rgba(20, 53, 42, 0.08), transparent 48%);
+  }
+
+  .glass-panel {
+    @apply border border-white/20 bg-paper/75 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-forest/50;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .document-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -82,6 +134,11 @@
 }
 
 @layer utilities {
+  .document-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   /* Room for MobileStickyCta on small screens (bar ~3.5rem + safe area) */
   .pb-mobile-cta {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));

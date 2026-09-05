@@ -4,15 +4,13 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
 import { getPortfolios } from "@/lib/strapi";
+import { metadataForPath } from "@/lib/page-seo";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "ผลงาน",
-  description:
-    "ตัวอย่างผลงาน Gift Set องค์กร — แสดงแนวทางบริการ การผลิต และการแพ็กจัดส่ง",
-  alternates: { canonical: "/portfolio" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/portfolio");
+}
 
 export default async function PortfolioPage() {
   const portfolios = await getPortfolios();

@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CreateOrderForm } from "@/components/CreateOrderForm";
 import { QuoteOpsForm } from "@/components/QuoteOpsForm";
 import { getCustomerById } from "@/lib/customer-repository";
-import {
-  isOpsAuthConfigured,
-  requireOpsSession,
-} from "@/lib/ops-auth";
+import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { getOrderRepository } from "@/lib/order-repository";
 import { getQuoteByRequestId } from "@/lib/quote-repository";
 import {
   LEAD_STATUS_LABELS,
   type LeadStatus,
 } from "@/lib/quote-types";
+import { formatThb } from "@/lib/th-billing";
+import { buildOrderBillingDefaults } from "@/lib/customer-billing";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,9 +23,12 @@ export default async function OpsQuoteDetailPage({
 }: {
   params: Params;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsSession())) {
+  const actor =
+    isOpsAuthConfigured() ? await requireOpsActor("quotes.read") : null;
+  if (!actor) {
     redirect("/ops/login");
   }
+  const canWrite = actorMay(actor, "quotes.write");
 
   const { requestId } = await params;
   const quote = getQuoteByRequestId(requestId);
@@ -33,6 +37,12 @@ export default async function OpsQuoteDetailPage({
   const customer = quote.customerId
     ? getCustomerById(quote.customerId)
     : null;
+  const existingOrder = getOrderRepository().getOrderByQuoteRequestId(
+    quote.requestId,
+  );
+  const canWriteOrders = actorMay(actor, "orders.write");
+  const quotedOrWon =
+    quote.leadStatus === "quoted" || quote.leadStatus === "won";
 
   return (
     <div>
@@ -90,6 +100,14 @@ export default async function OpsQuoteDetailPage({
           <dt className="text-xs text-ink/55">เทคนิคตกแต่ง</dt>
           <dd>{quote.decorationMethod}</dd>
         </div>
+        <div>
+          <dt className="text-xs text-ink/55">ที่อยู่จัดส่ง</dt>
+          <dd>{quote.province || "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-ink/55">วันต้องการ</dt>
+          <dd>{quote.neededDate || "—"}</dd>
+        </div>
         <div className="sm:col-span-2">
           <dt className="text-xs text-ink/55">รายละเอียด</dt>
           <dd className="whitespace-pre-wrap text-ink/85">
@@ -114,7 +132,45 @@ export default async function OpsQuoteDetailPage({
         requestId={quote.requestId}
         leadStatus={quote.leadStatus as LeadStatus}
         salesNotes={quote.salesNotes}
+        readOnly={!canWrite}
       />
+
+      {existingOrder ? (
+        <p className="mt-6 rounded border border-forest/15 bg-paper p-4 text-sm">
+          มีใบสั่งซื้อแล้ว:{" "}
+          <Link
+            href={`/ops/orders/${existingOrder.orderId}`}
+            className="font-mono text-forest underline-offset-2 hover:underline"
+          >
+            {existingOrder.orderId}
+          </Link>
+          <span className="text-ink/65">
+            {" "}
+            · {formatThb(existingOrder.totalAmount)}
+          </span>
+        </p>
+      ) : quotedOrWon && canWriteOrders ? (
+        <CreateOrderForm
+          quoteRequestId={quote.requestId}
+          company={quote.company}
+          defaultSummary={
+            quote.productInterest || quote.productSlug || "สินค้าสั่งผลิตสกรีนโลโก้"
+          }
+          defaultQuantity={quote.quantity}
+          {...buildOrderBillingDefaults(customer, quote.company)}
+          shipToName={quote.name}
+          shipToPhone={quote.phone}
+          shipToProvince={quote.province || customer?.defaultShipProvince || ""}
+        />
+      ) : quotedOrWon ? (
+        <p className="mt-6 text-sm text-ink/60">
+          ส่งใบเสนอราคาแล้ว — รอผู้มีสิทธิ์เปิดออเดอร์และวางบิลมัดจำ
+        </p>
+      ) : (
+        <p className="mt-6 text-sm text-ink/60">
+          เปลี่ยนสถานะเป็นส่งใบเสนอราคาแล้ว จึงจะเปิดออเดอร์และคำนวณมัดจำได้
+        </p>
+      )}
     </div>
   );
 }

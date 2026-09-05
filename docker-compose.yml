@@ -1,9 +1,12 @@
 # Local Postgres for Sprint 1 Strapi CMS (P1-CMS-001 local path).
+# MinIO stores images, PDFs, payment slips, mockups, and other documents.
 # Strapi itself runs on the host from ./cms after bootstrap — see docs/SPRINT1-LOCAL-CMS.md
 #
-#   docker compose up -d postgres
+#   docker compose up -d postgres minio minio-init
 #   npm run cms:bootstrap
 #   cd cms && npm install && npm run develop
+#
+# MinIO API: http://127.0.0.1:9000  Console: http://127.0.0.1:9001
 
 services:
   postgres:
@@ -25,5 +28,52 @@ services:
       retries: 10
       start_period: 10s
 
+  minio:
+    image: minio/minio:latest
+    container_name: giftset-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
+    volumes:
+      - giftset_minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: giftset-minio-init
+    depends_on:
+      - minio
+    restart: on-failure
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
+      MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE:-terabis-private}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-terabis-public}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        i=0
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          i=$$((i+1))
+          if [ $$i -gt 40 ]; then echo "MinIO not ready"; exit 1; fi
+          sleep 1
+        done
+        mc mb -p "local/$$MINIO_BUCKET_PRIVATE" || true
+        mc mb -p "local/$$MINIO_BUCKET_PUBLIC" || true
+        mc anonymous set download "local/$$MINIO_BUCKET_PUBLIC" || true
+        echo "MinIO buckets ready: $$MINIO_BUCKET_PRIVATE $$MINIO_BUCKET_PUBLIC"
+
 volumes:
   giftset_pgdata:
+  giftset_minio:

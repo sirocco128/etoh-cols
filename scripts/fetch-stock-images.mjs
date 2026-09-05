@@ -48,13 +48,28 @@ const IMAGES = [
   },
   {
     file: "product-tumbler-set.jpg",
-    url: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80",
-    credit: "Unsplash — notebook (photo-1517842645767)",
+    url: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=1400&q=85",
+    credit: "Unsplash — notebook / stationery (photo-1531346878377)",
   },
   {
     file: "product-tumbler-set-2.jpg",
-    url: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
-    credit: "Unsplash — desk stationery (photo-1586281380349)",
+    url: "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&w=1400&q=85",
+    credit: "Unsplash — ballpoint pen (photo-1585336261022)",
+  },
+  {
+    file: "mockup-tumbler.jpg",
+    url: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=1400&q=85",
+    credit: "Unsplash — tumbler mockup base (photo-1602143407151)",
+  },
+  {
+    file: "mockup-notebook.jpg",
+    url: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=1400&q=85",
+    credit: "Unsplash — notebook mockup base (photo-1531346878377)",
+  },
+  {
+    file: "mockup-pen.jpg",
+    url: "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&w=1400&q=85",
+    credit: "Unsplash — pen mockup base (photo-1585336261022)",
   },
   {
     file: "product-eco.jpg",

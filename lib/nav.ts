@@ -2,7 +2,10 @@
 export const PRIMARY_NAV_LINKS = [
   { href: "/premium-giftset", label: "Premium Gift Set" },
   { href: "/products", label: "สินค้าพรีเมียม" },
+  { href: "/catalog", label: "สมุดแคตตาล็อก" },
+  { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
+  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/portfolio", label: "ผลงาน" },
   { href: "/blog", label: "บทความ" },
 ] as const;

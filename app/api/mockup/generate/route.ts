@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  FACTORY_LEAK_REFUSAL_TH,
+  INJECTION_REFUSAL_TH,
+  sanitizeUserInstruction,
+} from "@/lib/ai-safety";
+import {
   generateMockupVariantWithOpenRouter,
   getOpenRouterMockupConfig,
 } from "@/lib/openrouter-mockup";
@@ -19,6 +24,8 @@ type GenerateBody = {
   logoDataUrl?: string | null;
   activityIndex?: number;
   variantIds?: MockupVariantId[];
+  refineInstruction?: string;
+  previousDataUrl?: string | null;
 };
 
 function isDataUrl(value: unknown): value is string {
@@ -53,6 +60,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
+  const userBits = [
+    body.productName,
+    body.surfaceLabel,
+    body.finishLabel,
+    body.text,
+    body.refineInstruction,
+  ]
+    .filter((value) => typeof value === "string" && value.trim())
+    .join("\n");
+  const userCheck = sanitizeUserInstruction(userBits, 2_000);
+  if (!userCheck.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          userCheck.reason === "injection"
+            ? INJECTION_REFUSAL_TH
+            : FACTORY_LEAK_REFUSAL_TH,
+        fallback: "canvas",
+      },
+      { status: 400 },
+    );
+  }
+
   if (!isDataUrl(body.productDataUrl)) {
     return NextResponse.json(
       { ok: false, error: "ต้องการรูปสินค้า (data URL)" },
@@ -72,6 +103,28 @@ export async function POST(request: Request) {
   const surfaceKind = body.surfaceKind || "cylinder";
   const activityIndex = Number(body.activityIndex) || 0;
   const copy = usageContextCopy(surfaceKind, activityIndex);
+  const refineRaw =
+    typeof body.refineInstruction === "string"
+      ? body.refineInstruction.trim()
+      : "";
+  const refineCheck = sanitizeUserInstruction(refineRaw, 400);
+  if (!refineCheck.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          refineCheck.reason === "injection"
+            ? INJECTION_REFUSAL_TH
+            : FACTORY_LEAK_REFUSAL_TH,
+        fallback: "canvas",
+      },
+      { status: 400 },
+    );
+  }
+  const refineInstruction = refineCheck.text;
+  const previousDataUrl = isDataUrl(body.previousDataUrl)
+    ? body.previousDataUrl
+    : null;
   const variantIds =
     Array.isArray(body.variantIds) && body.variantIds.length > 0
       ? body.variantIds
@@ -84,6 +137,8 @@ export async function POST(request: Request) {
         variantId === "lifestyle" ? copy.lifestyleBody : undefined;
       const placementHint =
         variantId === "office" ? copy.officeBody : undefined;
+      const retailHint =
+        variantId === "retail" ? copy.retailBody : undefined;
       const item = await generateMockupVariantWithOpenRouter({
         variantId,
         surfaceLabel: body.surfaceLabel || "สินค้า",
@@ -94,8 +149,11 @@ export async function POST(request: Request) {
         hasLogo,
         productDataUrl: body.productDataUrl!,
         logoDataUrl: hasLogo ? body.logoDataUrl : null,
+        previousDataUrl,
         activityHint,
         placementHint,
+        retailHint,
+        refineInstruction,
       });
       results.push(item);
     }

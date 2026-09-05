@@ -22,6 +22,7 @@ const ROUTES = [
   "/products/tumbler-notebook-pen-set",
   "/giftset/eco-giftset",
   "/customize-gift-set",
+  "/about",
   "/portfolio",
   "/blog",
   "/blog/premium-products-guide",

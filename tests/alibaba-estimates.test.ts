@@ -110,6 +110,10 @@ describe("1688 landed cost", () => {
     assert.equal(range!.priceMin, 419);
     assert.equal(range!.priceMax, 517);
     assert.equal(range!.priceRange, "419–517 บาท/ชุด");
+    assert.ok(range!.priceExFreightMin <= range!.priceMin);
+    assert.ok(range!.priceExFreightMax <= range!.priceMax);
+    assert.equal(range!.packagingMin, 45);
+    assert.equal(range!.packagingMax, 85);
     assert.equal(
       "factoryCny" in range! || "dutyThb" in range!,
       false,
@@ -120,6 +124,7 @@ describe("1688 landed cost", () => {
     const unit = computeUnitLanded(SAMPLE_OFFER, 30, 20, juneConfig);
     assert.ok(unit);
     assert.ok(unit!.freightThb > 0);
+    assert.ok(unit!.sellExFreightThb < unit!.sellThb);
     assert.ok(unit!.inlandThb > 0);
     assert.ok(unit!.landedCostThb > unit!.factoryThb);
     assert.equal(unit!.mode, "truck");

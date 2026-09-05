@@ -4,14 +4,15 @@ Downloaded via `npm run images:stock` from Unsplash.
 Use only for local try-fill — replace with licensed brand assets before production.
 Do **not** set `REAL_ASSETS_APPROVED=true` while these files are in use.
 
+- `about-facility.jpg` — company visual of Terabiz office / production (provided for /about)
 - `hero-giftset.jpg` — Unsplash — gift box (photo-1549465220)
 - `category-eco.jpg` — Unsplash — eco / nature (photo-1542601906990)
 - `category-team.jpg` — Unsplash — team collaboration (photo-1522071820081)
 - `category-tumbler.jpg` — Unsplash — water bottle (photo-1602143407151)
 - `category-it.jpg` — Unsplash — tech desk (photo-1519389950473)
 - `product-tumbler.jpg` — Unsplash — tumbler / bottle (photo-1602143407151)
-- `product-tumbler-set.jpg` — Unsplash — notebook (photo-1517842645767)
-- `product-tumbler-set-2.jpg` — Unsplash — desk stationery (photo-1586281380349)
+- `product-tumbler-set.jpg` — Unsplash — notebook / stationery (photo-1531346878377)
+- `product-tumbler-set-2.jpg` — Unsplash — ballpoint pen (photo-1585336261022)
 - `product-eco.jpg` — Unsplash — eco / leaves (photo-1542601906990)
 - `product-eco-set.jpg` — Unsplash — plants / eco (photo-1610348725531)
 - `product-it.jpg` — Unsplash — charging cable (photo-1621768216002)
@@ -23,3 +24,10 @@ Do **not** set `REAL_ASSETS_APPROVED=true` while these files are in use.
 - `article-guide.jpg` — Unsplash — planning desk (photo-1454165804606)
 - `article-cover.jpg` — Unsplash — retail / brand (photo-1556742049)
 - `og-default.jpg` — Unsplash — gift box OG (photo-1549465220)
+- `mockup-tumbler.jpg` — Unsplash — tumbler mockup base (photo-1602143407151)
+- `mockup-notebook.jpg` — Unsplash — notebook mockup base (photo-1531346878377)
+- `mockup-pen.jpg` — Unsplash — pen mockup base (photo-1585336261022)
+- `mockup-scene-lifestyle-tumbler.jpg` — Unsplash — lifestyle usage context
+- `mockup-scene-lifestyle-notebook.jpg` — Unsplash — writing / study context
+- `mockup-scene-lifestyle-pen.jpg` — Unsplash — writing / signing context
+- `mockup-scene-office.jpg` — Unsplash — office / workplace context

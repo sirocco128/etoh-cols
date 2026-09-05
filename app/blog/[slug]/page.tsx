@@ -11,6 +11,7 @@ import {
   buildBreadcrumbJsonLd,
 } from "@/lib/seo";
 import { metadataFromSeo } from "@/lib/metadata";
+import { resolveSeoFields } from "@/lib/page-seo";
 import { getArticleBySlug, getArticles } from "@/lib/strapi";
 
 export const revalidate = 3600;
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return { title: "ไม่พบบทความ" };
-  return metadataFromSeo(article.seo, {
+  return metadataFromSeo(resolveSeoFields(article.seo.canonicalPath, article.seo), {
     openGraphType: "article",
   });
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { isNavActive } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
 type NavLinkProps = {
   href: string;
@@ -27,7 +28,7 @@ export function NavLink({
       href={href}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`${className} ${active ? activeClassName : ""}`.trim()}
+      className={cn(className, active && activeClassName)}
     >
       {children}
     </Link>

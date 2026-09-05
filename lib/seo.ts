@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { Article, Faq, Product, SeoFields } from "@/lib/data";
+import { isPlaceholderEmail, isPlaceholderLine, isPlaceholderPhone } from "@/lib/company";
 import { getSiteConfig, type SiteConfig } from "@/lib/site";
 
 export type BreadcrumbItem = {
@@ -32,6 +33,10 @@ function absoluteAsset(pathOrUrl: string, baseUrl: string): string {
 }
 
 export function buildOrganizationJsonLd(site: SiteConfig = getSiteConfig()) {
+  const showPhone = !isPlaceholderPhone(site.phoneDisplay, site.phoneHref);
+  const showEmail = !isPlaceholderEmail(site.email);
+  const showLine = !isPlaceholderLine(site.lineId, site.lineUrl);
+
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -42,11 +47,11 @@ export function buildOrganizationJsonLd(site: SiteConfig = getSiteConfig()) {
     image: absoluteUrl(site, DEFAULT_OG),
     description: site.description,
     ...(site.taxId ? { taxID: site.taxId } : {}),
-    sameAs: [site.lineUrl],
+    ...(showLine ? { sameAs: [site.lineUrl] } : {}),
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: site.phoneHref.replace(/^tel:/i, ""),
-      email: site.email,
+      ...(showPhone ? { telephone: site.phoneHref.replace(/^tel:/i, "") } : {}),
+      ...(showEmail ? { email: site.email } : {}),
       contactType: "sales",
       availableLanguage: ["Thai", "English"],
     },
@@ -66,6 +71,9 @@ export function buildLocalBusinessJsonLd(
     return null;
   }
 
+  const showPhone = !isPlaceholderPhone(site.phoneDisplay, site.phoneHref);
+  const showEmail = !isPlaceholderEmail(site.email);
+
   const payload: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": lb.type,
@@ -73,8 +81,10 @@ export function buildLocalBusinessJsonLd(
     name: site.name,
     ...(site.legalName ? { legalName: site.legalName } : {}),
     url: site.url,
-    telephone: site.phoneHref.replace(/^tel:/i, ""),
-    email: site.email,
+    ...(showPhone
+      ? { telephone: site.phoneHref.replace(/^tel:/i, "") }
+      : {}),
+    ...(showEmail ? { email: site.email } : {}),
     priceRange: "$$",
     openingHours: lb.openingHours,
     address: {
@@ -102,6 +112,26 @@ export function buildProductJsonLd(
   product: Product,
   site: SiteConfig = getSiteConfig(),
 ) {
+  const hasPriceBand =
+    product.priceMin > 0 && product.priceMax >= product.priceMin;
+  const offers = hasPriceBand
+    ? {
+        "@type": "AggregateOffer",
+        lowPrice: String(product.priceMin),
+        highPrice: String(product.priceMax),
+        priceCurrency: product.currency,
+        availability: "https://schema.org/PreOrder",
+        url: absoluteUrl(site, `/products/${product.slug}`),
+        description:
+          "ช่วงราคาโดยประมาณ รวมค่าขนส่งจากจีนโดยประมาณ ไม่ใช่ใบเสนอราคา",
+      }
+    : {
+        "@type": "Offer",
+        availability: "https://schema.org/PreOrder",
+        url: absoluteUrl(site, `/products/${product.slug}`),
+        description: "สอบถามราคา — สั่งผลิตตามออเดอร์ ไม่ใช่ของพร้อมส่ง",
+      };
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -113,14 +143,39 @@ export function buildProductJsonLd(
       "@type": "Brand",
       name: site.name,
     },
-    offers: {
-      "@type": "AggregateOffer",
-      lowPrice: String(product.priceMin),
-      highPrice: String(product.priceMax),
-      priceCurrency: product.currency,
-      availability: "https://schema.org/InStock",
-      url: absoluteUrl(site, `/products/${product.slug}`),
+    category: "Corporate gift set",
+    offers,
+  };
+}
+
+export function buildWebSiteJsonLd(site: SiteConfig = getSiteConfig()) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.name,
+    url: site.url,
+    description: site.description,
+    inLanguage: "th-TH",
+    publisher: {
+      "@type": "Organization",
+      name: site.legalName || site.name,
     },
+  };
+}
+
+export function buildItemListJsonLd(
+  items: Array<{ name: string; path: string }>,
+  site: SiteConfig = getSiteConfig(),
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: absoluteUrl(site, item.path),
+    })),
   };
 }
 
@@ -171,6 +226,7 @@ export function buildBlogPostingJsonLd(
       "@type": "Person",
       name: article.author,
     },
+    keywords: article.seo.keywords || undefined,
     publisher: {
       "@type": "Organization",
       name: site.name,
@@ -214,10 +270,17 @@ export function metadataFromSeo(
   const canonical = (seo.canonicalPath || "/").startsWith("/")
     ? seo.canonicalPath || "/"
     : `/${seo.canonicalPath}`;
+  const keywordList = seo.keywords
+    ? seo.keywords
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean)
+    : undefined;
 
   return {
     title,
     description,
+    keywords: keywordList,
     alternates: {
       canonical,
     },

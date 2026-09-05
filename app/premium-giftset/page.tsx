@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ChinaOrderSteps } from "@/components/ChinaOrderSteps";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
 import { QuoteForm } from "@/components/QuoteForm";
@@ -11,14 +12,13 @@ import {
   buildFaqPageJsonLd,
 } from "@/lib/seo";
 import { getCategories, getFaqs } from "@/lib/strapi";
+import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
+import { metadataForPath } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "Premium Gift Set สำหรับองค์กร",
-  description:
-    "รับผลิต Premium Gift Set สกรีนโลโก้ กล่องพรีเมียม สำหรับลูกค้าองค์กร เริ่มสั่งผลิตขั้นต่ำตามโจทย์แคมเปญ",
-  alternates: { canonical: "/premium-giftset" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/premium-giftset");
+}
 
 const MATERIALS = [
   {
@@ -31,15 +31,9 @@ const MATERIALS = [
   },
 ] as const;
 
-const STEPS = [
-  "แจ้งโจทย์และงบประมาณ",
-  "เลือกสินค้าและออกแบบ",
-  "อนุมัติตัวอย่างก่อนผลิต",
-  "ผลิตและจัดส่ง",
-] as const;
-
 export default async function PremiumGiftSetPage() {
   const [categories, faqs] = await Promise.all([getCategories(), getFaqs()]);
+  const contact = getPublicContact(site);
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: "หน้าแรก", path: "/" },
@@ -83,14 +77,23 @@ export default async function PremiumGiftSetPage() {
               >
                 ดูตัวอย่างเซ็ต
               </Link>
-              <a
-                href={site.lineUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                LINE {site.lineId}
-              </a>
+              {contact.showLine ? (
+                <a
+                  href={site.lineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+                >
+                  LINE {site.lineId}
+                </a>
+              ) : (
+                <Link
+                  href="/about"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+                >
+                  เกี่ยวกับบริษัท
+                </Link>
+              )}
             </div>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
@@ -150,15 +153,7 @@ export default async function PremiumGiftSetPage() {
 
       <section className="bg-forest py-14 text-paper">
         <div className="mx-auto max-w-content px-4 sm:px-6">
-          <h2 className="text-2xl font-bold">ขั้นตอนการทำงาน 4 ขั้น</h2>
-          <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((step, index) => (
-              <li key={step} className="rounded-2xl border border-paper/15 p-5">
-                <p className="text-sm font-semibold text-brass-soft">ขั้นที่ {index + 1}</p>
-                <p className="mt-2 font-medium">{step}</p>
-              </li>
-            ))}
-          </ol>
+          <ChinaOrderSteps variant="dark" />
         </div>
       </section>
 

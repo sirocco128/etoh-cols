@@ -7,6 +7,8 @@
 #   docker compose -f docker-compose.staging.yml up -d --build
 #   npm run staging:smoke
 #
+# MinIO (images, PDFs, slips, mockups): API 9010 / console 9011 on the host.
+#
 # Strapi (optional, on host):
 #   docker compose up -d postgres
 #   npm run cms:bootstrap && cd cms && npm run develop
@@ -30,6 +32,46 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  minio:
+    image: minio/minio:latest
+    container_name: giftset-staging-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
+    volumes:
+      - giftset_staging_minio:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: giftset-staging-minio-init
+    depends_on:
+      - minio
+    restart: on-failure
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
+      MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE:-terabis-private}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-terabis-public}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        i=0
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          i=$$((i+1))
+          if [ $$i -gt 40 ]; then echo "MinIO not ready"; exit 1; fi
+          sleep 1
+        done
+        mc mb -p "local/$$MINIO_BUCKET_PRIVATE" || true
+        mc mb -p "local/$$MINIO_BUCKET_PUBLIC" || true
+        mc anonymous set download "local/$$MINIO_BUCKET_PUBLIC" || true
+        echo "MinIO buckets ready: $$MINIO_BUCKET_PRIVATE $$MINIO_BUCKET_PUBLIC"
 
   web:
     build:
@@ -55,6 +97,13 @@ services:
       CMS_MODE: ${STAGING_CMS_MODE:-mock}
       STRAPI_URL: ${STAGING_STRAPI_URL:-http://host.docker.internal:1337}
       STRAPI_FALLBACK_TO_MOCK: "true"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-terabis}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
+      MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE:-terabis-private}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-terabis-public}
+      MINIO_REGION: us-east-1
+      MINIO_USE_SSL: "false"
     volumes:
       - giftset_staging_leads:/app/.data
     extra_hosts:
@@ -62,6 +111,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health?deep=1"]
       interval: 30s
@@ -72,3 +123,4 @@ services:
 volumes:
   giftset_staging_pgdata:
   giftset_staging_leads:
+  giftset_staging_minio:

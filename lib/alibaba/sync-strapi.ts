@@ -222,7 +222,7 @@ export async function run1688StrapiSync(options: {
       continue;
     }
     const documentId = productDocumentId(found);
-    const prices = {
+    const corePrices = {
       priceMin: row.range.priceMin,
       priceMax: row.range.priceMax,
       priceRange: row.range.priceRange,
@@ -231,16 +231,16 @@ export async function run1688StrapiSync(options: {
     };
     try {
       await patchProduct(base, token, documentId, {
-        ...prices,
+        ...corePrices,
         sourcePlatform: "alibaba1688",
         sourceOfferId: row.offerId,
+        priceExFreightMin: row.range.priceExFreightMin,
+        priceExFreightMax: row.range.priceExFreightMax,
+        packagingMin: row.range.packagingMin,
+        packagingMax: row.range.packagingMax,
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!/sourcePlatform|sourceOfferId|unrecognized|Invalid key/i.test(message)) {
-        throw error;
-      }
-      await patchProduct(base, token, documentId, prices);
+    } catch {
+      await patchProduct(base, token, documentId, corePrices);
     }
     row.updated = true;
   }

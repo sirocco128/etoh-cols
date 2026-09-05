@@ -12,11 +12,21 @@ export default function OpsLoginPage() {
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบ Ops</h1>
       <p className="mt-2 text-sm text-ink/70">
-        จัดการลูกค้าและใบเสนอราคา (RFQ) จาก SQLite — ไม่ใช่ Strapi CMS
+        จัดการลูกค้าและใบเสนอราคาจากฐานข้อมูลร้าน — ไม่ใช่หน้าแก้ไขแคตตาล็อก
       </p>
       <form action={action} className="mt-6 space-y-4">
         <label className="block text-sm">
-          <span className="font-medium text-forest">รหัสผ่านแอดมิน</span>
+          <span className="font-medium text-forest">อีเมล</span>
+          <input
+            type="text"
+            name="email"
+            autoComplete="username"
+            placeholder="admin"
+            className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-forest">รหัสผ่าน</span>
           <input
             type="password"
             name="password"
@@ -37,6 +47,10 @@ export default function OpsLoginPage() {
         >
           {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         </button>
+        <p className="text-xs text-ink/55">
+          ผู้ดูแลหรือพนักงานใช้อีเมลที่ได้รับ รหัสผ่านอย่างน้อย 12 ตัวอักษร
+          ผู้ดูแลระบบเดิมใช้อีเมลที่ตั้งไว้ (ค่าเริ่มต้น admin) หรือเว้นว่างแล้วใส่รหัสผ่านผู้ดูแล
+        </p>
       </form>
     </div>
   );

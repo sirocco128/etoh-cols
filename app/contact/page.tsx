@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { QuoteForm } from "@/components/QuoteForm";
+import { COMPANY, formatRegisteredAddress } from "@/lib/company";
+import { metadataForPath } from "@/lib/page-seo";
+import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "ติดต่อขอใบเสนอราคา",
-  description:
-    "ติดต่อทีมขายเพื่อขอใบเสนอราคา Gift Set องค์กร โทร อีเมล หรือ LINE OA",
-  alternates: { canonical: "/contact" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/contact");
+}
 
 type ContactPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -28,6 +28,13 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const productSlug = firstParam(params.productSlug) || firstParam(params.slug);
   const quantity = firstParam(params.quantity);
   const basketId = firstParam(params.basketId);
+  const contact = getPublicContact(site);
+  const address = formatRegisteredAddress({
+    streetAddress: site.localBusiness.streetAddress,
+    locality: site.localBusiness.locality,
+    region: site.localBusiness.region,
+    postalCode: site.localBusiness.postalCode,
+  });
 
   return (
     <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
@@ -36,8 +43,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
         <section>
           <h1 className="text-3xl font-bold text-forest sm:text-4xl">ติดต่อ / ขอใบเสนอราคา</h1>
           <p className="mt-4 text-ink/80 leading-relaxed">
-            แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้งาน — ทีมขายติดต่อกลับในเวลาทำการ
-            แบบฟอร์มนี้ไม่มีการชำระเงิน และยังไม่ใช่การยืนยันสั่งซื้อ
+            {COMPANY.legalName} — แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้งาน
+            ทีมขายติดต่อกลับในเวลาทำการ แบบฟอร์มนี้ไม่มีการชำระเงิน
+            และยังไม่ใช่การยืนยันสั่งซื้อ หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์
           </p>
           {basketId ? (
             <p
@@ -51,50 +59,57 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
           <dl className="mt-8 space-y-5 text-sm">
             <div>
-              <dt className="font-semibold text-forest">โทรศัพท์</dt>
-              <dd className="mt-1">
-                <a href={site.phoneHref} className="text-ink/80 hover:text-brass">
-                  {site.phoneDisplay}
-                </a>
-              </dd>
+              <dt className="font-semibold text-forest">นิติบุคคล</dt>
+              <dd className="mt-1 text-ink/80">{site.legalName}</dd>
             </div>
-            <div>
-              <dt className="font-semibold text-forest">อีเมล</dt>
-              <dd className="mt-1">
-                <a
-                  href={`mailto:${site.email}`}
-                  className="text-ink/80 hover:text-brass"
-                >
-                  {site.email}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-forest">LINE OA</dt>
-              <dd className="mt-1">
-                <a
-                  href={site.lineUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-ink/80 hover:text-brass"
-                >
-                  {site.lineId}
-                </a>
-              </dd>
-            </div>
-            {site.localBusiness.streetAddress ? (
+            {site.taxId ? (
+              <div>
+                <dt className="font-semibold text-forest">เลขประจำตัวผู้เสียภาษี</dt>
+                <dd className="mt-1 font-mono text-ink/80">{site.taxId}</dd>
+              </div>
+            ) : null}
+            {contact.showPhone ? (
+              <div>
+                <dt className="font-semibold text-forest">โทรศัพท์</dt>
+                <dd className="mt-1">
+                  <a href={site.phoneHref} className="text-ink/80 hover:text-brass">
+                    {site.phoneDisplay}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {contact.showEmail ? (
+              <div>
+                <dt className="font-semibold text-forest">อีเมล</dt>
+                <dd className="mt-1">
+                  <a
+                    href={`mailto:${site.email}`}
+                    className="text-ink/80 hover:text-brass"
+                  >
+                    {site.email}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {contact.showLine ? (
+              <div>
+                <dt className="font-semibold text-forest">LINE OA</dt>
+                <dd className="mt-1">
+                  <a
+                    href={site.lineUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-ink/80 hover:text-brass"
+                  >
+                    {site.lineId}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {address ? (
               <div>
                 <dt className="font-semibold text-forest">ที่อยู่</dt>
-                <dd className="mt-1 text-ink/80">
-                  {[
-                    site.localBusiness.streetAddress,
-                    site.localBusiness.locality,
-                    site.localBusiness.region,
-                    site.localBusiness.postalCode,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                </dd>
+                <dd className="mt-1 text-ink/80">{address}</dd>
               </div>
             ) : null}
             {site.localBusiness.openingHours ? (

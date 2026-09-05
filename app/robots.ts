@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/ops/"],
+      disallow: ["/api/", "/ops/", "/orders/"],
     },
     sitemap,
     host: site.url.replace(/\/$/, ""),

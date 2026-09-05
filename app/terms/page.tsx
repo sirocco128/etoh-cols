@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
+import { COMPANY } from "@/lib/company";
+import { metadataForPath } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "ข้อกำหนดการใช้งาน",
-  description: "ข้อกำหนดการใช้งานและเงื่อนไขการขอใบเสนอราคา (ฉบับร่างเทมเพลต)",
-  alternates: { canonical: "/terms" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/terms");
+}
 
 function isLegalContentApproved(): boolean {
   const raw = (process.env.LEGAL_CONTENT_APPROVED ?? "").trim().toLowerCase();
@@ -61,8 +60,9 @@ export default function TermsPage() {
         <section>
           <h2>กฎหมายที่ใช้บังคับ</h2>
           <p>
-            ข้อกำหนดนี้จัดทำเป็นโครงร่างเบื้องต้น
-            กฎหมายที่ใช้บังคับและรายละเอียดเงื่อนไขการขายต้องระบุโดยฝ่ายกฎหมาย
+            ข้อกำหนดนี้ใช้กับการใช้เว็บไซต์ของ {COMPANY.legalName}
+            กฎหมายที่ใช้บังคับคือกฎหมายไทย
+            รายละเอียดเงื่อนไขการขายจะระบุในใบเสนอราคาที่ออกให้แต่ละงาน
           </p>
         </section>
       </div>

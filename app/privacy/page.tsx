@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { COMPANY } from "@/lib/company";
+import { metadataForPath } from "@/lib/page-seo";
+import { getPublicContact } from "@/lib/public-contact";
+import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "นโยบายความเป็นส่วนตัว",
-  description: "นโยบายความเป็นส่วนตัวและการคุ้มครองข้อมูลส่วนบุคคล (ฉบับร่างเทมเพลต)",
-  alternates: { canonical: "/privacy" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/privacy");
+}
 
 function isLegalContentApproved(): boolean {
   const raw = (process.env.LEGAL_CONTENT_APPROVED ?? "").trim().toLowerCase();
@@ -14,6 +15,7 @@ function isLegalContentApproved(): boolean {
 
 export default function PrivacyPage() {
   const legalApproved = isLegalContentApproved();
+  const contact = getPublicContact(site);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
@@ -33,7 +35,7 @@ export default function PrivacyPage() {
         <section>
           <h2>ข้อมูลที่เก็บรวบรวม</h2>
           <p>
-            เมื่อคุณส่งแบบฟอร์มขอใบเสนอราคา เราอาจเก็บชื่อ บริษัท อีเมล เบอร์โทร
+            เมื่อคุณส่งแบบฟอร์มขอใบเสนอราคา {COMPANY.legalName} อาจเก็บชื่อ บริษัท อีเมล เบอร์โทร
             รายละเอียดโปรเจกต์ และข้อมูลการอ้างอิงแคมเปญ (เช่น UTM)
           </p>
         </section>
@@ -62,7 +64,8 @@ export default function PrivacyPage() {
           <h2>สิทธิของเจ้าของข้อมูล</h2>
           <p>
             คุณสามารถขอเข้าถึง แก้ไข หรือลบข้อมูลส่วนบุคคลได้ตามกฎหมายที่เกี่ยวข้อง
-            โดยติดต่อผ่านช่องทางที่ระบุในหน้าติดต่อ
+            โดยติดต่อ {COMPANY.legalName} ผ่านหน้าติดต่อของเว็บไซต์นี้
+            {contact.showEmail ? ` หรืออีเมล ${site.email}` : ""}
           </p>
         </section>
       </div>

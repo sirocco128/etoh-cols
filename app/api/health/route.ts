@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { pingDb } from "@/lib/database";
+import { isMinioConfigured, pingMinio } from "@/lib/object-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,12 +31,17 @@ export async function GET(request: Request) {
     if (!ok) {
       throw new Error("database ping failed");
     }
+    let objects: "minio" | "local" | "minio-error" = "local";
+    if (isMinioConfigured()) {
+      objects = (await pingMinio()) ? "minio" : "minio-error";
+    }
     return NextResponse.json(
       {
         status: "ok",
         service: "premium-giftset-web",
         storage,
         database: "ok",
+        objects,
         timestamp,
       },
       {

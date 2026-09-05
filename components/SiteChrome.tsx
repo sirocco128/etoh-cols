@@ -15,7 +15,7 @@ export function SiteChrome({
   if (isOps) return <>{children}</>;
   return (
     <>
-      {chrome}
+      <div className="print:hidden">{chrome}</div>
       {children}
     </>
   );

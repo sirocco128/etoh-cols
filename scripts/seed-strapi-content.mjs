@@ -7,7 +7,7 @@
  *
  * Reads CMS_ADMIN_EMAIL / CMS_ADMIN_PASSWORD from env or .env.cms.local
  */
-import { readFileSync, existsSync, createReadStream } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve, basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -115,8 +115,14 @@ const PRODUCTS = [
     priceRange: "350–590 บาท/ชุด",
     priceMin: 350,
     priceMax: 590,
-    images: ["product-tumbler.jpg", "product-tumbler-set.jpg"],
+    images: [
+      "product-tumbler.jpg",
+      "product-tumbler-set.jpg",
+      "product-tumbler-set-2.jpg",
+    ],
     categorySlug: "tumbler-set",
+    enableCustomDesign: true,
+    customDesignPreset: "tumbler_set",
     seo: seo(
       "เซ็ตกระบอกน้ำ สมุด ปากกา",
       "เซ็ตกระบอกน้ำสแตนเลสพร้อมสมุดและปากกา สกรีนโลโก้องค์กร ขั้นต่ำ 30 ชุด ราคาโดยประมาณ 350–590 บาท ขอใบเสนอราคาได้ฟรีทันที",
@@ -293,7 +299,7 @@ const ARTICLES = [
 <h3>สรุป</h3>
 <p>เมื่อมีวัตถุประสงค์ งบ และกำหนดส่งชัดเจน การขอใบเสนอราคาจะรวดเร็วและตรงความต้องการมากขึ้น</p>`,
     cover: "article-guide.jpg",
-    author: "ทีมคอนเทนต์ GiftPro Asia",
+    author: "ทีมงาน เทราบิส",
     seo: seo(
       "คู่มือเลือกสินค้าพรีเมียมองค์กร",
       "หลักการเลือก Gift Set และสินค้าพรีเมียมให้องค์กร ครอบคลุมงบประมาณ วัสดุ การสกรีนโลโก้ และระยะเวลาผลิต เพื่อผลลัพธ์ที่เหมาะสม",
@@ -311,7 +317,7 @@ const ARTICLES = [
 <ul><li>รายชื่อผู้รับและที่อยู่จัดส่ง</li><li>งบต่อชุดรวมค่าแพ็กและขนส่ง</li><li>ไฟล์โลโก้และข้อความอวยพร</li></ul>
 <p>ส่งโจทย์ผ่านแบบฟอร์มขอใบเสนอราคาได้ทันที ทีมขายจะช่วยคัดเซ็ตให้ตรงงบ</p>`,
     cover: "article-cover.jpg",
-    author: "ทีมคอนเทนต์ GiftPro Asia",
+    author: "ทีมงาน เทราบิส",
     seo: seo(
       "วางแผนของขวัญปีใหม่องค์กร",
       "คู่มือวางแผนของขวัญปีใหม่สำหรับองค์กร ไทม์ไลน์ งบประมาณ และเช็คลิสต์ เพื่อสั่งผลิต Gift Set ได้ทันเทศกาลอย่างมืออาชีพ",
@@ -504,6 +510,8 @@ async function main() {
       currency: "THB",
       images: product.images.map((f) => media[f]),
       category: categoryIds[product.categorySlug],
+      enableCustomDesign: Boolean(product.enableCustomDesign),
+      customDesignPreset: product.customDesignPreset || "product_photo",
       seo: {
         ...product.seo,
         metaImage: media[product.images[0]],

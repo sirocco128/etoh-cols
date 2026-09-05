@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 
-const HIDDEN_PREFIXES = ["/contact", "/privacy", "/terms", "/quote-basket"];
+const HIDDEN_PREFIXES = ["/contact", "/privacy", "/terms", "/quote-basket", "/issues"];
 
 /**
  * Sticky mobile CTA bar — quote + LINE.
@@ -16,6 +17,7 @@ export function MobileStickyCta() {
   const hidden = HIDDEN_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
+  const contact = getPublicContact(site);
 
   if (hidden) return null;
 
@@ -32,14 +34,23 @@ export function MobileStickyCta() {
         >
           ขอใบเสนอราคา
         </Link>
-        <a
-          href={site.lineUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest transition hover:bg-forest-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
-        >
-          แชท LINE
-        </a>
+        {contact.showLine ? (
+          <a
+            href={site.lineUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest transition hover:bg-forest-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+          >
+            แชท LINE
+          </a>
+        ) : (
+          <Link
+            href="/about"
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest transition hover:bg-forest-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+          >
+            เกี่ยวกับเรา
+          </Link>
+        )}
       </div>
     </div>
   );

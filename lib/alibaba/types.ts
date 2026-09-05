@@ -51,6 +51,10 @@ export type LandedCostConfig = {
 export type PublicPriceRange = {
   priceMin: number;
   priceMax: number;
+  priceExFreightMin: number;
+  priceExFreightMax: number;
+  packagingMin: number;
+  packagingMax: number;
   priceRange: string;
   minOrder: number;
   currency: "THB";
@@ -65,6 +69,7 @@ export type UnitLandedBreakdown = {
   sof: number;
   markup: number;
   sellThb: number;
+  sellExFreightThb: number;
   mode: FreightMode;
   tier: MembershipTier;
   shipmentCbm: number;

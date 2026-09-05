@@ -4,6 +4,7 @@ import {
   getCategories,
   getProducts,
 } from "@/lib/strapi";
+import { IDEA_THEMES, ideaThemePath } from "@/lib/seo-themes";
 import { site } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -14,18 +15,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/",
     "/premium-giftset",
     "/products",
+    "/catalog",
+    "/ideas",
     "/customize-gift-set",
+    "/about",
     "/portfolio",
     "/blog",
     "/contact",
+    "/issues",
     "/privacy",
     "/terms",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: now,
     changeFrequency:
-      path === "/" || path === "/premium-giftset" ? "weekly" : "monthly",
-    priority: path === "/" ? 1 : path === "/premium-giftset" ? 0.9 : 0.7,
+      path === "/" || path === "/premium-giftset" || path === "/ideas"
+        ? "weekly"
+        : "monthly",
+    priority:
+      path === "/"
+        ? 1
+        : path === "/premium-giftset" || path === "/ideas"
+          ? 0.9
+          : 0.7,
   }));
 
   const [categories, products, articles] = await Promise.all([
@@ -40,6 +52,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
+    })),
+    ...categories.map((category) => ({
+      url: `${base}/catalog/${category.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
     })),
     ...products.map((product) => ({
       url: `${base}/products/${product.slug}`,
@@ -56,6 +74,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           : now,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    ...IDEA_THEMES.map((theme) => ({
+      url: `${base}${ideaThemePath(theme.slug)}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
     })),
   ];
 

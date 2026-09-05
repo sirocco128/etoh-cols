@@ -133,7 +133,18 @@ docker compose exec -T postgres pg_dump -U giftset giftset > .data/backups/strap
 # cat .data/backups/strapi-….sql | docker compose exec -T postgres psql -U giftset giftset
 ```
 
-Media uploads live under `cms/public/uploads/` locally (OBS/CDN remains **BLOCKED** for production — P1-MEDIA-001).
+Media uploads are stored in MinIO (`terabis-public/cms/`) when `MINIO_ENDPOINT` is set. Run `npm run cms:media:minio` to copy existing `cms/public/uploads/` files. Huawei OBS/CDN remains **BLOCKED** for production — P1-MEDIA-001.
+
+### Custom design / mockup (product flags)
+
+In Strapi **Content Manager → Product**:
+
+| Field | Meaning |
+| --- | --- |
+| `enableCustomDesign` | เปิดบล็อกออกแบบโลโก้บนหน้ารายละเอียดสินค้า |
+| `customDesignPreset` | `tumbler_set` = แม่แบบกระบอกน้ำ/สมุด/ปากกา · `product_photo` = ใช้รูปสินค้าเป็นแม่แบบ |
+
+Restart Strapi after schema sync if the fields do not appear. Seed sets `tumbler-notebook-pen-set` to enabled + `tumbler_set`.
 
 ## Status vs production
 

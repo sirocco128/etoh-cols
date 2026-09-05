@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import { P2ComingSoon } from "@/components/P2ComingSoon";
 import { QuoteBasketPanel } from "@/components/QuoteBasketPanel";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
+import { metadataForPath } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "ตะกร้าใบเสนอราคา",
-  description:
-    "รวบรวมสินค้าหลายรายการก่อนส่งคำขอใบเสนอราคา Gift Set องค์กร",
-  alternates: { canonical: "/quote-basket" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/quote-basket");
+}
 
 export default function QuoteBasketPage() {
   if (!isP2QuoteToolsEnabled()) {

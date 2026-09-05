@@ -1,5 +1,8 @@
 "use client";
 
+import { CompanyLookupField } from "@/components/CompanyLookupField";
+import { ContactFields } from "@/components/ContactFields";
+import { ThaiAddressFields } from "@/components/ThaiAddressFields";
 import Link from "next/link";
 import {
   useActionState,
@@ -14,13 +17,24 @@ import {
   type QuoteActionState,
   type QuoteFormValues,
 } from "@/app/actions/quote";
-import { RFQ_NO_PAYMENT } from "@/lib/ux-copy";
+import {
+  appendQuoteDetailTemplate,
+  QUOTE_DETAIL_HINT,
+  QUOTE_DETAIL_TEMPLATES,
+  RFQ_NO_PAYMENT,
+} from "@/lib/ux-copy";
+import { emailFieldError, phoneFieldError } from "@/lib/contact-validate";
+import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 import {
   clearBasketStorage,
   loadBasketFromStorage,
 } from "@/lib/quote-basket";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
+import {
+  MOCKUP_BRIEF_EVENT,
+  type MockupBriefEventDetail,
+} from "@/lib/mockup-studio";
 
 const DRAFT_KEY = "giftpro:quote-form-draft:v1";
 
@@ -108,9 +122,11 @@ export function QuoteForm({
   basketId = "",
 }: QuoteFormProps) {
   const [state, formAction, pending] = useActionState(submitQuote, initialState);
+  const contact = getPublicContact(site);
   const [startedAt, setStartedAt] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   const [draft, setDraft] = useState<QuoteFormValues>({});
+  const [contactAttempted, setContactAttempted] = useState(false);
   const startedRef = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -174,6 +190,29 @@ export function QuoteForm({
   }, [state.values]);
 
   useEffect(() => {
+    function onMockupBrief(event: Event) {
+      const detail = (event as CustomEvent<MockupBriefEventDetail>).detail;
+      const incoming = detail?.text?.trim();
+      if (!incoming) return;
+      setDraft((prev) => {
+        const previous = prev.detail?.trim() ?? "";
+        const stripped = previous
+          .replace(
+            /ตัวอย่างการวางโลโก้บนหน้าเว็บ[\s\S]*?(?:กรุณาส่งไฟล์โลโก้จริงให้ทีมขายทางอีเมลหรือ LINE)?/u,
+            "",
+          )
+          .trim();
+        const nextDetail = stripped ? `${stripped}\n\n${incoming}` : incoming;
+        const next = { ...prev, detail: nextDetail };
+        saveDraft(next);
+        return next;
+      });
+    }
+    window.addEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
+    return () => window.removeEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
+  }, []);
+
+  useEffect(() => {
     if (state.ok && state.requestId) {
       clearDraft();
       if (isP2QuoteToolsEnabled()) {
@@ -189,6 +228,8 @@ export function QuoteForm({
   }, [state.ok, state.requestId]);
 
   function onFormInput(event: FormEvent<HTMLFormElement>) {
+    const native = event.nativeEvent as InputEvent;
+    if (native.isComposing) return;
     const form = event.currentTarget;
     const data = new FormData(form);
     const next: QuoteFormValues = {};
@@ -201,8 +242,26 @@ export function QuoteForm({
     saveDraft(next);
   }
 
+  function patchDraft(partial: QuoteFormValues) {
+    setDraft((prev) => {
+      const next = { ...prev, ...partial };
+      saveDraft(next);
+      return next;
+    });
+  }
+
+  function applyDetailTemplate(body: string) {
+    setDraft((prev) => {
+      const nextDetail = appendQuoteDetailTemplate(prev.detail || "", body);
+      const next = { ...prev, detail: nextDetail };
+      saveDraft(next);
+      return next;
+    });
+  }
+
   const values = { ...draft, ...(state.values || {}) };
   const val = (name: string, fallback = "") => values[name] ?? fallback;
+  const detailValue = val("detail");
 
   if (state.ok && state.requestId) {
     return (
@@ -226,23 +285,31 @@ export function QuoteForm({
         <ol className="mt-6 list-decimal space-y-2 pl-5 text-sm text-ink/80">
           <li>ตรวจสอบอีเมล/โทรศัพท์ที่ให้ไว้ให้พร้อมรับสาย</li>
           <li>เตรียมโลโก้ (AI/PDF/PNG) และจำนวนโดยประมาณ</li>
-          <li>หากเร่งด่วน ติดต่อผ่านโทรศัพท์หรือ LINE ได้เลย</li>
+          {contact.showPhone || contact.showLine ? (
+            <li>หากเร่งด่วน ติดต่อผ่านโทรศัพท์หรือ LINE ได้เลย</li>
+          ) : (
+            <li>หากเร่งด่วน ส่งรายละเอียดเพิ่มในอีเมลตอบกลับจากทีมขาย</li>
+          )}
         </ol>
         <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href={site.phoneHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-5 text-sm font-semibold text-paper"
-          >
-            โทร {site.phoneDisplay}
-          </a>
-          <a
-            href={site.lineUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest"
-          >
-            LINE {site.lineId}
-          </a>
+          {contact.showPhone ? (
+            <a
+              href={site.phoneHref}
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-5 text-sm font-semibold text-paper"
+            >
+              โทร {site.phoneDisplay}
+            </a>
+          ) : null}
+          {contact.showLine ? (
+            <a
+              href={site.lineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest"
+            >
+              LINE {site.lineId}
+            </a>
+          ) : null}
           <Link
             href="/products"
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest"
@@ -275,6 +342,14 @@ export function QuoteForm({
       ref={formRef}
       action={formAction}
       onInput={onFormInput}
+      onSubmit={(event) => {
+        const emailIssue = emailFieldError(val("email"));
+        const phoneIssue = phoneFieldError(val("phone"));
+        if (emailIssue || phoneIssue) {
+          event.preventDefault();
+          setContactAttempted(true);
+        }
+      }}
       className="relative space-y-5 rounded-2xl border border-forest/10 bg-paper p-5 sm:p-8"
       noValidate
     >
@@ -331,44 +406,44 @@ export function QuoteForm({
         value={val("productSlug", productSlug)}
       />
 
+      <Field
+        id="name"
+        name="name"
+        label="ชื่อ-นามสกุล *"
+        error={fieldError(errors, "name")}
+        required
+        autoComplete="name"
+        defaultValue={val("name")}
+      />
+
+      <CompanyLookupField
+        taxId={val("taxId")}
+        company={val("company")}
+        taxError={fieldError(errors, "taxId")}
+        companyError={fieldError(errors, "company")}
+        onTaxIdChange={(value) => patchDraft({ taxId: value })}
+        onCompanyChange={(value) => patchDraft({ company: value })}
+        onFill={(fill) =>
+          patchDraft({
+            taxId: fill.taxId,
+            company: fill.company,
+            ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
+            ...(fill.province ? { province: fill.province } : {}),
+            ...(fill.district ? { district: fill.district } : {}),
+            ...(fill.subdistrict ? { subdistrict: fill.subdistrict } : {}),
+            ...(fill.zip ? { zip: fill.zip } : {}),
+          })
+        }
+      />
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          id="name"
-          name="name"
-          label="ชื่อ-นามสกุล *"
-          error={fieldError(errors, "name")}
-          required
-          autoComplete="name"
-          defaultValue={val("name")}
-        />
-        <Field
-          id="company"
-          name="company"
-          label="บริษัท / องค์กร *"
-          error={fieldError(errors, "company")}
-          required
-          autoComplete="organization"
-          defaultValue={val("company")}
-        />
-        <Field
-          id="email"
-          name="email"
-          type="email"
-          label="อีเมล *"
-          error={fieldError(errors, "email")}
-          required
-          autoComplete="email"
-          defaultValue={val("email")}
-        />
-        <Field
-          id="phone"
-          name="phone"
-          type="tel"
-          label="เบอร์โทร *"
-          error={fieldError(errors, "phone")}
-          required
-          autoComplete="tel"
-          defaultValue={val("phone")}
+        <ContactFields
+          email={val("email")}
+          phone={val("phone")}
+          emailError={fieldError(errors, "email")}
+          phoneError={fieldError(errors, "phone")}
+          forceShow={contactAttempted}
+          onChange={(next) => patchDraft(next)}
         />
         <Field
           id="quantity"
@@ -397,14 +472,18 @@ export function QuoteForm({
           error={fieldError(errors, "neededDate")}
           defaultValue={val("neededDate")}
         />
-        <Field
-          id="province"
-          name="province"
-          label="จังหวัดจัดส่ง"
-          error={fieldError(errors, "province")}
-          defaultValue={val("province")}
-        />
       </div>
+
+      <ThaiAddressFields
+        streetAddress={val("streetAddress")}
+        province={val("province")}
+        district={val("district")}
+        subdistrict={val("subdistrict")}
+        zip={val("zip")}
+        streetError={fieldError(errors, "streetAddress")}
+        provinceError={fieldError(errors, "province")}
+        onChange={(next) => patchDraft(next)}
+      />
 
       <Field
         id="productInterest"
@@ -425,7 +504,6 @@ export function QuoteForm({
           id="decorationMethod"
           name="decorationMethod"
           defaultValue={val("decorationMethod", "not-sure")}
-          key={`decoration-${val("decorationMethod", "not-sure")}`}
           className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           aria-invalid={Boolean(fieldError(errors, "decorationMethod"))}
           aria-describedby={
@@ -451,15 +529,48 @@ export function QuoteForm({
         <label htmlFor="detail" className="mb-1.5 block text-sm font-medium text-ink">
           รายละเอียดเพิ่มเติม
         </label>
+        <p id="detail-hint" className="mb-2 text-xs text-ink/60">
+          {QUOTE_DETAIL_HINT}
+        </p>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {QUOTE_DETAIL_TEMPLATES.map((template) => {
+            const selected = detailValue.includes(template.body);
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => applyDetailTemplate(template.body)}
+                aria-pressed={selected}
+                className={`rounded-full border px-3 py-1.5 text-left text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass ${
+                  selected
+                    ? "border-forest bg-forest text-paper"
+                    : "border-forest/20 bg-forest-mist/60 text-forest hover:border-brass hover:bg-brass/15"
+                }`}
+              >
+                {template.label}
+              </button>
+            );
+          })}
+        </div>
         <textarea
           id="detail"
           name="detail"
-          rows={4}
-          defaultValue={val("detail")}
-          key={`detail-${val("detail").slice(0, 24)}`}
+          rows={6}
+          value={detailValue}
+          onChange={(event) => {
+            const nextDetail = event.target.value;
+            setDraft((prev) => {
+              const next = { ...prev, detail: nextDetail };
+              saveDraft(next);
+              return next;
+            });
+          }}
+          placeholder="เช่น จำนวน วันที่ใช้ วิธีใส่โลโก้ จุดส่ง หรือเลือกข้อความด้านบนแล้วแก้ต่อ"
           className="w-full rounded-xl border border-forest/20 bg-paper px-3 py-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           aria-invalid={Boolean(fieldError(errors, "detail"))}
-          aria-describedby={fieldError(errors, "detail") ? "detail-error" : undefined}
+          aria-describedby={
+            fieldError(errors, "detail") ? "detail-hint detail-error" : "detail-hint"
+          }
         />
         {fieldError(errors, "detail") ? (
           <p id="detail-error" className="mt-1 text-sm text-red-700">
@@ -476,7 +587,6 @@ export function QuoteForm({
           value="true"
           required
           defaultChecked={val("consent") === "true"}
-          key={`consent-${val("consent")}`}
           className="mt-1 h-5 w-5 rounded border-forest/30 text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           aria-invalid={Boolean(fieldError(errors, "consent"))}
           aria-describedby={fieldError(errors, "consent") ? "consent-error" : undefined}
@@ -538,7 +648,6 @@ function Field({
         required={required}
         autoComplete={autoComplete}
         defaultValue={defaultValue}
-        key={`${id}-${defaultValue ?? ""}`}
         min={min}
         className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
         aria-invalid={Boolean(error)}

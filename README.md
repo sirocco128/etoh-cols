@@ -101,6 +101,14 @@ cd cms && npm install && npm run develop
 Set in `.env.local`: `CMS_MODE=strapi`, `STRAPI_API_TOKEN=…`, `REVALIDATE_SECRET=…`  
 If Strapi is partially configured, set `STRAPI_FALLBACK_TO_MOCK=true` to avoid build failures.
 
+### Local MinIO (images, PDFs, documents)
+
+```bash
+npm run minio:up
+```
+
+Console: http://127.0.0.1:9001 (user `terabis` / password from `.env.example`). Copy the `MINIO_*` block from `.env.example` into `.env.local`. Payment slips, catalog source photos, mockups, and ops PDFs go to buckets `terabis-private` / `terabis-public`. Strapi product photos use `terabis-public/cms/` — run `npm run cms:media:minio` after `minio:up`, then restart Strapi. If `MINIO_ENDPOINT` is empty, Next.js files stay under `.data/objects/` and Strapi stays on `cms/public/uploads`.
+
 ## P2 quote tools (optional)
 
 ```bash
@@ -123,7 +131,7 @@ Requires local Strapi admin in `.env.cms.local`. Estimates include China→Thail
 
 ## Gemini → real 1688 / Alibaba photos (ops)
 
-At `/ops/catalog-images`, staff search with Gemini (OpenRouter web search, domains limited to 1688.com / alibaba.com / alicdn). Only listing URLs and alicdn images that pass the allowlist are shown. Saving downloads the file into object storage (MinIO or `.data/objects/images`) and a SQLite row (`catalog_source_images`). Photos stay **ops-internal** until `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are both true.
+At `/ops/catalog-images`, staff search with Gemini (OpenRouter web search, domains limited to 1688.com / alibaba.com / alicdn). Only listing URLs and alicdn images that pass the allowlist are shown. Saving downloads the file into `.data/catalog-images/` and a SQLite row (`catalog_source_images`). Photos stay **ops-internal** until `ALIBABA_PUBLIC_IMAGES` and `ALIBABA_IMAGES_LICENSED` are both true.
 
 ```bash
 npm run db:migrate

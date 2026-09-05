@@ -55,6 +55,20 @@ describe("quote-schema (§31.1)", () => {
       email: "not-an-email",
     });
     assert.equal(parsed.success, false);
+    if (!parsed.success) {
+      assert.match(parsed.error.issues[0]?.message || "", /อีเมลไม่ถูกต้อง/);
+    }
+  });
+
+  it("rejects an invalid phone number", () => {
+    const parsed = quoteSchema.safeParse({
+      ...basePayload,
+      phone: "12345",
+    });
+    assert.equal(parsed.success, false);
+    if (!parsed.success) {
+      assert.match(parsed.error.issues[0]?.message || "", /เบอร์โทรไม่ถูกต้อง/);
+    }
   });
 
   it("rejects missing consent", () => {
@@ -95,5 +109,39 @@ describe("quote-schema (§31.1)", () => {
     fd.set("neededDate", basePayload.neededDate);
     const result = parseQuoteFormData(fd);
     assert.equal(result.success, true);
+  });
+
+  it("accepts a 13-digit tax ID and composes tambon/district/province", () => {
+    const parsed = quoteSchema.safeParse({
+      ...basePayload,
+      taxId: "0105556003873",
+      district: "ทุ่งครุ",
+      subdistrict: "ทุ่งครุ",
+    });
+    assert.equal(parsed.success, true);
+
+    const fd = new FormData();
+    fd.set("name", basePayload.name);
+    fd.set("company", basePayload.company);
+    fd.set("email", basePayload.email);
+    fd.set("phone", basePayload.phone);
+    fd.set("quantity", String(basePayload.quantity));
+    fd.set("consent", "on");
+    fd.set("decorationMethod", basePayload.decorationMethod);
+    fd.set("province", "กรุงเทพมหานคร");
+    fd.set("district", "ทุ่งครุ");
+    fd.set("subdistrict", "ทุ่งครุ");
+    fd.set("streetAddress", "50/238 ซอยประชาอุทิศ 72");
+    fd.set("zip", "10140");
+    fd.set("taxId", "0105556003873");
+    const result = parseQuoteFormData(fd);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.taxId, "0105556003873");
+      assert.equal(
+        result.data.province,
+        "50/238 ซอยประชาอุทิศ 72 แขวงทุ่งครุ เขตทุ่งครุ กรุงเทพมหานคร 10140",
+      );
+    }
   });
 });

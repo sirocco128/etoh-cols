@@ -122,4 +122,58 @@ describe("ops customers + quote workflow", () => {
     assert.equal(verifyOpsSessionToken(token), true);
     assert.equal(verifyOpsSessionToken("v1.1.bad"), false);
   });
+
+  it("assigns sales and viewer roles and writes redacted audit", async () => {
+    process.env.ADMIN_PASSWORD = "test-admin-pass-12";
+    process.env.ADMIN_SESSION_SECRET =
+      "test-ops-session-secret-at-least-32-chars";
+    process.env.OPS_USERS = JSON.stringify([
+      {
+        email: "sales@local",
+        password: "sales-pass-12x",
+        role: "sales",
+        name: "เซลล์",
+      },
+      {
+        email: "view@local",
+        password: "viewer-pass-12",
+        role: "viewer",
+        name: "ดูอย่างเดียว",
+      },
+    ]);
+
+    const { authenticateOpsUser, createOpsSessionToken, parseOpsSessionToken } =
+      await import("../lib/ops-auth");
+    const { actorMay } = await import("../lib/ops-roles");
+    const { writeOpsAudit, listOpsAudit } = await import("../lib/ops-audit");
+
+    const sales = authenticateOpsUser("sales@local", "sales-pass-12x");
+    assert.equal(sales?.role, "sales");
+    assert.equal(actorMay(sales!, "quotes.write"), true);
+    assert.equal(actorMay(sales!, "customers.merge"), false);
+    assert.equal(actorMay(sales!, "customers.import"), false);
+    assert.equal(actorMay(sales!, "audit.read"), false);
+    assert.equal(actorMay(sales!, "factory.read"), false);
+    assert.equal(actorMay(sales!, "factory.write"), false);
+    assert.equal(actorMay(sales!, "finance.read"), false);
+
+    const viewer = authenticateOpsUser("view@local", "viewer-pass-12");
+    assert.equal(viewer?.role, "viewer");
+    assert.equal(actorMay(viewer!, "quotes.write"), false);
+
+    const parsed = parseOpsSessionToken(createOpsSessionToken(Date.now(), sales!));
+    assert.equal(parsed?.role, "sales");
+
+    writeOpsAudit({
+      actor: sales,
+      action: "quote.update",
+      status: "ok",
+      resourceType: "quote",
+      resourceId: "RFQ-TEST",
+      prompt: "api_key=super-secret-token",
+    });
+    const rows = listOpsAudit({ action: "quote.update", limit: 5 });
+    assert.ok(rows.length >= 1);
+    assert.doesNotMatch(rows[0]?.prompt || "", /super-secret-token/);
+  });
 });

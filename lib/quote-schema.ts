@@ -4,9 +4,12 @@ import {
   DECORATION_METHODS,
   type QuoteRequestInput,
 } from "@/lib/quote-types";
+import { isValidThaiTaxId } from "@/lib/th-billing";
+import { formatThaiMailingAddress } from "@/lib/thai-address-format";
+import { isValidEmail, isValidThaiPhone } from "@/lib/contact-validate";
+import { EMAIL_INVALID, PHONE_INVALID } from "@/lib/ux-copy";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const PHONE_PATTERN = /^[0-9+()\-\s]{8,20}$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function cleanedString(max: number, min = 0) {
@@ -58,15 +61,11 @@ export const quoteSchema = z
     company: cleanedString(160, 2),
     email: z.preprocess(
       (value) => cleanText(String(value ?? "")),
-      z.string().email().max(254),
+      z.string().refine(isValidEmail, { message: EMAIL_INVALID }),
     ),
     phone: z.preprocess(
       (value) => cleanText(String(value ?? "")),
-      z
-        .string()
-        .min(8)
-        .max(20)
-        .regex(PHONE_PATTERN, "Invalid phone format"),
+      z.string().refine(isValidThaiPhone, { message: PHONE_INVALID }),
     ),
     quantity: z.coerce.number().int().min(1).max(1_000_000),
     consent: z.preprocess((value) => {
@@ -85,6 +84,19 @@ export const quoteSchema = z
       return cleanText(String(value));
     }, z.string().regex(DATE_PATTERN).optional()),
     province: optionalCleanedString(100),
+    district: optionalCleanedString(80),
+    subdistrict: optionalCleanedString(80),
+    streetAddress: optionalCleanedString(300),
+    zip: optionalCleanedString(10),
+    taxId: z.preprocess((value) => {
+      if (value === undefined || value === null) return undefined;
+      const digits = String(value).replace(/\D/g, "");
+      return digits.length === 0 ? undefined : digits;
+    }, z
+      .string()
+      .length(13)
+      .refine((value) => isValidThaiTaxId(value), "Invalid tax ID")
+      .optional()),
     productInterest: optionalCleanedString(200),
     productSlug: z.preprocess((value) => {
       if (value === undefined || value === null) return undefined;
@@ -161,6 +173,11 @@ export function parseQuoteFormData(
     budgetPerSet: formData.get("budgetPerSet") ?? undefined,
     neededDate: formData.get("neededDate") ?? undefined,
     province: formData.get("province") ?? undefined,
+    district: formData.get("district") ?? undefined,
+    subdistrict: formData.get("subdistrict") ?? undefined,
+    streetAddress: formData.get("streetAddress") ?? undefined,
+    zip: formData.get("zip") ?? undefined,
+    taxId: formData.get("taxId") ?? undefined,
     productInterest: formData.get("productInterest") ?? undefined,
     productSlug: formData.get("productSlug") ?? undefined,
     decorationMethod: formData.get("decorationMethod") ?? undefined,
@@ -190,7 +207,17 @@ export function parseQuoteFormData(
 
   return {
     success: true,
-    data: parsed.data as QuoteRequestInput,
+    data: {
+      ...parsed.data,
+      province:
+        formatThaiMailingAddress({
+          streetAddress: parsed.data.streetAddress,
+          province: parsed.data.province,
+          district: parsed.data.district,
+          subdistrict: parsed.data.subdistrict,
+          zip: parsed.data.zip,
+        }) || parsed.data.province,
+    } as QuoteRequestInput,
   };
 }
 

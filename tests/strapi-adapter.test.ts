@@ -143,4 +143,22 @@ describe("strapi-adapter (§31.4)", () => {
       });
     });
   });
+
+  it("allows MinIO catalog media when MINIO_ENDPOINT is set", () => {
+    const previous = process.env.MINIO_ENDPOINT;
+    process.env.MINIO_ENDPOINT = "http://127.0.0.1:9000";
+    try {
+      const url = resolveMediaUrl(
+        "http://127.0.0.1:9000/terabis-public/cms/product.jpg",
+        { strapiUrl: "https://cms.example.com", allowlistOrigins },
+      );
+      assert.equal(
+        url,
+        "http://127.0.0.1:9000/terabis-public/cms/product.jpg",
+      );
+    } finally {
+      if (previous === undefined) delete process.env.MINIO_ENDPOINT;
+      else process.env.MINIO_ENDPOINT = previous;
+    }
+  });
 });

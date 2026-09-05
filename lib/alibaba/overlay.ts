@@ -29,6 +29,10 @@ export function overlayOfferOnProduct(
     priceMax: range.priceMax,
     priceRange: range.priceRange,
     minOrder: range.minOrder,
+    priceExFreightMin: range.priceExFreightMin,
+    priceExFreightMax: range.priceExFreightMax,
+    packagingMin: range.packagingMin,
+    packagingMax: range.packagingMax,
   };
 
   const applyImages = options?.applyImages ?? alibabaPublicImagesEnabled();

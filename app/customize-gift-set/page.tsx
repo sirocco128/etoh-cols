@@ -4,13 +4,11 @@ import { ProductConfiguratorStub } from "@/components/ProductConfiguratorStub";
 import { QuoteForm } from "@/components/QuoteForm";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
 import { RFQ_NO_PAYMENT } from "@/lib/ux-copy";
+import { metadataForPath } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "ออกแบบเซ็ตเอง",
-  description:
-    "ออกแบบ Gift Set องค์กรตามโจทย์ — คัดสินค้า บรรจุภัณฑ์ อัตลักษณ์แบรนด์ และการแพ็กจัดส่ง",
-  alternates: { canonical: "/customize-gift-set" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/customize-gift-set");
+}
 
 const ELEMENTS = [
   {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { site } from "@/lib/site";
+import { getPublicContact } from "@/lib/public-contact";
 import { NavLink } from "@/components/NavLink";
 import { withOptionalBasketLink } from "@/lib/nav";
 
@@ -19,6 +20,7 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
 
 export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
   const navLinks = withOptionalBasketLink(enableP2QuoteTools);
+  const contact = getPublicContact(site);
   const [open, setOpen] = useState(false);
   const dialogId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -145,20 +147,32 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
               >
                 ขอใบเสนอราคา
               </NavLink>
-              <a
-                href={site.phoneHref}
-                className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
-              >
-                โทรฝ่ายขาย {site.phoneDisplay}
-              </a>
-              <a
-                href={site.lineUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
-              >
-                LINE OA {site.lineId}
-              </a>
+              {contact.showPhone ? (
+                <a
+                  href={site.phoneHref}
+                  className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
+                >
+                  โทรฝ่ายขาย {site.phoneDisplay}
+                </a>
+              ) : null}
+              {contact.showLine ? (
+                <a
+                  href={site.lineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
+                >
+                  LINE OA {site.lineId}
+                </a>
+              ) : (
+                <NavLink
+                  href="/about"
+                  onClick={close}
+                  className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
+                >
+                  เกี่ยวกับบริษัท
+                </NavLink>
+              )}
             </div>
           </div>
         </div>

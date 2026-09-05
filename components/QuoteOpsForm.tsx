@@ -17,15 +17,29 @@ export function QuoteOpsForm({
   requestId,
   leadStatus,
   salesNotes,
+  readOnly = false,
 }: {
   requestId: string;
   leadStatus: LeadStatus;
   salesNotes: string | null;
+  readOnly?: boolean;
 }) {
   const [state, action, pending] = useActionState(
     updateQuoteOpsAction,
     initial,
   );
+
+  if (readOnly) {
+    return (
+      <div className="mt-6 space-y-3 rounded border border-forest/15 bg-paper p-4 text-sm">
+        <h2 className="text-lg font-semibold text-forest">สถานะขาย (ดูอย่างเดียว)</h2>
+        <p>สถานะ: {LEAD_STATUS_LABELS[leadStatus]}</p>
+        <p className="whitespace-pre-wrap text-ink/80">
+          {salesNotes || "ยังไม่มีบันทึกฝ่ายขาย"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form action={action} className="mt-6 space-y-4 rounded border border-forest/15 bg-paper p-4">

@@ -117,7 +117,12 @@ function toLeadPayload(input: QuoteRequestInput) {
     quantity: input.quantity,
     budgetPerSet: input.budgetPerSet ?? null,
     neededDate: input.neededDate ?? null,
+    streetAddress: input.streetAddress ?? null,
     province: input.province ?? null,
+    district: input.district ?? null,
+    subdistrict: input.subdistrict ?? null,
+    zip: input.zip ?? null,
+    taxId: input.taxId ?? null,
     productInterest: input.productInterest ?? null,
     productSlug: input.productSlug ?? null,
     decorationMethod: input.decorationMethod,
@@ -345,6 +350,8 @@ export async function submitQuotePayload(
       phone: input.phone,
       contactName: input.name,
       quoteSubmittedAt: submittedAt,
+      province: input.province,
+      taxId: input.taxId,
     });
     linkQuoteCustomer(requestId, customer.id);
   } catch {

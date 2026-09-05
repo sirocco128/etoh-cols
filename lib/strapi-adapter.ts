@@ -28,6 +28,13 @@ function cleaned(value: unknown, max?: number): string {
   return text;
 }
 
+function optionalNonNegative(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return n;
+}
+
 const slugSchema = z
   .string()
   .min(1)
@@ -146,6 +153,27 @@ function resolveAllowlist(options: MediaResolveOptions): Set<string> {
     origins.add(origin);
   }
 
+  for (const extra of extraMediaOriginsFromEnv()) {
+    origins.add(extra);
+  }
+
+  return origins;
+}
+
+function extraMediaOriginsFromEnv(): string[] {
+  const origins: string[] = [];
+  for (const raw of [
+    process.env.MINIO_ENDPOINT,
+    process.env.MINIO_PUBLIC_BASE_URL,
+  ]) {
+    const value = String(raw || "").trim();
+    if (!value) continue;
+    try {
+      origins.push(new URL(value).origin);
+    } catch {
+      // skip invalid
+    }
+  }
   return origins;
 }
 
@@ -370,6 +398,20 @@ export function adaptProduct(
       cleaned(entity.priceRange, 120) ||
       `${priceMin}–${priceMax} บาท/ชุด`;
 
+    const priceExFreightMin = optionalNonNegative(entity.priceExFreightMin);
+    const priceExFreightMax = optionalNonNegative(entity.priceExFreightMax);
+    const packagingMin = optionalNonNegative(entity.packagingMin);
+    const packagingMax = optionalNonNegative(entity.packagingMax);
+
+    const enableCustomDesign = Boolean(entity.enableCustomDesign);
+    const presetRaw = cleaned(entity.customDesignPreset, 40);
+    const customDesignPreset =
+      presetRaw === "tumbler_set" || presetRaw === "product_photo"
+        ? presetRaw
+        : enableCustomDesign
+          ? ("product_photo" as const)
+          : undefined;
+
     return {
       name,
       slug,
@@ -379,10 +421,16 @@ export function adaptProduct(
       priceRange,
       priceMin,
       priceMax,
+      ...(priceExFreightMin !== undefined ? { priceExFreightMin } : {}),
+      ...(priceExFreightMax !== undefined ? { priceExFreightMax } : {}),
+      ...(packagingMin !== undefined ? { packagingMin } : {}),
+      ...(packagingMax !== undefined ? { packagingMax } : {}),
       currency: "THB",
       images,
       categorySlug,
       seo,
+      ...(enableCustomDesign ? { enableCustomDesign: true } : {}),
+      ...(customDesignPreset ? { customDesignPreset } : {}),
     };
   } catch (error) {
     console.error("[strapi-adapter] skip product", error);

@@ -1,7 +1,4 @@
-/**
- * Site configuration parsed from environment variables.
- * Server and shared modules may import this; do not put secrets in NEXT_PUBLIC_*.
- */
+import { COMPANY } from "@/lib/company";
 
 export const LOCAL_BUSINESS_TYPES = [
   "LocalBusiness",
@@ -41,9 +38,8 @@ export type SiteConfig = {
 };
 
 const FALLBACK_URL = "http://localhost:3000";
-const FALLBACK_NAME = "GiftPro Asia";
-const FALLBACK_DESCRIPTION =
-  "รับผลิต Gift Set ของขวัญพรีเมียม สกรีนโลโก้ สำหรับลูกค้าองค์กร";
+const FALLBACK_NAME = COMPANY.brandName;
+const FALLBACK_DESCRIPTION = COMPANY.description;
 const FALLBACK_PHONE_DISPLAY = "02-000-0000";
 const FALLBACK_PHONE_HREF = "tel:+6620000000";
 const FALLBACK_EMAIL = "sales@example.com";
@@ -129,18 +125,19 @@ export function getSiteConfig(): SiteConfig {
   const description =
     readEnv("NEXT_PUBLIC_SITE_DESCRIPTION") || FALLBACK_DESCRIPTION;
 
-  const streetAddress = readEnv("SITE_STREET_ADDRESS");
-  const locality = readEnv("SITE_ADDRESS_LOCALITY");
-  const postalCode = readEnv("SITE_POSTAL_CODE");
+  const streetAddress =
+    readEnv("SITE_STREET_ADDRESS") || COMPANY.streetAddress;
+  const locality = readEnv("SITE_ADDRESS_LOCALITY") || COMPANY.locality;
+  const postalCode = readEnv("SITE_POSTAL_CODE") || COMPANY.postalCode;
   const enabledFlag = parseBoolean(
     readEnv("SITE_ENABLE_LOCAL_BUSINESS_SCHEMA"),
-    false,
+    true,
   );
 
   cachedSite = {
     url,
     name,
-    legalName: readEnv("SITE_LEGAL_NAME"),
+    legalName: readEnv("SITE_LEGAL_NAME") || COMPANY.legalName,
     description,
     phoneDisplay: resolvePhoneDisplay(
       readEnv("NEXT_PUBLIC_SITE_PHONE_DISPLAY") || FALLBACK_PHONE_DISPLAY,
@@ -159,7 +156,7 @@ export function getSiteConfig(): SiteConfig {
       readEnv("NEXT_PUBLIC_ALLOW_INDEXING"),
       false,
     ),
-    taxId: readEnv("SITE_TAX_ID"),
+    taxId: readEnv("SITE_TAX_ID") || COMPANY.taxId,
     localBusiness: {
       enabled:
         enabledFlag &&
@@ -171,7 +168,7 @@ export function getSiteConfig(): SiteConfig {
       ),
       streetAddress,
       locality,
-      region: readEnv("SITE_ADDRESS_REGION"),
+      region: readEnv("SITE_ADDRESS_REGION") || COMPANY.region,
       postalCode,
       countryCode: readEnv("SITE_COUNTRY_CODE") || "TH",
       latitude: parseOptionalNumber(readEnv("SITE_LATITUDE")),

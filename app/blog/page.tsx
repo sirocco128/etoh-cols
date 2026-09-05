@@ -4,15 +4,13 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
 import { getArticles } from "@/lib/strapi";
+import { metadataForPath } from "@/lib/page-seo";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "บทความ",
-  description:
-    "บทความแนะนำการเลือกสินค้าพรีเมียมและ Gift Set สำหรับองค์กร",
-  alternates: { canonical: "/blog" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataForPath("/blog");
+}
 
 export default async function BlogPage() {
   const articles = await getArticles();

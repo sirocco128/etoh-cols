@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  isOpsAuthConfigured,
-  requireOpsSession,
-} from "@/lib/ops-auth";
+import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
 import {
   countQuoteRequests,
   listQuoteRequests,
@@ -39,7 +36,7 @@ export default async function OpsQuotesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsSession())) {
+  if (!isOpsAuthConfigured() || !(await requireOpsActor("quotes.read"))) {
     redirect("/ops/login");
   }
 

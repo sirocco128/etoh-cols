@@ -44,6 +44,8 @@ const isSecureProduction = process.env.NODE_ENV === "production" && isHttpsSite;
 const mediaOrigins = [
   ...parseRemoteImageOrigins(process.env.NEXT_IMAGE_REMOTE_URLS),
   safeOrigin(process.env.STRAPI_URL),
+  safeOrigin(process.env.MINIO_ENDPOINT),
+  safeOrigin(process.env.MINIO_PUBLIC_BASE_URL),
 ].filter((origin, index, list) => origin && list.indexOf(origin) === index);
 
 /** @type {import('next').RemotePattern[]} */

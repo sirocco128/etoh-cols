@@ -73,6 +73,31 @@
     },
     "sourceOfferId": {
       "type": "string"
+    },
+    "enableCustomDesign": {
+      "type": "boolean",
+      "default": false
+    },
+    "customDesignPreset": {
+      "type": "enumeration",
+      "enum": ["tumbler_set", "product_photo"],
+      "default": "product_photo"
+    },
+    "priceExFreightMin": {
+      "type": "decimal",
+      "min": 0
+    },
+    "priceExFreightMax": {
+      "type": "decimal",
+      "min": 0
+    },
+    "packagingMin": {
+      "type": "decimal",
+      "min": 0
+    },
+    "packagingMax": {
+      "type": "decimal",
+      "min": 0
     }
   }
 }

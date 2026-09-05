@@ -18,6 +18,7 @@ describe("mockup AI prompts", () => {
     });
     assert.match(prompt, /screen-printed|UV-printed|curvature/i);
     assert.match(prompt, /กระบอกน้ำ/);
+    assert.match(prompt, /1688|offer IDs|CNY/i);
   });
 
   it("describes lifestyle and office contexts", () => {
@@ -44,6 +45,18 @@ describe("mockup AI prompts", () => {
       placementHint: "โต๊ะทำงาน",
     });
     assert.match(office, /office|workplace/i);
+
+    const retail = buildMockupAiPrompt({
+      variantId: "retail",
+      surfaceLabel: "กระบอกน้ำ",
+      surfaceKind: "cylinder",
+      finishLabel: "ดำด้าน",
+      productName: "เซ็ต",
+      hasLogo: true,
+      refineInstruction: "สูงขึ้นไปอีกนิด",
+    });
+    assert.match(retail, /retail|shelf/i);
+    assert.match(retail, /สูงขึ้นไปอีกนิด/);
   });
 });
 

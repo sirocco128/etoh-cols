@@ -138,6 +138,7 @@ function writeSkeleton() {
           strapi: "strapi",
         },
         dependencies: {
+          "@strapi/provider-upload-aws-s3": "5.52.3",
           "@strapi/plugin-cloud": "5.52.3",
           "@strapi/plugin-users-permissions": "5.52.3",
           "@strapi/strapi": "5.52.3",
@@ -274,24 +275,106 @@ function writeSkeleton() {
 
   writeFile(
     join(CMS, "config/middlewares.ts"),
-    `export default [
-  "strapi::logger",
-  "strapi::errors",
-  "strapi::security",
-  "strapi::cors",
-  "strapi::poweredBy",
-  "strapi::query",
-  "strapi::body",
-  "strapi::session",
-  "strapi::favicon",
-  "strapi::public",
-];
+    `export default ({ env }) => {
+  const minio = String(env("MINIO_ENDPOINT", "http://127.0.0.1:9000")).replace(
+    /\\/+$/,
+    "",
+  );
+
+  return [
+    "strapi::logger",
+    "strapi::errors",
+    {
+      name: "strapi::security",
+      config: {
+        contentSecurityPolicy: {
+          useDefaults: true,
+          directives: {
+            "connect-src": ["'self'", "https:", "http:"],
+            "img-src": [
+              "'self'",
+              "data:",
+              "blob:",
+              "market-assets.strapi.io",
+              minio,
+              "http://127.0.0.1:9000",
+              "http://localhost:9000",
+            ],
+            "media-src": [
+              "'self'",
+              "data:",
+              "blob:",
+              "market-assets.strapi.io",
+              minio,
+              "http://127.0.0.1:9000",
+              "http://localhost:9000",
+            ],
+            upgradeInsecureRequests: null,
+          },
+        },
+      },
+    },
+    "strapi::cors",
+    "strapi::poweredBy",
+    "strapi::query",
+    "strapi::body",
+    "strapi::session",
+    "strapi::favicon",
+    "strapi::public",
+  ];
+};
 `,
   );
 
   writeFile(
     join(CMS, "config/plugins.ts"),
-    `export default () => ({});
+    `export default ({ env }) => {
+  const minioEndpoint = String(env("MINIO_ENDPOINT", "")).replace(/\\/+$/, "");
+  const accessKey = env("MINIO_ACCESS_KEY", "");
+  const secretKey = env("MINIO_SECRET_KEY", "");
+  const bucket = env("MINIO_BUCKET_PUBLIC", "terabis-public");
+  const region = env("MINIO_REGION", "us-east-1");
+  const useMinio = Boolean(minioEndpoint && accessKey && secretKey);
+  const publicBase =
+    env("MINIO_PUBLIC_BASE_URL", "") ||
+    (useMinio ? \`\${minioEndpoint}/\${bucket}\` : "");
+
+  return {
+    seo: {
+      enabled: true,
+    },
+    ...(useMinio
+      ? {
+          upload: {
+            config: {
+              provider: "aws-s3",
+              providerOptions: {
+                baseUrl: publicBase,
+                rootPath: env("MINIO_CMS_ROOT", "cms"),
+                s3Options: {
+                  credentials: {
+                    accessKeyId: accessKey,
+                    secretAccessKey: secretKey,
+                  },
+                  endpoint: minioEndpoint,
+                  region,
+                  forcePathStyle: true,
+                  params: {
+                    Bucket: bucket,
+                  },
+                },
+              },
+              actionOptions: {
+                upload: {},
+                uploadStream: {},
+                delete: {},
+              },
+            },
+          },
+        }
+      : {}),
+  };
+};
 `,
   );
 
@@ -365,6 +448,15 @@ DATABASE_USERNAME=giftset
 DATABASE_PASSWORD=giftset
 DATABASE_SSL=false
 DATABASE_POOL_MIN=0
+
+# MinIO — public catalog media (docker compose up -d minio minio-init)
+MINIO_ENDPOINT=http://127.0.0.1:9000
+MINIO_ACCESS_KEY=terabis
+MINIO_SECRET_KEY=terabisMinioDev1
+MINIO_BUCKET_PUBLIC=terabis-public
+MINIO_REGION=us-east-1
+MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000/terabis-public
+MINIO_CMS_ROOT=cms
 `,
   );
 
@@ -386,6 +478,8 @@ npm run develop
 \`\`\`
 
 Open http://localhost:1337/admin and create the first admin user.
+
+Media: \`npm run minio:up\` then \`npm run cms:media:minio\` so product photos live in MinIO instead of \`public/uploads\`.
 
 Full guide: [docs/SPRINT1-LOCAL-CMS.md](../docs/SPRINT1-LOCAL-CMS.md)
 `,
@@ -482,6 +576,14 @@ DATABASE_USERNAME=giftset
 DATABASE_PASSWORD=giftset
 DATABASE_SSL=false
 DATABASE_POOL_MIN=0
+
+MINIO_ENDPOINT=http://127.0.0.1:9000
+MINIO_ACCESS_KEY=terabis
+MINIO_SECRET_KEY=terabisMinioDev1
+MINIO_BUCKET_PUBLIC=terabis-public
+MINIO_REGION=us-east-1
+MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000/terabis-public
+MINIO_CMS_ROOT=cms
 `;
   writeFile(envPath, body);
   log("\n→ Wrote cms/.env with local secrets + postgres giftset credentials");

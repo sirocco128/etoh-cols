@@ -176,6 +176,7 @@ export async function generateOpenRouterImage(
 export type MockupAiVariantRequest = MockupAiPromptInput & {
   productDataUrl: string;
   logoDataUrl?: string | null;
+  previousDataUrl?: string | null;
 };
 
 export type MockupAiVariantResult = {
@@ -193,7 +194,9 @@ export async function generateMockupVariantWithOpenRouter(
   if (!preset) throw new Error(`Unknown variant ${input.variantId}`);
 
   const prompt = buildMockupAiPrompt(input);
-  const references = [input.productDataUrl];
+  const references = [];
+  if (input.previousDataUrl) references.push(input.previousDataUrl);
+  references.push(input.productDataUrl);
   if (input.logoDataUrl) references.push(input.logoDataUrl);
 
   const dataUrl = await generateOpenRouterImage({
