@@ -18,12 +18,24 @@ describe("ops nav", () => {
     });
     assert.equal(admin.some((link) => link.href === "/ops" && link.group === "primary"), true);
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "more"), true);
+    const strapi = admin.find((link) => link.label === "เข้า Strapi");
+    assert.equal(strapi?.external, true);
+    assert.equal(strapi?.group, "more");
+    assert.match(strapi?.href ?? "", /\/admin$/);
     const viewer = buildOpsNavLinks({
       email: "view@local",
       name: "ดู",
       role: "viewer",
     });
     assert.equal(viewer.some((link) => link.href === "/ops/users"), false);
+    assert.equal(viewer.some((link) => link.label === "เข้า Strapi"), false);
+    const sales = buildOpsNavLinks({
+      email: "sales@local",
+      name: "เซลล์",
+      role: "sales",
+    });
+    assert.equal(sales.some((link) => link.label === "เข้า Strapi" && link.external), true);
+    assert.equal(isOpsNavActive("/ops", "http://localhost:1337/admin"), false);
   });
 });
 

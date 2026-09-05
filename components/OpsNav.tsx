@@ -7,6 +7,35 @@ import { opsLogoutAction } from "@/app/actions/ops";
 import { isOpsNavActive, type OpsNavLink } from "@/lib/ops-nav";
 import { cn } from "@/lib/utils";
 
+function NavItem({
+  link,
+  className,
+  onClick,
+}: {
+  link: OpsNavLink;
+  className: string;
+  onClick?: () => void;
+}) {
+  if (link.external) {
+    return (
+      <a
+        href={link.href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+      >
+        {link.label}
+      </a>
+    );
+  }
+  return (
+    <Link href={link.href} className={className} onClick={onClick}>
+      {link.label}
+    </Link>
+  );
+}
+
 export function OpsNav({
   actorLabel,
   links,
@@ -36,9 +65,7 @@ export function OpsNav({
         </Link>
         <nav className="hidden flex-wrap items-center gap-2 text-sm text-paper/85 lg:flex" aria-label="เมนูปฏิบัติการ">
           {primary.map((link) => (
-            <Link key={link.href} href={link.href} className={itemClass(link.href)}>
-              {link.label}
-            </Link>
+            <NavItem key={link.href} link={link} className={itemClass(link.href)} />
           ))}
           {more.length ? (
             <details className="relative">
@@ -47,13 +74,11 @@ export function OpsNav({
               </summary>
               <div className="absolute left-0 z-20 mt-1 min-w-[12rem] rounded-lg border border-forest/20 bg-forest py-1 shadow-lg">
                 {more.map((link) => (
-                  <Link
+                  <NavItem
                     key={link.href}
-                    href={link.href}
+                    link={link}
                     className={cn("block px-3 py-2 text-sm hover:bg-forest-light", isOpsNavActive(pathname, link.href) && "text-brass-soft")}
-                  >
-                    {link.label}
-                  </Link>
+                  />
                 ))}
               </div>
             </details>
@@ -82,14 +107,12 @@ export function OpsNav({
       {open ? (
         <nav className="flex w-full flex-col gap-1 border-t border-paper/15 pt-3 text-sm lg:hidden" aria-label="เมนูมือถือปฏิบัติการ">
           {links.map((link) => (
-            <Link
+            <NavItem
               key={link.href}
-              href={link.href}
+              link={link}
               className={cn("rounded px-2 py-2", isOpsNavActive(pathname, link.href) && "bg-paper/15 text-brass-soft")}
               onClick={() => setOpen(false)}
-            >
-              {link.label}
-            </Link>
+            />
           ))}
         </nav>
       ) : null}

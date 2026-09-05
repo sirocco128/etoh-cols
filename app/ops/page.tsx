@@ -3,6 +3,7 @@ import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { countQuoteRequests } from "@/lib/quote-repository";
 import { countApprovalQueue } from "@/lib/payment-approval";
 import { listPos } from "@/lib/factory-po-service";
+import { getStrapiAdminUrl } from "@/lib/strapi-url";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -74,6 +75,36 @@ export default async function OpsIndexPage() {
       ) : (
         <p className="mt-6 text-sm text-ink/70">ยังไม่มีคิวที่บัญชีนี้ดูได้</p>
       )}
+      {actorMay(actor, "catalog.write") ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold text-forest">แคตตาล็อก</h2>
+          <p className="mt-1 text-sm text-ink/70">
+            จัดการสินค้าและรูปใน Strapi — เปิดแท็บใหม่ ไม่ใช่หน้าคอนโซลนี้
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <a
+              href={getStrapiAdminUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl border border-forest/15 bg-paper p-5 hover:border-brass/50"
+            >
+              <p className="font-semibold text-forest">เข้า Strapi</p>
+              <p className="mt-2 text-sm text-ink/70">
+                เปิดแอดมินแคตตาล็อก (สินค้า หมวด รูป)
+              </p>
+            </a>
+            <Link
+              href="/ops/catalog-images"
+              className="block rounded-xl border border-forest/15 bg-paper p-5 hover:border-brass/50"
+            >
+              <p className="font-semibold text-forest">รูปโรงงาน</p>
+              <p className="mt-2 text-sm text-ink/70">
+                ค้นรูปจากเว็บโรงงาน แล้วนำไปใส่ใน Strapi ทีหลัง
+              </p>
+            </Link>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

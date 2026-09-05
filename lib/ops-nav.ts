@@ -1,10 +1,12 @@
 import { actorMay, ROLE_LABELS, type OpsActor } from "@/lib/ops-roles";
 import { isNavActive } from "@/lib/nav";
+import { getStrapiAdminUrl } from "@/lib/strapi-url";
 
 export type OpsNavLink = {
   href: string;
   label: string;
   group: "primary" | "more";
+  external?: boolean;
 };
 
 export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
@@ -29,6 +31,12 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   links.push({ href: "/ops/seo", label: "SEO", group: "more" });
   if (actorMay(actor, "catalog.write")) {
     links.push({ href: "/ops/catalog-images", label: "รูปโรงงาน", group: "more" });
+    links.push({
+      href: getStrapiAdminUrl(),
+      label: "เข้า Strapi",
+      group: "more",
+      external: true,
+    });
   }
   if (actorMay(actor, "assistant.use")) {
     links.push({ href: "/ops/assistant", label: "ผู้ช่วยเซลล์", group: "more" });
@@ -44,6 +52,7 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
 }
 
 export function isOpsNavActive(pathname: string, href: string): boolean {
+  if (href.startsWith("http://") || href.startsWith("https://")) return false;
   if (href === "/ops") return pathname === "/ops";
   if (href === "/") return pathname === "/";
   return isNavActive(pathname, href);
