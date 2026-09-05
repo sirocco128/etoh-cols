@@ -42,8 +42,8 @@ export function FloatingQuoteDock() {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed z-30 flex flex-col items-end gap-2",
-        "bottom-[10.5rem] right-3 sm:bottom-28 sm:right-4 lg:bottom-24",
+        "pointer-events-none fixed z-30 hidden flex-col items-end gap-2 lg:flex",
+        "bottom-24 right-4",
       )}
       role="region"
       aria-label="ทางลัดติดต่อ"

@@ -65,3 +65,25 @@ export function isPlaceholderEmail(email: string): boolean {
 export function isPlaceholderLine(id: string, url: string): boolean {
   return /giftproasia/i.test(id) || /giftproasia/i.test(url);
 }
+
+const SCHEMA_DAY_TH: Record<string, string> = {
+  Mo: "จันทร์",
+  Tu: "อังคาร",
+  We: "พุธ",
+  Th: "พฤหัสบดี",
+  Fr: "ศุกร์",
+  Sa: "เสาร์",
+  Su: "อาทิตย์",
+};
+
+/** Show schema.org hours like Mo-Sa 08:30-17:30 in Thai. Keep the raw value for JSON-LD. */
+export function formatOpeningHoursDisplay(raw: string): string {
+  const match = raw
+    .trim()
+    .match(/^([A-Za-z]{2})-([A-Za-z]{2})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+  if (!match?.[1] || !match[2] || !match[3] || !match[4]) return raw;
+  const from = SCHEMA_DAY_TH[match[1]] || match[1];
+  const to = SCHEMA_DAY_TH[match[2]] || match[2];
+  const clock = (value: string) => value.replace(/^0/, "");
+  return `${from}–${to} ${clock(match[3])}–${clock(match[4])} น.`;
+}

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { listPos } from "@/lib/factory-po-service";
 import {
   FACTORY_PO_STATUS_LABELS,
@@ -19,9 +18,7 @@ export default async function FactoryPoListPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("factory.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("factory.read");
   const sp = await searchParams;
   const q = (sp.q || "").trim();
   const statusRaw = (sp.status || "all").trim();

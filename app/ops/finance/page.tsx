@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { COMPANY } from "@/lib/company";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import {
   buildExecutivePnl,
   defaultFinanceRange,
@@ -31,9 +30,7 @@ export default async function OpsFinancePage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("finance.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("finance.read");
 
   const sp = await searchParams;
   const fallback = defaultFinanceRange();

@@ -10,7 +10,7 @@ export default function OpsLoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบ Ops</h1>
+      <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบปฏิบัติการ</h1>
       <p className="mt-2 text-sm text-ink/70">
         จัดการลูกค้าและใบเสนอราคาจากฐานข้อมูลร้าน — ไม่ใช่หน้าแก้ไขแคตตาล็อก
       </p>

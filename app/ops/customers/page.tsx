@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   countCustomers,
   listCustomers,
@@ -13,7 +12,7 @@ import {
   CUSTOMER_TYPES,
   CUSTOMER_TYPE_LABELS,
 } from "@/lib/customer-types";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import {
   PRODUCT_KINDS,
   PRODUCT_KIND_LABELS,
@@ -43,9 +42,7 @@ export default async function OpsCustomersPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("customers.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("customers.read");
   const canWrite = actorMay(actor, "customers.write");
   const canImport = actorMay(actor, "customers.import");
 
@@ -220,7 +217,7 @@ export default async function OpsCustomersPage({
               <th className="px-2 py-2 font-semibold">ผู้ติดต่อ</th>
               <th className="px-2 py-2 font-semibold">กลุ่ม</th>
               <th className="px-2 py-2 font-semibold">แท็ก</th>
-              <th className="px-2 py-2 font-semibold">RFQ</th>
+              <th className="px-2 py-2 font-semibold">คำขอ</th>
               <th className="px-2 py-2 font-semibold">ออเดอร์</th>
               <th className="px-2 py-2 font-semibold">เคยซื้อ</th>
               <th className="px-2 py-2 font-semibold">ภาษี</th>
@@ -230,7 +227,7 @@ export default async function OpsCustomersPage({
             {customers.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-2 py-8 text-center text-ink/60">
-                  ยังไม่มีลูกค้า — ส่งคำขอที่ /contact หรือกดเพิ่มลูกค้า
+                  ยังไม่มีลูกค้า — ส่งคำขอที่แบบฟอร์มติดต่อ หรือกดเพิ่มลูกค้า
                 </td>
               </tr>
             ) : (

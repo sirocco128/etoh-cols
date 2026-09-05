@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { FactoryPoForm } from "@/components/FactoryPoForm";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getFactoryPo } from "@/lib/factory-po-service";
 import { FACTORY_PO_STATUS_LABELS } from "@/lib/factory-po-types";
 import { getOrderRepository } from "@/lib/order-repository";
@@ -18,9 +18,7 @@ export default async function FactoryPoDetailPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("factory.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("factory.read");
   const canWrite = actorMay(actor, "factory.write");
   const { poId } = await params;
   const po = getFactoryPo(poId);

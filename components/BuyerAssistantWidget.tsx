@@ -65,7 +65,7 @@ export function BuyerAssistantWidget() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-[5.5rem] right-3 z-40 sm:bottom-6 sm:right-4 lg:bottom-6">
+    <div className="pointer-events-none fixed bottom-6 right-4 z-40 hidden lg:block">
       {open ? (
         <div className="pointer-events-auto mb-3 flex h-[min(28rem,70vh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-forest/15 bg-paper shadow-[0_16px_48px_rgba(20,53,42,0.16)]">
           <div className="flex items-start justify-between gap-2 bg-forest px-4 py-3 text-paper">

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { listCashReceipts } from "@/lib/ops-cycle-service";
 import { getOrderRepository } from "@/lib/order-repository";
 import { PAYMENT_KIND_LABELS } from "@/lib/order-types";
@@ -13,9 +12,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function QrPayPage() {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("orders.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("orders.read");
   const promptPay = getPayeeDetails();
   const openVouchers = listCashReceipts({ status: "open", limit: 40 });
   const openPayments = getOrderRepository().listOpenPayments(40);
@@ -53,7 +50,7 @@ export default async function QrPayPage() {
           ← วงจรปฏิบัติการ
         </Link>
       </p>
-      <h1 className="mt-3 text-2xl font-bold text-forest">QR Payments</h1>
+      <h1 className="mt-3 text-2xl font-bold text-forest">QR พร้อมเพย์</h1>
       <p className="mt-1 text-sm text-ink/70">
         รวม QR พร้อมเพย์ที่ยังรอเงินเข้า
         {promptPay.promptPayId

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { VoucherReviewForm } from "@/components/AccountingDecisionForms";
 import { SlipPreview } from "@/components/SlipPreview";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getCashReceipt } from "@/lib/ops-cycle-service";
 import { CASH_LINE_KIND_LABELS } from "@/lib/ops-cycle-types";
 import { getLatestSlipForVoucher } from "@/lib/payment-slips";
@@ -18,9 +18,7 @@ export default async function OpsVoucherApprovalPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
   const { voucherId } = await params;
   const voucher = getCashReceipt(voucherId);
   if (!voucher) notFound();

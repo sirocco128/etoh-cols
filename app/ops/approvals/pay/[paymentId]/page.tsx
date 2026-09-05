@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PaymentReviewForm } from "@/components/AccountingDecisionForms";
 import { SlipPreview } from "@/components/SlipPreview";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getOrderRepository } from "@/lib/order-repository";
 import { PAYMENT_KIND_LABELS, PAYMENT_RECORD_STATUS_LABELS } from "@/lib/order-types";
 import { getLatestSlipForPayment } from "@/lib/payment-slips";
@@ -18,9 +18,7 @@ export default async function OpsPaymentApprovalPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
   const { paymentId } = await params;
   const payment = getOrderRepository().getPaymentByPaymentId(paymentId);
   if (!payment) notFound();

@@ -37,7 +37,7 @@ export default async function PremiumGiftSetPage() {
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: "หน้าแรก", path: "/" },
-    { name: "Premium Gift Set", path: "/premium-giftset" },
+    { name: "ชุดของขวัญองค์กร", path: "/premium-giftset" },
   ]);
   const faqLd = buildFaqPageJsonLd(faqs);
 
@@ -47,7 +47,7 @@ export default async function PremiumGiftSetPage() {
       <JsonLd data={faqLd} />
 
       <div className="mx-auto max-w-content px-4 pt-8 sm:px-6">
-        <Breadcrumbs items={[{ label: "Premium Gift Set" }]} />
+        <Breadcrumbs items={[{ label: "ชุดของขวัญองค์กร" }]} />
       </div>
 
       <section className="mx-auto max-w-content px-4 pb-12 pt-2 sm:px-6 sm:pb-16">
@@ -57,7 +57,7 @@ export default async function PremiumGiftSetPage() {
               ของขวัญองค์กร · สกรีนโลโก้
             </p>
             <h1 className="mt-3 text-3xl font-bold text-forest sm:text-4xl">
-              Premium Gift Set สำหรับองค์กร
+              ชุดของขวัญองค์กรพรีเมียม
             </h1>
             <p className="mt-4 text-base leading-relaxed text-ink/80">
               รับผลิตชุดของขวัญพร้อมโลโก้และบรรจุภัณฑ์ตามแบรนด์
@@ -99,7 +99,7 @@ export default async function PremiumGiftSetPage() {
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
             <Image
               src="/images/hero-giftset.jpg"
-              alt="ตัวอย่าง Premium Gift Set ในกล่ององค์กร"
+              alt="ตัวอย่างชุดของขวัญองค์กรในกล่อง"
               fill
               className="object-cover"
               sizes="(max-width:1024px) 100vw, 50vw"
@@ -181,7 +181,7 @@ export default async function PremiumGiftSetPage() {
       </section>
 
       <section id="quote" className="mx-auto max-w-content scroll-mt-28 px-4 py-14 sm:px-6">
-        <QuoteForm heading="ขอใบเสนอราคา Premium Gift Set" />
+        <QuoteForm heading="ขอใบเสนอราคาชุดของขวัญองค์กร" />
       </section>
     </>
   );

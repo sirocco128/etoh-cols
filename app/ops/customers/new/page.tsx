@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CustomerOpsForm } from "@/components/CustomerOpsForm";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsNewCustomerPage() {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("customers.write") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("customers.write");
   if (!actorMay(actor, "customers.write")) redirect("/ops/customers");
 
   return (

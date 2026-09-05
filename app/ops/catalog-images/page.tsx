@@ -1,15 +1,13 @@
-import { redirect } from "next/navigation";
 import { OpsCatalogImageSearch } from "@/components/OpsCatalogImageSearch";
 import { listCatalogSourceImages } from "@/lib/catalog-source-images";
 import { products } from "@/lib/data";
-import { isOpsAuthConfigured, requireOpsSession } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsCatalogImagesPage() {
-  if (!isOpsAuthConfigured()) redirect("/ops/login");
-  if (!(await requireOpsSession())) redirect("/ops/login");
+  await requireOpsPage("catalog.write");
 
   const saved = listCatalogSourceImages(48);
 

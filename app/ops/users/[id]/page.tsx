@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { OpsStaffForm } from "@/components/OpsStaffForm";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { getOpsStaffById } from "@/lib/ops-staff";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +12,7 @@ type PageProps = {
 };
 
 export default async function OpsUserEditPage({ params }: PageProps) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("users.write") : null;
-  if (!actor) redirect("/ops/login");
-  if (!actorMay(actor, "users.write")) redirect("/ops/users");
+  await requireOpsPage("users.write");
 
   const { id: raw } = await params;
   const id = Number(raw);

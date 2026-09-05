@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listApprovalQueue } from "@/lib/payment-approval";
 import { SLIP_CHECK_STATUS_LABELS } from "@/lib/slip-verify";
 import { formatThaiDateTime, formatThb } from "@/lib/th-billing";
@@ -9,9 +8,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsApprovalsPage() {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
   const canWrite = actorMay(actor, "orders.write");
   const items = listApprovalQueue();
 

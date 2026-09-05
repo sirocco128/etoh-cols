@@ -16,7 +16,7 @@ import {
 } from "@/lib/customer-types";
 import { isLineOaEnabled } from "@/lib/line-oa";
 import { listMockupAssets } from "@/lib/mockup-assets";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 import { listQuoteRequests } from "@/lib/quote-repository";
 import {
@@ -37,9 +37,7 @@ export default async function OpsCustomerDetailPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("customers.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("customers.read");
   const canWrite = actorMay(actor, "customers.write");
   const canMerge = actorMay(actor, "customers.merge");
 
@@ -74,7 +72,7 @@ export default async function OpsCustomerDetailPage({
       <h1 className="mt-3 text-2xl font-bold text-forest">{customer.company}</h1>
       <p className="mt-1 text-sm text-ink/70">
         {customer.email} · {CUSTOMER_TYPE_LABELS[customer.customerType]} ·{" "}
-        {CUSTOMER_SOURCE_LABELS[customer.source]} · RFQ {customer.quoteCount} ·
+        {CUSTOMER_SOURCE_LABELS[customer.source]} · คำขอ {customer.quoteCount} ·
         ออเดอร์ {customer.orderCount}
       </p>
       <div className="mt-3">

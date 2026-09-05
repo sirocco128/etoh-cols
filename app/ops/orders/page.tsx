@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { getOrderRepository } from "@/lib/order-repository";
 import {
   FULFILLMENT_LABELS,
@@ -30,9 +29,7 @@ export default async function OpsOrdersPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("orders.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("orders.read");
 
   const sp = await searchParams;
   const q = (sp.q || "").trim();

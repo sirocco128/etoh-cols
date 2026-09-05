@@ -27,8 +27,8 @@ describe("nav helpers (UX)", () => {
       "ไอเดียชุดของขวัญ",
     );
     assert.equal(
-      links.find((l) => l.href === "/catalog")?.label,
-      "สมุดแคตตาล็อก",
+      links.find((l) => l.href === "/premium-giftset")?.label,
+      "ชุดของขวัญองค์กร",
     );
   });
 

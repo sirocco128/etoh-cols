@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import {
   ConfirmPaymentForm,
   OrderFulfillmentForm,
 } from "@/components/OrderOpsForms";
 import { OrderStatusTimeline } from "@/components/OrderStatusTimeline";
 import { PromptPayPanel } from "@/components/PromptPayPanel";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import {
   BILLING_DOCUMENT_LABELS,
   PAYMENT_KIND_LABELS,
@@ -39,9 +39,7 @@ export default async function OpsOrderDetailPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
   const canWrite = actorMay(actor, "orders.write");
   const canFactory = actorMay(actor, "factory.read");
   const canFactoryWrite = actorMay(actor, "factory.write");

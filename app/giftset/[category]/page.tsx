@@ -51,7 +51,7 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: "หน้าแรก", path: "/" },
-    { name: "Premium Gift Set", path: "/premium-giftset" },
+    { name: "ชุดของขวัญองค์กร", path: "/premium-giftset" },
     { name: category.name, path: `/giftset/${category.slug}` },
   ]);
 
@@ -61,7 +61,7 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
       <div className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
         <Breadcrumbs
           items={[
-            { href: "/premium-giftset", label: "Premium Gift Set" },
+            { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
             { label: category.name },
           ]}
         />

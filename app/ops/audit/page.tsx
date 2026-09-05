@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { listOpsAudit } from "@/lib/ops-audit";
-import { actorMay, getOpsActor, isOpsAuthConfigured } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { ROLE_LABELS } from "@/lib/ops-roles";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +18,7 @@ function formatWhen(iso: string): string {
 }
 
 export default async function OpsAuditPage() {
-  if (!isOpsAuthConfigured()) redirect("/ops/login");
-  const actor = await getOpsActor();
-  if (!actor) redirect("/ops/login");
-  if (!actorMay(actor, "audit.read")) redirect("/ops/quotes");
+  await requireOpsPage("audit.read");
 
   const rows = listOpsAudit({ limit: 200 });
 

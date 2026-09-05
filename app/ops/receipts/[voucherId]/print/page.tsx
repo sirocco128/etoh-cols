@@ -1,8 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DocumentPreviewShell } from "@/components/DocumentPreviewShell";
 import { PayeeDetailsBlock } from "@/components/PayeeDetailsBlock";
 import { COMPANY, formatRegisteredAddress } from "@/lib/company";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { ensureCashReceiptAccessToken, getCashReceipt } from "@/lib/ops-cycle-service";
 import { CASH_LINE_KIND_LABELS } from "@/lib/ops-cycle-types";
 import { getOrderRepository } from "@/lib/order-repository";
@@ -21,9 +21,7 @@ export default async function CashReceiptPrintPage({
 }: {
   params: Params;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("orders.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("orders.read");
   const { voucherId } = await params;
   const voucher = getCashReceipt(voucherId);
   if (!voucher) notFound();

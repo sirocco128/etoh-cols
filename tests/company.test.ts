@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   COMPANY,
+  formatOpeningHoursDisplay,
   formatRegisteredAddress,
   isPlaceholderEmail,
   isPlaceholderLine,
@@ -55,6 +56,14 @@ describe("company identity (non-product)", () => {
       formatRegisteredAddress(),
       "50/238 ซอยประชาอุทิศ 72 แขวงทุ่งครุ เขตทุ่งครุ กรุงเทพมหานคร 10140",
     );
+  });
+
+  it("formats schema.org opening hours for Thai display", () => {
+    assert.equal(
+      formatOpeningHoursDisplay("Mo-Sa 08:30-17:30"),
+      "จันทร์–เสาร์ 8:30–17:30 น.",
+    );
+    assert.equal(formatOpeningHoursDisplay("ทุกวัน"), "ทุกวัน");
   });
 
   it("detects demo phone, email, and LINE", () => {

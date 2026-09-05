@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import {
   countQuoteRequests,
   listQuoteRequests,
@@ -36,9 +35,7 @@ export default async function OpsQuotesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("quotes.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("quotes.read");
 
   const sp = await searchParams;
   const q = (sp.q || "").trim();
@@ -56,7 +53,7 @@ export default async function OpsQuotesPage({
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-forest">ใบเสนอราคา (RFQ)</h1>
+          <h1 className="text-2xl font-bold text-forest">ใบเสนอราคา</h1>
           <p className="mt-1 text-sm text-ink/70">พบ {total} รายการ</p>
         </div>
       </div>
@@ -104,7 +101,10 @@ export default async function OpsQuotesPage({
             {quotes.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-2 py-8 text-center text-ink/60">
-                  ยังไม่มีคำขอ — ลองส่งฟอร์มที่ /contact
+                  ยังไม่มีคำขอ —{" "}
+                  <Link href="/contact" className="text-forest underline-offset-2 hover:underline">
+                    ส่งแบบฟอร์มติดต่อ
+                  </Link>
                 </td>
               </tr>
             ) : (

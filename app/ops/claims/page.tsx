@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { createClaimAction, setClaimStatusAction } from "@/app/actions/ops-cycle";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { listClaims } from "@/lib/ops-cycle-service";
 import {
   CLAIM_AGAINST,
@@ -22,9 +21,7 @@ export default async function ClaimsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("factory.write"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("factory.write");
   const sp = await searchParams;
   const rows = listClaims(80);
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import {
   DEPARTMENT_LABELS,
   ROLE_LABELS,
@@ -26,9 +25,7 @@ function formatWhen(iso: string | null): string {
 }
 
 export default async function OpsUsersPage() {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("users.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("users.read");
   const canWrite = actorMay(actor, "users.write");
   const staff = listOpsStaff();
   const envUsers = listOpsUserSeeds();

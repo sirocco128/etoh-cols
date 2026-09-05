@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { receiveGoodsAction } from "@/app/actions/ops-cycle";
 import { listPos } from "@/lib/factory-po-service";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import {
   factoryPayableSnapshot,
   listGoodsReceipts,
@@ -24,9 +23,7 @@ export default async function InboundPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("factory.write"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("factory.write");
   const sp = await searchParams;
   const pos = listPos({ status: "all" }).filter(
     (po) => po.status !== "cancelled" && po.status !== "draft",

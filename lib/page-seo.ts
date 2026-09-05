@@ -46,7 +46,7 @@ const INDEXABLE_STATICS: CatalogSeoPage[] = [
   },
   {
     path: "/premium-giftset",
-    label: "Premium Gift Set",
+    label: "ชุดของขวัญองค์กร",
     kind: "static",
     keywords: ["premium gift set", "ของขวัญองค์กรพรีเมียม", "สกรีนโลโก้"],
     seo: {

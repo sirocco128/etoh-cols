@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { OpsTagField } from "@/components/OpsTagField";
 import { EntityTagForm } from "@/components/EntityTagForm";
 import { TagChips } from "@/components/TagChips";
 import { createCashReceiptAction } from "@/app/actions/ops-cycle";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { listCashReceipts } from "@/lib/ops-cycle-service";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 import {
@@ -26,9 +25,7 @@ export default async function CashReceiptsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("orders.write"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("orders.write");
   const sp = await searchParams;
   const orderId = (sp.orderId || "").trim();
   const order = orderId

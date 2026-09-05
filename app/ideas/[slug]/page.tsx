@@ -17,7 +17,7 @@ import {
   getIdeaTheme,
   ideaThemePath,
 } from "@/lib/seo-themes";
-import { getProducts } from "@/lib/strapi";
+import { getArticleBySlug, getProducts } from "@/lib/strapi";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -52,6 +52,7 @@ export default async function IdeaThemePage({ params }: PageProps) {
   const related = products.filter((product) =>
     theme.relatedProductSlugs.includes(product.slug),
   );
+  const themeArticle = await getArticleBySlug(`gift-set-${theme.slug}-theme`);
   const faqs = theme.faqs.map((faq) => ({
     question: faq.question,
     answer: faq.answer,
@@ -99,12 +100,14 @@ export default async function IdeaThemePage({ params }: PageProps) {
               >
                 ดูสินค้า
               </Link>
-              <Link
-                href={`/blog/gift-set-${theme.slug}-theme`}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                อ่านบทความธีมนี้
-              </Link>
+              {themeArticle ? (
+                <Link
+                  href={`/blog/${themeArticle.slug}`}
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+                >
+                  อ่านบทความธีมนี้
+                </Link>
+              ) : null}
             </div>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest-mist">

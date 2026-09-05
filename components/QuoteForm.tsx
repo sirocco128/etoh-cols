@@ -58,6 +58,8 @@ type QuoteFormProps = {
   basketId?: string;
 };
 
+const QUOTE_STEPS = ["ผู้ติดต่อ", "งานที่ต้องการ", "ที่อยู่และส่งคำขอ"] as const;
+
 function fieldError(
   fieldErrors: Record<string, string> | undefined,
   name: string,
@@ -127,6 +129,7 @@ export function QuoteForm({
   const [draftReady, setDraftReady] = useState(false);
   const [draft, setDraft] = useState<QuoteFormValues>({});
   const [contactAttempted, setContactAttempted] = useState(false);
+  const [step, setStep] = useState(0);
   const startedRef = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -211,6 +214,22 @@ export function QuoteForm({
     window.addEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
     return () => window.removeEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
   }, []);
+
+  useEffect(() => {
+    if (!state.fieldErrors) return;
+    const keys = Object.keys(state.fieldErrors);
+    if (keys.some((key) => ["name", "company", "email", "phone", "taxId"].includes(key))) {
+      setStep(0);
+    } else if (
+      keys.some((key) =>
+        ["quantity", "budgetPerSet", "neededDate", "productInterest", "decorationMethod", "detail"].includes(key),
+      )
+    ) {
+      setStep(1);
+    } else {
+      setStep(2);
+    }
+  }, [state.fieldErrors]);
 
   useEffect(() => {
     if (state.ok && state.requestId) {
@@ -307,7 +326,7 @@ export function QuoteForm({
               rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest"
             >
-              LINE {site.lineId}
+              แชทไลน์ {site.lineId}
             </a>
           ) : null}
           <Link
@@ -332,6 +351,19 @@ export function QuoteForm({
         <p className="text-sm text-ink/60">กำลังเตรียมฟอร์ม…</p>
       </div>
     );
+  }
+
+  function goNext() {
+    if (step === 0) {
+      const emailIssue = emailFieldError(val("email"));
+      const phoneIssue = phoneFieldError(val("phone"));
+      if (!val("name")?.trim() || !val("company")?.trim() || emailIssue || phoneIssue) {
+        setContactAttempted(true);
+        return;
+      }
+    }
+    if (step === 1 && !(val("quantity") || "").trim()) return;
+    setStep((current) => Math.min(QUOTE_STEPS.length - 1, current + 1));
   }
 
   const errors = state.fieldErrors;
@@ -360,6 +392,23 @@ export function QuoteForm({
           หากส่งไม่สำเร็จ ระบบเก็บบร่างไว้ในเครื่องนี้ให้กดส่งซ้ำได้
         </p>
       </div>
+
+      <ol className="flex flex-wrap gap-2 text-xs" aria-label="ขั้นตอนแบบฟอร์ม">
+        {QUOTE_STEPS.map((label, index) => (
+          <li
+            key={label}
+            className={`rounded-full px-3 py-1 ${
+              index === step
+                ? "bg-forest text-paper"
+                : index < step
+                  ? "bg-forest-mist text-forest"
+                  : "bg-forest-mist/50 text-ink/50"
+            }`}
+          >
+            {index + 1}. {label}
+          </li>
+        ))}
+      </ol>
 
       {state.formError ? (
         <div
@@ -406,12 +455,12 @@ export function QuoteForm({
         value={val("productSlug", productSlug)}
       />
 
+      <div className={step === 0 ? "space-y-5" : "hidden"}>
       <Field
         id="name"
         name="name"
         label="ชื่อ-นามสกุล *"
         error={fieldError(errors, "name")}
-        required
         autoComplete="name"
         defaultValue={val("name")}
       />
@@ -445,13 +494,17 @@ export function QuoteForm({
           forceShow={contactAttempted}
           onChange={(next) => patchDraft(next)}
         />
+      </div>
+      </div>
+
+      <div className={step === 1 ? "space-y-5" : "hidden"}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field
           id="quantity"
           name="quantity"
           type="number"
           label="จำนวนโดยประมาณ (เซ็ต) *"
           error={fieldError(errors, "quantity")}
-          required
           min={1}
           defaultValue={val("quantity")}
         />
@@ -473,17 +526,6 @@ export function QuoteForm({
           defaultValue={val("neededDate")}
         />
       </div>
-
-      <ThaiAddressFields
-        streetAddress={val("streetAddress")}
-        province={val("province")}
-        district={val("district")}
-        subdistrict={val("subdistrict")}
-        zip={val("zip")}
-        streetError={fieldError(errors, "streetAddress")}
-        provinceError={fieldError(errors, "province")}
-        onChange={(next) => patchDraft(next)}
-      />
 
       <Field
         id="productInterest"
@@ -578,6 +620,19 @@ export function QuoteForm({
           </p>
         ) : null}
       </div>
+      </div>
+
+      <div className={step === 2 ? "space-y-5" : "hidden"}>
+      <ThaiAddressFields
+        streetAddress={val("streetAddress")}
+        province={val("province")}
+        district={val("district")}
+        subdistrict={val("subdistrict")}
+        zip={val("zip")}
+        streetError={fieldError(errors, "streetAddress")}
+        provinceError={fieldError(errors, "province")}
+        onChange={(next) => patchDraft(next)}
+      />
 
       <div className="flex items-start gap-3">
         <input
@@ -585,7 +640,7 @@ export function QuoteForm({
           name="consent"
           type="checkbox"
           value="true"
-          required
+          required={step === 2}
           defaultChecked={val("consent") === "true"}
           className="mt-1 h-5 w-5 rounded border-forest/30 text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           aria-invalid={Boolean(fieldError(errors, "consent"))}
@@ -600,14 +655,36 @@ export function QuoteForm({
           {fieldError(errors, "consent")}
         </p>
       ) : null}
+      </div>
 
-      <button
-        type="submit"
-        disabled={pending || !startedAt}
-        className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper transition hover:bg-forest-light disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass sm:w-auto"
-      >
-        {pending ? "กำลังส่ง..." : "ส่งคำขอใบเสนอราคา"}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        {step > 0 ? (
+          <button
+            type="button"
+            onClick={() => setStep((current) => Math.max(0, current - 1))}
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+          >
+            ย้อนกลับ
+          </button>
+        ) : null}
+        {step < QUOTE_STEPS.length - 1 ? (
+          <button
+            type="button"
+            onClick={goNext}
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper"
+          >
+            ถัดไป
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={pending || !startedAt}
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper transition hover:bg-forest-light disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass sm:w-auto"
+          >
+            {pending ? "กำลังส่ง..." : "ส่งคำขอใบเสนอราคา"}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

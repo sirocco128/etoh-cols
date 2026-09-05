@@ -6,6 +6,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   actorMay,
   findOpsUserByEmail,
@@ -210,5 +211,16 @@ export async function requireOpsActor(
   const actor = await getOpsActor();
   if (!actor) return null;
   if (permission && !actorMay(actor, permission)) return null;
+  return actor;
+}
+
+/** Login if unsigned-in; dedicated page if signed-in without the permission. */
+export async function requireOpsPage(
+  permission?: OpsPermission,
+): Promise<OpsActor> {
+  if (!isOpsAuthConfigured()) redirect("/ops/login");
+  const actor = await getOpsActor();
+  if (!actor) redirect("/ops/login");
+  if (permission && !actorMay(actor, permission)) redirect("/ops/forbidden");
   return actor;
 }

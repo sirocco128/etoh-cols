@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LineLabSpa } from "@/components/LineLabSpa";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import {
   lineOaLabStatus,
   listLineLabContacts,
@@ -11,9 +11,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsLineLabPage() {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("customers.write") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("customers.write");
   if (!actorMay(actor, "customers.write")) redirect("/ops/customers");
 
   const status = lineOaLabStatus();

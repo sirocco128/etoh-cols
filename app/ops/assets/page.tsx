@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { createAssetAction } from "@/app/actions/ops-cycle";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listAssets } from "@/lib/ops-cycle-service";
 import { formatThaiDateTime, formatThb } from "@/lib/th-billing";
 
@@ -16,9 +15,7 @@ export default async function AssetsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("finance.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("finance.read");
   const canWrite = actorMay(actor, "finance.write");
   const sp = await searchParams;
   const rows = listAssets(80);

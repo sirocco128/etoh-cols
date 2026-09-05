@@ -45,7 +45,7 @@ export default function CustomizeGiftSetPage() {
       <Breadcrumbs items={[{ label: "ออกแบบเซ็ตเอง" }]} />
       <section className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-wide text-brass">
-          Custom Gift Set
+          เซ็ตตามโจทย์องค์กร
         </p>
         <h1 className="mt-3 text-3xl font-bold text-forest sm:text-4xl">
           ออกแบบเซ็ตของขวัญองค์กรเอง

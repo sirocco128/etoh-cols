@@ -1,8 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DocumentPreviewShell } from "@/components/DocumentPreviewShell";
 import { COMPANY, formatRegisteredAddress } from "@/lib/company";
 import { getFactoryPo } from "@/lib/factory-po-service";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { getClaimByReceiptId, getGoodsReceipt } from "@/lib/ops-cycle-service";
 import { DESTINATION_LABELS } from "@/lib/ops-cycle-types";
 import { formatThaiDate, formatThb } from "@/lib/th-billing";
@@ -17,9 +17,7 @@ export default async function GoodsReceiptPrintPage({
 }: {
   params: Params;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("factory.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("factory.read");
   const { receiptId } = await params;
   const receipt = getGoodsReceipt(receiptId);
   if (!receipt) notFound();

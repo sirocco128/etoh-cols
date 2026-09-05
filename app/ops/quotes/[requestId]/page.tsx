@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { CreateOrderForm } from "@/components/CreateOrderForm";
 import { QuoteOpsForm } from "@/components/QuoteOpsForm";
 import { getCustomerById } from "@/lib/customer-repository";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getOrderRepository } from "@/lib/order-repository";
 import { getQuoteByRequestId } from "@/lib/quote-repository";
 import {
@@ -23,11 +23,7 @@ export default async function OpsQuoteDetailPage({
 }: {
   params: Params;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("quotes.read") : null;
-  if (!actor) {
-    redirect("/ops/login");
-  }
+  const actor = await requireOpsPage("quotes.read");
   const canWrite = actorMay(actor, "quotes.write");
 
   const { requestId } = await params;

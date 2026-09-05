@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FactoryPoForm } from "@/components/FactoryPoForm";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { draftFromOrder } from "@/lib/factory-po-service";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +14,7 @@ export default async function NewFactoryPoPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("factory.write") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("factory.write");
   if (!actorMay(actor, "factory.write")) redirect("/ops/quotes");
 
   const sp = await searchParams;

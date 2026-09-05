@@ -1,15 +1,12 @@
-import { redirect } from "next/navigation";
 import { OpsSeoEditor } from "@/components/OpsSeoEditor";
-import { actorMay, getOpsActor, isOpsAuthConfigured } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listResolvedSeoPages } from "@/lib/page-seo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsSeoPage() {
-  if (!isOpsAuthConfigured()) redirect("/ops/login");
-  const actor = await getOpsActor();
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage();
 
   const pages = listResolvedSeoPages();
   const canWrite = actorMay(actor, "seo.write");

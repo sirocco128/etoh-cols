@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { BillingDocumentView } from "@/components/BillingDocumentView";
 import { DocumentPreviewShell } from "@/components/DocumentPreviewShell";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { getOrderBundle } from "@/lib/order-service";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +14,7 @@ export default async function OpsBillingDocumentPage({
 }: {
   params: Params;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("orders.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("orders.read");
   const { orderId, documentId } = await params;
   const bundle = getOrderBundle(orderId);
   const document = bundle?.documents.find((d) => d.documentId === documentId);

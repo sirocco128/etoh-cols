@@ -1,15 +1,11 @@
-import { redirect } from "next/navigation";
 import { OpsAssistantChat } from "@/components/OpsAssistantChat";
-import { actorMay, getOpsActor, isOpsAuthConfigured } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function OpsAssistantPage() {
-  if (!isOpsAuthConfigured()) redirect("/ops/login");
-  const actor = await getOpsActor();
-  if (!actor) redirect("/ops/login");
-  if (!actorMay(actor, "assistant.use")) redirect("/ops/quotes");
+  await requireOpsPage("assistant.use");
 
   return (
     <div>

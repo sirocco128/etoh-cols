@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavLink } from "@/components/NavLink";
@@ -37,14 +36,12 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          <ThemeToggle />
           <Button asChild>
             <Link href="/contact">ขอใบเสนอราคา</Link>
           </Button>
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <ThemeToggle />
           <MobileMenu enableP2QuoteTools={isP2QuoteToolsEnabled()} />
         </div>
       </div>

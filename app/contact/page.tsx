@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { QuoteForm } from "@/components/QuoteForm";
-import { COMPANY, formatRegisteredAddress } from "@/lib/company";
+import { COMPANY, formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
 import { metadataForPath } from "@/lib/page-seo";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
@@ -93,7 +93,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
             ) : null}
             {contact.showLine ? (
               <div>
-                <dt className="font-semibold text-forest">LINE OA</dt>
+                <dt className="font-semibold text-forest">แชทไลน์</dt>
                 <dd className="mt-1">
                   <a
                     href={site.lineUrl}
@@ -116,7 +116,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               <div>
                 <dt className="font-semibold text-forest">เวลาทำการ</dt>
                 <dd className="mt-1 text-ink/80">
-                  {site.localBusiness.openingHours}
+                  {formatOpeningHoursDisplay(site.localBusiness.openingHours)}
                 </dd>
               </div>
             ) : null}

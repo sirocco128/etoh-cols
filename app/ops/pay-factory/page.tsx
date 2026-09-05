@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { payFactoryAction } from "@/app/actions/ops-cycle";
 import { listPos } from "@/lib/factory-po-service";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import {
   factoryPayableSnapshot,
   listSupplierPayments,
@@ -20,9 +19,7 @@ export default async function PayFactoryPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("finance.write"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("finance.write");
   const sp = await searchParams;
   const pos = listPos({ status: "all" }).filter((po) => po.status !== "cancelled");
   const snaps = pos

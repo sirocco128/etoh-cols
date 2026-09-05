@@ -118,6 +118,38 @@ export function isOpsRole(value: string | null | undefined): value is OpsRole {
   return (OPS_ROLES as readonly string[]).includes(String(value || ""));
 }
 
+export const PERMISSION_GROUPS: Array<{
+  title: string;
+  items: OpsPermission[];
+}> = [
+  { title: "ใบเสนอราคา", items: ["quotes.read", "quotes.write"] },
+  {
+    title: "ลูกค้า",
+    items: [
+      "customers.read",
+      "customers.write",
+      "customers.merge",
+      "customers.import",
+    ],
+  },
+  { title: "ออเดอร์", items: ["orders.read", "orders.write"] },
+  {
+    title: "โรงงาน",
+    items: ["factory.read", "factory.write", "catalog.write"],
+  },
+  { title: "บัญชี", items: ["finance.read", "finance.write"] },
+  {
+    title: "ระบบ",
+    items: [
+      "audit.read",
+      "assistant.use",
+      "seo.write",
+      "users.read",
+      "users.write",
+    ],
+  },
+];
+
 export function permissionsFor(role: OpsRole): OpsPermission[] {
   return [...ROLE_PERMISSIONS[role]];
 }

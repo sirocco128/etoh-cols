@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import {
   claimFromIssueAction,
   createOpsIssueAction,
   setIssueStatusAction,
 } from "@/app/actions/ops-cycle";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getClaimByIssueId, listIssues } from "@/lib/ops-cycle-service";
 import {
   ISSUE_CATEGORIES,
@@ -26,9 +25,7 @@ export default async function OpsIssuesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
   const canWrite = actorMay(actor, "orders.write");
   const canClaim = actorMay(actor, "factory.write");
   const sp = await searchParams;

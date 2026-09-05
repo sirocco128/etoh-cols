@@ -35,7 +35,7 @@ export function EmptyState({
           href="/premium-giftset"
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest transition hover:bg-paper"
         >
-          ดู Premium Gift Set
+          ดูชุดของขวัญองค์กร
         </Link>
       </div>
     </div>

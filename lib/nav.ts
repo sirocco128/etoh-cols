@@ -1,6 +1,6 @@
 /** Shared primary navigation (desktop + mobile). */
 export const PRIMARY_NAV_LINKS = [
-  { href: "/premium-giftset", label: "Premium Gift Set" },
+  { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
   { href: "/products", label: "สินค้าพรีเมียม" },
   { href: "/catalog", label: "สมุดแคตตาล็อก" },
   { href: "/ideas", label: "ไอเดียชุดของขวัญ" },

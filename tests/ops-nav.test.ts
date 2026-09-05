@@ -1,0 +1,35 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { buildOpsNavLinks, isOpsNavActive } from "../lib/ops-nav";
+import { OPS_PERMISSIONS, PERMISSION_GROUPS } from "../lib/ops-roles";
+
+describe("ops nav", () => {
+  it("keeps overview exact so nested ops pages are not all marked active", () => {
+    assert.equal(isOpsNavActive("/ops", "/ops"), true);
+    assert.equal(isOpsNavActive("/ops/quotes", "/ops"), false);
+    assert.equal(isOpsNavActive("/ops/quotes/RFQ-1", "/ops/quotes"), true);
+  });
+
+  it("puts core work in primary and staff tools in more", () => {
+    const admin = buildOpsNavLinks({
+      email: "admin",
+      name: "ผู้ดูแล",
+      role: "admin",
+    });
+    assert.equal(admin.some((link) => link.href === "/ops" && link.group === "primary"), true);
+    assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "more"), true);
+    const viewer = buildOpsNavLinks({
+      email: "view@local",
+      name: "ดู",
+      role: "viewer",
+    });
+    assert.equal(viewer.some((link) => link.href === "/ops/users"), false);
+  });
+});
+
+describe("permission groups", () => {
+  it("covers every ops permission exactly once", () => {
+    const grouped = PERMISSION_GROUPS.flatMap((group) => group.items);
+    assert.deepEqual([...grouped].sort(), [...OPS_PERMISSIONS].sort());
+  });
+});

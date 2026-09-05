@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   createOpsStaffAction,
   updateOpsStaffAction,
@@ -8,11 +8,11 @@ import {
 } from "@/app/actions/ops-staff";
 import {
   DEPARTMENT_LABELS,
-  OPS_PERMISSIONS,
-  OPS_ROLES,
+  PERMISSION_GROUPS,
   PERMISSION_LABELS,
   ROLE_LABELS,
   ROLE_PERMISSIONS,
+  OPS_ROLES,
   STAFF_DEPARTMENTS,
   type OpsPermission,
   type OpsRole,
@@ -41,7 +41,8 @@ export function OpsStaffForm({
 }) {
   const action = mode === "create" ? createOpsStaffAction : updateOpsStaffAction;
   const [state, formAction, pending] = useActionState(action, initial);
-  const role = staff?.role ?? "sales";
+  const [role, setRole] = useState<OpsRole>(staff?.role ?? "sales");
+  const baseline = ROLE_PERMISSIONS[role];
 
   return (
     <form action={formAction} className="mt-6 max-w-3xl space-y-5">
@@ -74,7 +75,8 @@ export function OpsStaffForm({
           <span className="font-medium text-forest">บทบาท</span>
           <select
             name="role"
-            defaultValue={role}
+            value={role}
+            onChange={(event) => setRole(event.target.value as OpsRole)}
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
           >
             {OPS_ROLES.map((item) => (
@@ -133,58 +135,69 @@ export function OpsStaffForm({
         <span className="mt-1 block text-xs text-ink/55">อย่างน้อย 12 ตัวอักษร</span>
       </label>
 
-      <fieldset className="rounded-xl border border-forest/15 p-4">
-        <legend className="px-1 text-sm font-semibold text-forest">
-          สิทธิ์เพิ่มจากบทบาท
-        </legend>
+      <fieldset key={`grants-${role}`} className="rounded-xl border border-forest/15 p-4">
         <p className="mb-3 text-xs text-ink/60">
           บทบาทกำหนดชุดสิทธิ์พื้นฐานแล้ว เลือกเพิ่มเฉพาะงานที่ต้องการให้ทำได้มากกว่าบทบาท
         </p>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {OPS_PERMISSIONS.map((permission) => {
-            const baseline = ROLE_PERMISSIONS[role].includes(permission);
-            return (
-              <li key={`g-${permission}`}>
-                <label className="flex items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    name="grant"
-                    value={permission}
-                    defaultChecked={staff?.extraGrants.includes(permission)}
-                    disabled={baseline}
-                  />
-                  <span>
-                    {PERMISSION_LABELS[permission]}
-                    {baseline ? (
-                      <span className="block text-xs text-ink/45">มีตามบทบาทอยู่แล้ว</span>
-                    ) : null}
-                  </span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
+        {PERMISSION_GROUPS.map((group) => (
+          <div key={`g-${group.title}`} className="mt-4 first:mt-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">
+              {group.title}
+            </p>
+            <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+              {group.items.map((permission) => {
+                const inRole = baseline.includes(permission);
+                return (
+                  <li key={`g-${permission}`}>
+                    <label className="flex items-start gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="grant"
+                        value={permission}
+                        defaultChecked={staff?.extraGrants.includes(permission)}
+                        disabled={inRole}
+                      />
+                      <span>
+                        {PERMISSION_LABELS[permission]}
+                        {inRole ? (
+                          <span className="block text-xs text-ink/45">มีตามบทบาทอยู่แล้ว</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </fieldset>
 
       <fieldset className="rounded-xl border border-forest/15 p-4">
         <legend className="px-1 text-sm font-semibold text-forest">
           ห้ามใช้แม้บทบาทมี
         </legend>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {OPS_PERMISSIONS.map((permission) => (
-            <li key={`d-${permission}`}>
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="deny"
-                  value={permission}
-                  defaultChecked={staff?.extraDenies.includes(permission)}
-                />
-                <span>{PERMISSION_LABELS[permission]}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        {PERMISSION_GROUPS.map((group) => (
+          <div key={`d-${group.title}`} className="mt-4 first:mt-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">
+              {group.title}
+            </p>
+            <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+              {group.items.map((permission) => (
+                <li key={`d-${permission}`}>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="deny"
+                      value={permission}
+                      defaultChecked={staff?.extraDenies.includes(permission)}
+                    />
+                    <span>{PERMISSION_LABELS[permission]}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </fieldset>
 
       {state && !state.ok ? (

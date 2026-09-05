@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type ProductsPageProps = {
-  searchParams: Promise<{ category?: string | string[] }>;
+  searchParams: Promise<{ category?: string | string[]; q?: string | string[] }>;
 };
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -26,6 +26,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const categorySlug = Array.isArray(params.category)
     ? params.category[0]
     : params.category;
+  const queryRaw = Array.isArray(params.q) ? params.q[0] : params.q;
+  const query = (queryRaw || "").trim().toLowerCase();
   const [products, categories] = await Promise.all([
     getProducts(),
     getCategories(),
@@ -34,9 +36,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     categorySlug && categories.some((item) => item.slug === categorySlug)
       ? categorySlug
       : null;
-  const visible = activeCategory
-    ? products.filter((product) => product.categorySlug === activeCategory)
-    : products;
+  const visible = products.filter((product) => {
+    if (activeCategory && product.categorySlug !== activeCategory) return false;
+    if (!query) return true;
+    const haystack = `${product.name} ${product.description || ""}`.toLowerCase();
+    return haystack.includes(query);
+  });
 
   return (
     <div className="bg-premium-mesh">
@@ -63,8 +68,40 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </p>
         </FadeIn>
 
+        <form className="mt-8 flex flex-wrap gap-2" method="get" action="/products">
+          {activeCategory ? (
+            <input type="hidden" name="category" value={activeCategory} />
+          ) : null}
+          <label className="sr-only" htmlFor="product-search">
+            ค้นหาสินค้า
+          </label>
+          <input
+            id="product-search"
+            name="q"
+            defaultValue={queryRaw || ""}
+            placeholder="ค้นหาชื่อสินค้า"
+            className="min-h-11 min-w-[16rem] flex-1 rounded-full border border-forest/15 bg-paper px-4 text-sm"
+          />
+          <button
+            type="submit"
+            className="inline-flex min-h-11 items-center rounded-full bg-forest px-5 text-sm font-medium text-paper"
+          >
+            ค้นหา
+          </button>
+        </form>
+
         {categories.length > 0 ? (
-          <CatalogFilterTabs categories={categories} activeSlug={activeCategory} />
+          <CatalogFilterTabs
+            categories={categories}
+            activeSlug={activeCategory}
+            hrefFor={(slug) => {
+              const next = new URLSearchParams();
+              if (slug) next.set("category", slug);
+              if (query) next.set("q", queryRaw || query);
+              const qs = next.toString();
+              return qs ? `/products?${qs}` : "/products";
+            }}
+          />
         ) : null}
 
         {products.length === 0 ? (
@@ -76,8 +113,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           />
         ) : visible.length === 0 ? (
           <EmptyState
-            title="ยังไม่มีสินค้าในหมวดนี้"
-            description="ลองดูหมวดอื่น หรือส่งโจทย์ให้ทีมขายแนะนำเซ็ตที่สกรีนโลโก้ได้"
+            title={query ? "ไม่พบสินค้าที่ตรงคำค้น" : "ยังไม่มีสินค้าในหมวดนี้"}
+            description="ลองเปลี่ยนคำค้นหรือหมวด หรือส่งโจทย์ให้ทีมขายแนะนำเซ็ตที่สกรีนโลโก้ได้"
             actionHref="/contact"
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />

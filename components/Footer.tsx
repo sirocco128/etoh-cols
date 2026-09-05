@@ -1,20 +1,17 @@
 import Link from "next/link";
-import { formatRegisteredAddress } from "@/lib/company";
+import { formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 
 const SERVICE_LINKS = [
-  { href: "/premium-giftset", label: "Premium Gift Set" },
+  { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
   { href: "/products", label: "สินค้าพรีเมียม" },
   { href: "/catalog", label: "สมุดแคตตาล็อก" },
   { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
-  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/portfolio", label: "ผลงาน" },
   { href: "/blog", label: "บทความ" },
   { href: "/contact", label: "ติดต่อขอใบเสนอราคา" },
-  { href: "/orders", label: "ออเดอร์ / ชำระเงิน" },
-  { href: "/issues", label: "แจ้งปัญหา" },
 ] as const;
 
 const INFO_LINKS = [
@@ -34,6 +31,7 @@ export function Footer() {
     region: site.localBusiness.region,
     postalCode: site.localBusiness.postalCode,
   });
+  const hours = formatOpeningHoursDisplay(site.localBusiness.openingHours);
 
   return (
     <footer className="mt-auto border-t border-forest/10 bg-forest text-paper">
@@ -95,7 +93,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-brass-soft"
                 >
-                  LINE OA {site.lineId}
+                  แชทไลน์ {site.lineId}
                 </a>
               </li>
             ) : (
@@ -108,10 +106,8 @@ export function Footer() {
             {address ? (
               <li className="pt-2 text-paper/70">{address}</li>
             ) : null}
-            {site.localBusiness.openingHours ? (
-              <li className="text-paper/70">
-                เวลาทำการ: {site.localBusiness.openingHours}
-              </li>
+            {hours ? (
+              <li className="text-paper/70">เวลาทำการ: {hours}</li>
             ) : null}
           </ul>
           <ul className="mt-6 space-y-2 text-sm">

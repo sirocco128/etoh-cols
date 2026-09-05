@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { actorMay, isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -51,15 +50,13 @@ const CARDS = [
   {
     href: "/ops/qr-pay",
     perm: "orders.read" as const,
-    title: "QR Payments",
+    title: "QR พร้อมเพย์",
     body: "รวม QR พร้อมเพย์ของใบรับเงินและงวดที่รอชำระ",
   },
 ];
 
 export default async function OpsCycleHubPage() {
-  const actor =
-    isOpsAuthConfigured() ? await requireOpsActor("orders.read") : null;
-  if (!actor) redirect("/ops/login");
+  const actor = await requireOpsPage("orders.read");
 
   return (
     <div>

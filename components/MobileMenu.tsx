@@ -138,6 +138,14 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   {link.label}
                 </NavLink>
               ))}
+              <NavLink
+                href="/orders"
+                onClick={close}
+                className="rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
+                activeClassName="bg-forest-mist text-forest"
+              >
+                ออเดอร์ของฉัน
+              </NavLink>
             </nav>
             <div className="space-y-2 border-t border-forest/10 p-4">
               <NavLink
@@ -162,15 +170,15 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   rel="noopener noreferrer"
                   className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
                 >
-                  LINE OA {site.lineId}
+                  แชทไลน์ {site.lineId}
                 </a>
               ) : (
                 <NavLink
-                  href="/about"
+                  href="/contact"
                   onClick={close}
                   className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
                 >
-                  เกี่ยวกับบริษัท
+                  ส่งแบบฟอร์มติดต่อ
                 </NavLink>
               )}
             </div>

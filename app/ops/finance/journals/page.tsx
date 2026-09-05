@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { requireOpsPage } from "@/lib/ops-auth";
 import { listJournals, listLedgerAccounts } from "@/lib/ledger-repository";
 import { formatThb } from "@/lib/th-billing";
 import { defaultFinanceRange } from "@/lib/finance-report";
@@ -15,9 +14,7 @@ export default async function JournalsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  if (!isOpsAuthConfigured() || !(await requireOpsActor("finance.read"))) {
-    redirect("/ops/login");
-  }
+  await requireOpsPage("finance.read");
   const sp = await searchParams;
   const fallback = defaultFinanceRange();
   const fromDate = /^\d{4}-\d{2}-\d{2}$/.test(sp.from || "") ? sp.from! : fallback.fromDate;
