@@ -16,7 +16,7 @@ Local staff UI for RFQ leads and a lightweight CRM. **Not** Strapi CMS and **not
 - LINE lab: http://localhost:3000/ops/line-lab (sales / admin)
 - Sales assistant: http://localhost:3000/ops/assistant (admin / sales)
 - Factory photos: http://localhost:3000/ops/catalog-images (admin / sales) — Gemini searches live 1688 / Alibaba listings and stores images in SQLite (not the public catalog)
-- **Strapi CMS:** from ภาพรวม or เมนู เพิ่มเติม → **เข้า Strapi** (admin / sales) — opens `{STRAPI_ADMIN_URL}` or `{STRAPI_URL}/admin` in a new tab. If `STRAPI_URL` is `host.docker.internal`, the link rewrites to `localhost` so it works in the browser.
+- **Strapi CMS:** เมนู **เข้า Strapi** บนแถบคอนโซล (admin / sales) — เปิด `{STRAPI_ADMIN_URL}` หรือ `{STRAPI_URL}/admin` ในแท็บใหม่. ถ้า `STRAPI_URL` เป็น `host.docker.internal` ลิงก์จะชี้ `localhost`. Server fetch ใช้ `127.0.0.1` เพื่อไม่ให้ค้าง IPv6.
 - Audit: http://localhost:3000/ops/audit (admin)
 - Users / RBAC: http://localhost:3000/ops/users (admin)
 

@@ -12,9 +12,9 @@ export default function OpsLoginPage() {
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบปฏิบัติการ</h1>
       <p className="mt-2 text-sm text-ink/70">
-        จัดการลูกค้าและใบเสนอราคาจากฐานข้อมูลร้าน — ไม่ใช่หน้าแก้ไขแคตตาล็อก
+        จัดการลูกค้า ใบเสนอราคา และออเดอร์ — แคตตาล็อกสินค้าเปิดจากเมนูเข้า Strapi หลังล็อกอิน
       </p>
-      <form action={action} className="mt-6 space-y-4">
+      <form action={action} className="mt-6 space-y-4" aria-busy={pending}>
         <label className="block text-sm">
           <span className="font-medium text-forest">อีเมล</span>
           <input
@@ -22,6 +22,7 @@ export default function OpsLoginPage() {
             name="email"
             autoComplete="username"
             placeholder="admin"
+            defaultValue="admin"
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
           />
         </label>

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { SMARTGIFT_FX_CNY_THB } from "@/lib/alibaba/rates";
 import {
+  countOpenInboundPos,
   getFactoryPoByPoId,
   insertFactoryPo,
   listFactoryPos,
@@ -195,6 +196,10 @@ export function listPos(params?: {
   status?: FactoryPoStatus | "all";
 }): FactoryPoRecord[] {
   return listFactoryPos(params);
+}
+
+export function countInboundPos(): number {
+  return countOpenInboundPos();
 }
 
 export function draftFromOrder(orderId: string): SaveFactoryPoInput | null {

@@ -262,3 +262,15 @@ export function listFactoryPos(params?: {
     .all(...binds, limit) as FactoryPoRow[];
   return rows.map(mapPo);
 }
+
+/** Open factory POs still waiting on goods — for the ops overview card. */
+export function countOpenInboundPos(): number {
+  const row = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS n FROM factory_pos
+       WHERE status NOT IN ('cancelled', 'draft', 'received')
+         AND COALESCE(received_qty, 0) < quantity`,
+    )
+    .get() as { n: number } | undefined;
+  return Number(row?.n ?? 0);
+}

@@ -60,6 +60,7 @@ export function getNexterpPool(): Pool {
           database: config.database,
           waitForConnections: true,
           connectionLimit: 5,
+          connectTimeout: 2000,
           namedPlaceholders: true,
           timezone: "Z",
         });

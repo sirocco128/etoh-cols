@@ -29,6 +29,7 @@ import { alibabaEstimatesEnabled, overlayOffersOnProducts } from "@/lib/alibaba/
 import { loadOffersFromFile } from "@/lib/alibaba/offers";
 import type { AlibabaOffer } from "@/lib/alibaba/types";
 import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
+import { getStrapiApiUrl } from "@/lib/strapi-url";
 import {
   getNexterpProductBySlug,
   listNexterpCategories,
@@ -61,7 +62,7 @@ function fallbackEnabled(): boolean {
 }
 
 function getStrapiUrl(): string {
-  return (process.env.STRAPI_URL || "http://localhost:1337").replace(/\/+$/, "");
+  return getStrapiApiUrl();
 }
 
 function getTimeoutMs(): number {

@@ -299,19 +299,20 @@ export async function lookupCompanyByTaxId(
   const fetchImpl = options?.fetchImpl ?? fetch;
   const errors: string[] = [];
 
-  try {
-    const rd = await lookupRdVat(taxId, fetchImpl);
-    if (rd) return { ok: true, ...rd };
-  } catch (error) {
+  const rdTask = lookupRdVat(taxId, fetchImpl).catch((error) => {
     errors.push(error instanceof Error ? error.message : "rd");
-  }
-
-  try {
-    const moc = await lookupMoc(taxId, fetchImpl);
-    if (moc) return { ok: true, ...moc };
-  } catch (error) {
+    return null;
+  });
+  const mocTask = lookupMoc(taxId, fetchImpl).catch((error) => {
     errors.push(error instanceof Error ? error.message : "moc");
-  }
+    return null;
+  });
+
+  const rd = await rdTask;
+  if (rd) return { ok: true, ...rd };
+
+  const moc = await mocTask;
+  if (moc) return { ok: true, ...moc };
 
   try {
     const dbd = await lookupDbdOpenApi(taxId, fetchImpl);

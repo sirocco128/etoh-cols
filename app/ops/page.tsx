@@ -2,7 +2,7 @@ import Link from "next/link";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { countQuoteRequests } from "@/lib/quote-repository";
 import { countApprovalQueue } from "@/lib/payment-approval";
-import { listPos } from "@/lib/factory-po-service";
+import { countInboundPos } from "@/lib/factory-po-service";
 import { getStrapiAdminUrl } from "@/lib/strapi-url";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +12,7 @@ export default async function OpsIndexPage() {
   const actor = await requireOpsPage();
   const newQuotes = countQuoteRequests({ leadStatus: "new" });
   const approvals = actorMay(actor, "orders.read") ? countApprovalQueue() : 0;
-  const inbound = actorMay(actor, "factory.read")
-    ? listPos({ status: "all" }).filter(
-        (po) =>
-          po.status !== "cancelled" &&
-          po.status !== "draft" &&
-          po.status !== "received" &&
-          po.receivedQty < po.quantity,
-      ).length
-    : 0;
+  const inbound = actorMay(actor, "factory.read") ? countInboundPos() : 0;
 
   const cards = [
     actorMay(actor, "quotes.read")

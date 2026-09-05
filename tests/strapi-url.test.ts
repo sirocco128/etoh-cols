@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { getStrapiAdminUrl } from "../lib/strapi-url";
+import { getStrapiAdminUrl, getStrapiApiUrl } from "../lib/strapi-url";
 
 describe("getStrapiAdminUrl", () => {
   const keys = ["STRAPI_ADMIN_URL", "STRAPI_URL"] as const;
@@ -26,6 +26,12 @@ describe("getStrapiAdminUrl", () => {
   it("defaults to localhost Strapi admin", () => {
     withEnv({ STRAPI_ADMIN_URL: undefined, STRAPI_URL: undefined }, () => {
       assert.equal(getStrapiAdminUrl(), "http://localhost:1337/admin");
+    });
+  });
+
+  it("uses IPv4 loopback for server-side Strapi fetch", () => {
+    withEnv({ STRAPI_ADMIN_URL: undefined, STRAPI_URL: "http://localhost:1337" }, () => {
+      assert.equal(getStrapiApiUrl(), "http://127.0.0.1:1337");
     });
   });
 

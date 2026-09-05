@@ -46,7 +46,27 @@ const mediaOrigins = [
   safeOrigin(process.env.STRAPI_URL),
   safeOrigin(process.env.MINIO_ENDPOINT),
   safeOrigin(process.env.MINIO_PUBLIC_BASE_URL),
-].filter((origin, index, list) => origin && list.indexOf(origin) === index);
+]
+  .flatMap((origin) => {
+    if (!origin) return [];
+    try {
+      const url = new URL(origin);
+      if (url.hostname === "localhost") {
+        const ipv4 = new URL(origin);
+        ipv4.hostname = "127.0.0.1";
+        return [origin, ipv4.origin];
+      }
+      if (url.hostname === "127.0.0.1") {
+        const named = new URL(origin);
+        named.hostname = "localhost";
+        return [origin, named.origin];
+      }
+    } catch {
+      return [origin];
+    }
+    return [origin];
+  })
+  .filter((origin, index, list) => origin && list.indexOf(origin) === index);
 
 /** @type {import('next').RemotePattern[]} */
 const remotePatterns = mediaOrigins.flatMap((origin) => {
@@ -76,6 +96,20 @@ function buildContentSecurityPolicy() {
   const connectSrc = ["'self'"];
   const strapiOrigin = safeOrigin(process.env.STRAPI_URL);
   if (strapiOrigin) connectSrc.push(strapiOrigin);
+  try {
+    if (strapiOrigin) {
+      const url = new URL(strapiOrigin);
+      if (url.hostname === "localhost") {
+        url.hostname = "127.0.0.1";
+        connectSrc.push(url.origin);
+      } else if (url.hostname === "127.0.0.1") {
+        url.hostname = "localhost";
+        connectSrc.push(url.origin);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
   if (isDev) {
     connectSrc.push("ws:", "wss:");
   }

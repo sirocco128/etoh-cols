@@ -23,9 +23,14 @@ function NavItem({
         className={className}
         target="_blank"
         rel="noopener noreferrer"
+        title="เปิดแท็บใหม่"
+        aria-label={`${link.label} เปิดแท็บใหม่`}
         onClick={onClick}
       >
         {link.label}
+        <span className="ml-1 text-[0.65rem] opacity-70" aria-hidden>
+          ↗
+        </span>
       </a>
     );
   }

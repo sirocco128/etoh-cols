@@ -146,9 +146,9 @@ export async function listMysqlCustomers(
 
 export async function updateMysqlCustomer(
   params: UpdateCustomerParams,
-): Promise<CustomerRecord> {
+): Promise<CustomerRecord | null> {
   const existing = await getMysqlCustomerById(params.id);
-  if (!existing) throw new Error("Customer not found");
+  if (!existing) return null;
 
   await nexterpExecute(
     `UPDATE customers SET

@@ -20,7 +20,7 @@ describe("ops nav", () => {
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "more"), true);
     const strapi = admin.find((link) => link.label === "เข้า Strapi");
     assert.equal(strapi?.external, true);
-    assert.equal(strapi?.group, "more");
+    assert.equal(strapi?.group, "primary");
     assert.match(strapi?.href ?? "", /\/admin$/);
     const viewer = buildOpsNavLinks({
       email: "view@local",
