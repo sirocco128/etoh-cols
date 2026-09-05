@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isNavActive, withOptionalBasketLink } from "../lib/nav";
+import { isMoreNavActive, isNavActive, moreNavLinks, withOptionalBasketLink } from "../lib/nav";
 
 describe("nav helpers (UX)", () => {
   it("marks nested product paths as active for /products", () => {
@@ -14,34 +14,32 @@ describe("nav helpers (UX)", () => {
     assert.equal(isNavActive("/products", "/"), false);
   });
 
-  it("includes ideas and about in the primary nav", () => {
+  it("keeps four buyer destinations in the primary nav", () => {
     const links = withOptionalBasketLink(false);
     assert.equal(links.some((l) => l.href === "/about"), true);
     assert.equal(
       links.find((l) => l.href === "/about")?.label,
       "เกี่ยวกับเรา",
     );
-    assert.equal(links.some((l) => l.href === "/ideas"), true);
-    assert.equal(
-      links.find((l) => l.href === "/ideas")?.label,
-      "ไอเดียชุดของขวัญ",
-    );
+    assert.equal(links.some((l) => l.href === "/ideas"), false);
+    assert.equal(links.some((l) => l.href === "/catalog"), false);
     assert.equal(
       links.find((l) => l.href === "/premium-giftset")?.label,
       "ชุดของขวัญองค์กร",
-    );
-    assert.equal(
-      links.find((l) => l.href === "/catalog")?.label,
-      "สมุดพลิกดู",
     );
     assert.match(
       links.find((l) => l.href === "/products")?.hint || "",
       /ขอราคา/,
     );
-    assert.match(
-      links.find((l) => l.href === "/catalog")?.hint || "",
-      /พลิกดู/,
-    );
+  });
+
+  it("parks flipbook and ideas under more nav", () => {
+    const more = moreNavLinks();
+    assert.equal(more.find((l) => l.href === "/ideas")?.label, "ไอเดียชุดของขวัญ");
+    assert.equal(more.find((l) => l.href === "/catalog")?.label, "สมุดพลิกดู");
+    assert.match(more.find((l) => l.href === "/catalog")?.hint || "", /พลิกดู/);
+    assert.equal(isMoreNavActive("/catalog"), true);
+    assert.equal(isMoreNavActive("/products"), false);
   });
 
   it("appends quote basket link when P2 tools enabled", () => {

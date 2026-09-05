@@ -12,11 +12,11 @@ export default function OpsLoginPage() {
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบปฏิบัติการ</h1>
       <p className="mt-2 text-sm text-ink/70">
-        จัดการลูกค้า ใบเสนอราคา และออเดอร์ — แคตตาล็อกสินค้าเปิดจากเมนูเข้า Strapi หลังล็อกอิน
+        จัดการลูกค้าและใบเสนอราคา — เข้าได้เฉพาะพนักงาน
       </p>
       <form action={action} className="mt-6 space-y-4" aria-busy={pending}>
         <label className="block text-sm">
-          <span className="font-medium text-forest">อีเมล</span>
+          <span className="font-medium text-forest">อีเมลหรือชื่อผู้ใช้</span>
           <input
             type="text"
             name="email"
@@ -44,7 +44,7 @@ export default function OpsLoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded bg-forest px-4 py-2.5 text-sm font-medium text-paper hover:bg-forest-light disabled:opacity-60"
+          className="w-full rounded bg-forest px-4 py-2.5 text-sm font-medium text-paper hover:bg-forest-light disabled:cursor-wait disabled:opacity-80"
         >
           {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         </button>

@@ -5,6 +5,7 @@ export type NavLinkItem = {
   hint?: string;
 };
 
+/** First-time buyer destinations — keep short so the quote CTA stays in view. */
 export const PRIMARY_NAV_LINKS: NavLinkItem[] = [
   { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
   {
@@ -12,6 +13,12 @@ export const PRIMARY_NAV_LINKS: NavLinkItem[] = [
     label: "สินค้าพรีเมียม",
     hint: "เลือกเซ็ตแล้วขอราคา",
   },
+  { href: "/about", label: "เกี่ยวกับเรา" },
+  { href: "/blog", label: "บทความ" },
+];
+
+/** Browse/inspiration — parked under “ดูเพิ่ม” so primary chrome stays scannable. */
+export const MORE_NAV_LINKS: NavLinkItem[] = [
   {
     href: "/catalog",
     label: "สมุดพลิกดู",
@@ -19,9 +26,7 @@ export const PRIMARY_NAV_LINKS: NavLinkItem[] = [
   },
   { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
   { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
-  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/portfolio", label: "ผลงาน" },
-  { href: "/blog", label: "บทความ" },
 ];
 
 export function withOptionalBasketLink(
@@ -34,8 +39,16 @@ export function withOptionalBasketLink(
   ];
 }
 
+export function moreNavLinks(): NavLinkItem[] {
+  return [...MORE_NAV_LINKS];
+}
+
 /** Active when pathname matches href, or is a nested path (except home). */
 export function isNavActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function isMoreNavActive(pathname: string): boolean {
+  return MORE_NAV_LINKS.some((link) => isNavActive(pathname, link.href));
 }

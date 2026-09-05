@@ -127,8 +127,8 @@ describe("mockup-studio quote brief", () => {
     assert.ok(brief.length <= 1800);
   });
 
-  it("exports the TARABIZ watermark label", () => {
-    assert.equal(MOCKUP_WATERMARK_TEXT, "TARABIZ");
+  it("exports the Thai watermark label", () => {
+    assert.equal(MOCKUP_WATERMARK_TEXT, "เทราบิส");
   });
 });
 

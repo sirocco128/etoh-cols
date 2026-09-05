@@ -1,18 +1,8 @@
 "use client";
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ReactNode } from "react";
 
+/** Light-only site — skip next-themes so `<html>` class does not mismatch on hydrate. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
-      disableTransitionOnChange
-      forcedTheme="light"
-    >
-      {children}
-    </NextThemesProvider>
-  );
+  return children;
 }

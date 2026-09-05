@@ -22,7 +22,8 @@ function run(command, args, env = process.env) {
     cwd: ROOT,
     stdio: "inherit",
     env,
-    shell: process.platform === "win32",
+    // Node under "C:\Program Files" breaks when shell concatenates unquoted paths.
+    shell: process.platform === "win32" && command.toLowerCase().endsWith(".cmd"),
   });
   return result.status ?? 1;
 }

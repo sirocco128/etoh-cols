@@ -31,6 +31,7 @@ export function CatalogFlipbook({
   flipHtml5Url,
 }: CatalogFlipbookProps) {
   const reduceMotion = useReducedMotion();
+  const [motionReady, setMotionReady] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const swipeX = useRef<number | null>(null);
   const [index, setIndex] = useState(0);
@@ -39,6 +40,11 @@ export function CatalogFlipbook({
   const [mode, setMode] = useState<"flip" | "external">("flip");
   const total = pages.length;
   const page = pages[index];
+  const skipMotion = !motionReady || reduceMotion;
+
+  useEffect(() => {
+    setMotionReady(true);
+  }, []);
 
   const go = useCallback(
     (next: number) => {
@@ -91,7 +97,7 @@ export function CatalogFlipbook({
   if (!page) return null;
 
   return (
-    <div className="mt-8">
+    <div className="mt-3">
       {flipHtml5Url ? (
         <div className="mb-4 flex flex-wrap gap-2 print:hidden">
           <Button
@@ -166,13 +172,13 @@ export function CatalogFlipbook({
                   key={index}
                   custom={direction}
                   initial={
-                    reduceMotion
-                      ? { opacity: 0 }
+                    skipMotion
+                      ? false
                       : { rotateY: direction * 70, opacity: 0 }
                   }
                   animate={{ rotateY: 0, opacity: 1 }}
                   exit={
-                    reduceMotion
+                    skipMotion
                       ? { opacity: 0 }
                       : { rotateY: direction * -70, opacity: 0 }
                   }
@@ -199,20 +205,37 @@ export function CatalogFlipbook({
               </AnimatePresence>
             </div>
 
+            <button
+              type="button"
+              aria-label="หน้าก่อน"
+              disabled={index === 0}
+              onClick={() => go(index - 1)}
+              className="absolute inset-y-12 left-0 z-10 hidden w-14 cursor-pointer sm:block disabled:pointer-events-none"
+            />
+            <button
+              type="button"
+              aria-label="หน้าถัดไป"
+              disabled={index >= total - 1}
+              onClick={() => go(index + 1)}
+              className="absolute inset-y-12 right-0 z-10 hidden w-14 cursor-pointer sm:block disabled:pointer-events-none"
+            />
+
             <div className="flex items-center justify-center gap-3 pb-5 print:hidden">
               <Button
                 type="button"
                 variant="outline"
+                className="h-12 w-12"
                 size="icon"
                 aria-label="หน้าก่อน"
                 disabled={index === 0}
                 onClick={() => go(index - 1)}
               >
-                <ChevronLeft aria-hidden />
+                <ChevronLeft aria-hidden className="h-6 w-6" />
               </Button>
               <Button
                 type="button"
                 variant="forest"
+                className="min-h-12 px-6"
                 disabled={index >= total - 1}
                 onClick={() => go(index + 1)}
               >
@@ -221,7 +244,7 @@ export function CatalogFlipbook({
               </Button>
             </div>
           </div>
-          <p className="mt-3 text-sm text-ink/55 print:hidden dark:text-paper/60">
+          <p className="mt-2 text-xs text-ink/50 print:hidden dark:text-paper/55">
             {FLIP_CATALOG_PRINT_HINT}
           </p>
         </>

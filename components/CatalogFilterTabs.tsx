@@ -23,7 +23,7 @@ export function CatalogFilterTabs({
   return (
     <nav
       aria-label="หมวดสินค้า"
-      className="mt-8 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="mt-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <ul className="flex w-max min-w-full gap-2">
         {tabs.map((tab) => {

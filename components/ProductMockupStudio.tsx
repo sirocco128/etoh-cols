@@ -97,31 +97,22 @@ function stampWatermark(
   ctx.translate(width / 2, height / 2);
   ctx.rotate((-28 * Math.PI) / 180);
   const fontSize = clamp(Math.min(width, height) * 0.07, 14, 36);
-  const gap = fontSize * 0.5;
   ctx.font = `600 ${fontSize}px "Noto Sans Thai", system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = `rgba(20,53,42,${opacity})`;
   ctx.strokeStyle = `rgba(255,255,255,${opacity * 0.35})`;
   ctx.lineWidth = Math.max(0.8, fontSize * 0.04);
-  const chars = MOCKUP_WATERMARK_TEXT.split("");
-  const widths = chars.map((ch) => ctx.measureText(ch).width);
-  const total =
-    widths.reduce((sum, n) => sum + n, 0) + Math.max(0, chars.length - 1) * gap;
+  const mark = MOCKUP_WATERMARK_TEXT;
+  const markWidth = ctx.measureText(mark).width;
   const stepY = fontSize * 3.2;
-  const stepX = total + fontSize * 2.4;
+  const stepX = markWidth + fontSize * 2.4;
   for (let row = -3; row <= 3; row += 1) {
     for (let col = -3; col <= 3; col += 1) {
       const ox = col * stepX + (row % 2 === 0 ? 0 : stepX * 0.45);
       const oy = row * stepY;
-      let cursor = ox - total / 2;
-      for (let i = 0; i < chars.length; i += 1) {
-        const ch = chars[i]!;
-        const cw = widths[i]!;
-        ctx.strokeText(ch, cursor + cw / 2, oy);
-        ctx.fillText(ch, cursor + cw / 2, oy);
-        cursor += cw + gap;
-      }
+      ctx.strokeText(mark, ox, oy);
+      ctx.fillText(mark, ox, oy);
     }
   }
   ctx.restore();
@@ -735,7 +726,7 @@ async function tryGenerateWithOpenRouter(options: {
     const statusRes = await fetch("/api/mockup/generate", { method: "GET" });
     if (!statusRes.ok) return { error: "ตรวจสอบสถานะ AI ไม่สำเร็จ" };
     const status = (await statusRes.json()) as { enabled?: boolean };
-    if (!status.enabled) return { error: "ยังไม่ได้เปิด OpenRouter" };
+    if (!status.enabled) return { error: "ยังใช้โหมดพรีวิวในเครื่อง" };
 
     const productDataUrl = await imageToJpegDataUrl(options.surface.photo);
     const logoDataUrl = options.logoCanvas
@@ -1201,7 +1192,7 @@ export function ProductMockupStudio({
           1) บนสินค้าที่เลือก · 2) บริบทการใช้งานจริง · 3) วางในออฟฟิศ · 4) รีเทล
           — ปรับต่อด้วยคำสั่งในช่องรีเทล มีลายน้ำ {MOCKUP_WATERMARK_TEXT} (ยังไม่ใช่ไฟล์ผลิต)
           {aiEnabled
-            ? " · ใช้ Gemini ผ่าน OpenRouter เพื่อภาพเนียนขึ้น"
+            ? " · สร้างภาพเนียนขึ้นจากระบบบนเว็บ"
             : " · โหมดพรีวิวในเครื่อง"}
         </p>
       </div>
@@ -1344,10 +1335,10 @@ export function ProductMockupStudio({
           >
             {busy
               ? aiEnabled
-                ? "กำลังสร้างด้วย Gemini…"
+                ? "กำลังสร้างภาพ…"
                 : "กำลังสร้าง 4 แบบ…"
               : aiEnabled
-                ? "สร้างรูป 4 แบบด้วย AI"
+                ? "สร้างรูป 4 มุมมอง"
                 : "สร้างรูป 4 แบบ"}
           </button>
           {variants.length > 0 ? (
@@ -1361,13 +1352,13 @@ export function ProductMockupStudio({
               disabled={busy}
               className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest disabled:opacity-60"
             >
-              Gen ใหม่ (ฉาก / ตำแหน่งใช้งาน)
+              สร้างมุมมองใหม่ (ฉาก / ตำแหน่งใช้งาน)
             </button>
           ) : null}
           {engine ? (
             <p className="text-xs text-ink/55">
               โหมดล่าสุด:{" "}
-              {engine === "openrouter" ? "Gemini (OpenRouter)" : "พรีวิวในเครื่อง"}
+              {engine === "openrouter" ? "ภาพเนียนขึ้น" : "พรีวิวในเครื่อง"}
             </p>
           ) : null}
           {error ? (
@@ -1508,14 +1499,22 @@ export function ProductMockupStudio({
           ) : null}
 
           <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={confirmSelection}
-              disabled={!selected}
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-5 text-sm font-semibold text-paper disabled:opacity-50"
-            >
-              ยืนยันแบบนี้ไปใบเสนอราคา
-            </button>
+            {selected ? (
+              <button
+                type="button"
+                onClick={confirmSelection}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-5 text-sm font-semibold text-paper"
+              >
+                ยืนยันแบบนี้ไปใบเสนอราคา
+              </button>
+            ) : (
+              <a
+                href="#quote"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-5 text-sm font-semibold text-forest"
+              >
+                ยังไม่ต้องสร้างรูป — เลื่อนไปขอราคาได้
+              </a>
+            )}
             {confirmed && selected ? (
               <p className="self-center text-sm text-forest">
                 ยืนยันแล้ว: {selected.label} — เลื่อนไปกรอกฟอร์มด้านล่างได้

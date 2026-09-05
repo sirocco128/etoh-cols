@@ -16,10 +16,13 @@ const SERVICE_LINKS = [
 
 const INFO_LINKS = [
   { href: "/about", label: "เกี่ยวกับเรา" },
-  { href: "/orders", label: "ออเดอร์ของฉัน" },
-  { href: "/issues", label: "แจ้งปัญหาสินค้า" },
   { href: "/privacy", label: "นโยบายความเป็นส่วนตัว" },
   { href: "/terms", label: "ข้อกำหนดการใช้งาน" },
+] as const;
+
+const RETURNING_CUSTOMER_LINKS = [
+  { href: "/orders", label: "ออเดอร์ของฉัน" },
+  { href: "/issues", label: "แจ้งปัญหาสินค้า" },
 ] as const;
 
 export function Footer() {
@@ -119,6 +122,20 @@ export function Footer() {
               </li>
             ))}
           </ul>
+          <details className="mt-4">
+            <summary className="cursor-pointer list-none text-sm text-paper/85 hover:text-brass-soft [&::-webkit-details-marker]:hidden">
+              ลูกค้าที่สั่งแล้ว
+            </summary>
+            <ul className="mt-2 space-y-2 text-sm">
+              {RETURNING_CUSTOMER_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-paper/85 hover:text-brass-soft">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       </div>
       <div className="border-t border-paper/10 py-4 text-center text-xs text-paper/55">

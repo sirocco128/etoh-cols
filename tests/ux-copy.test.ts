@@ -92,6 +92,7 @@ describe("ux-copy (buyer-facing strings)", () => {
     assert.match(FLIP_CATALOG_LEAD, /กลุ่มเดียวกัน/);
     assert.match(FLIP_CATALOG_CLOSING_BODY, /ไม่มีการชำระเงิน/);
     assert.doesNotMatch(FLIP_CATALOG_PRINT_HINT, BUYER_JARGON);
+    assert.doesNotMatch(FLIP_CATALOG_PRINT_HINT, /อัปโหลด/);
   });
 
   it("retail command copy is jargon-free", () => {

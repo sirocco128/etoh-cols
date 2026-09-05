@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "@/lib/site";
 import { getPublicContact } from "@/lib/public-contact";
 import { NavLink } from "@/components/NavLink";
-import { withOptionalBasketLink } from "@/lib/nav";
+import { moreNavLinks, withOptionalBasketLink } from "@/lib/nav";
 
 type MobileMenuProps = {
   enableP2QuoteTools?: boolean;
@@ -20,9 +20,10 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
 
 export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
   const navLinks = withOptionalBasketLink(enableP2QuoteTools);
+  const extraLinks = moreNavLinks();
   const contact = getPublicContact(site);
   const [open, setOpen] = useState(false);
-  const dialogId = useId();
+  const dialogId = "mobile-nav-dialog";
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -144,14 +145,47 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   ) : null}
                 </NavLink>
               ))}
-              <NavLink
-                href="/orders"
-                onClick={close}
-                className="rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
-                activeClassName="bg-forest-mist text-forest"
-              >
-                ออเดอร์ของฉัน
-              </NavLink>
+              <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-ink/45">
+                ดูเพิ่ม
+              </p>
+              {extraLinks.map((link) => (
+                <NavLink
+                  key={link.href}
+                  href={link.href}
+                  title={link.hint}
+                  onClick={close}
+                  className="rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
+                  activeClassName="bg-forest-mist text-forest"
+                >
+                  <span className="block">{link.label}</span>
+                  {link.hint ? (
+                    <span className="mt-0.5 block text-xs font-normal text-ink/55">
+                      {link.hint}
+                    </span>
+                  ) : null}
+                </NavLink>
+              ))}
+              <details className="mt-2 rounded-lg px-3 py-2">
+                <summary className="cursor-pointer list-none text-sm font-medium text-ink/70 [&::-webkit-details-marker]:hidden">
+                  ลูกค้าที่สั่งแล้ว
+                </summary>
+                <NavLink
+                  href="/orders"
+                  onClick={close}
+                  className="mt-1 block rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
+                  activeClassName="bg-forest-mist text-forest"
+                >
+                  ออเดอร์ของฉัน
+                </NavLink>
+                <NavLink
+                  href="/issues"
+                  onClick={close}
+                  className="block rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
+                  activeClassName="bg-forest-mist text-forest"
+                >
+                  แจ้งปัญหาสินค้า
+                </NavLink>
+              </details>
             </nav>
             <div className="space-y-2 border-t border-forest/10 p-4">
               <NavLink

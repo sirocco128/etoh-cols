@@ -20,8 +20,11 @@ describe("ops nav", () => {
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "more"), true);
     const strapi = admin.find((link) => link.label === "เข้า Strapi");
     assert.equal(strapi?.external, true);
-    assert.equal(strapi?.group, "primary");
+    assert.equal(strapi?.group, "more");
     assert.match(strapi?.href ?? "", /\/admin$/);
+    assert.equal(admin.find((link) => link.href === "/ops/orders")?.label, "ออเดอร์");
+    assert.equal(admin.find((link) => link.href === "/ops/approvals")?.group, "more");
+    assert.equal(admin.find((link) => link.href === "/ops/cycle")?.group, "more");
     const viewer = buildOpsNavLinks({
       email: "view@local",
       name: "ดู",

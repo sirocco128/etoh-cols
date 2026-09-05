@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavLink } from "@/components/NavLink";
+import { NavMore } from "@/components/NavMore";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
 import { withOptionalBasketLink } from "@/lib/nav";
 import { site } from "@/lib/site";
@@ -37,6 +38,7 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          <NavMore />
           <Button asChild>
             <Link href="/contact">ขอใบเสนอราคา</Link>
           </Button>

@@ -133,6 +133,16 @@ export function QuoteForm({
   const startedRef = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const stepperRef = useRef<HTMLOListElement>(null);
+  const stepMounted = useRef(false);
+
+  useEffect(() => {
+    if (!stepMounted.current) {
+      stepMounted.current = true;
+      return;
+    }
+    stepperRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [step]);
 
   const attribution = useMemo(() => {
     if (typeof window === "undefined") {
@@ -393,10 +403,15 @@ export function QuoteForm({
         </p>
       </div>
 
-      <ol className="flex flex-wrap gap-2 text-xs" aria-label="ขั้นตอนแบบฟอร์ม">
+      <ol
+        ref={stepperRef}
+        className="flex flex-wrap gap-2 text-xs"
+        aria-label="ขั้นตอนแบบฟอร์ม"
+      >
         {QUOTE_STEPS.map((label, index) => (
           <li
             key={label}
+            aria-current={index === step ? "step" : undefined}
             className={`rounded-full px-3 py-1 ${
               index === step
                 ? "bg-forest text-paper"
@@ -431,13 +446,16 @@ export function QuoteForm({
         className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden"
         aria-hidden="true"
       >
-        <label htmlFor="website">เว็บไซต์</label>
+        <label htmlFor="website" aria-hidden="true">
+          เว็บไซต์
+        </label>
         <input
           id="website"
           name="website"
           type="text"
           tabIndex={-1}
           autoComplete="off"
+          aria-hidden="true"
         />
       </div>
 

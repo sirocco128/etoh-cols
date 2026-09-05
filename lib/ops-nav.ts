@@ -13,10 +13,10 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   const links: OpsNavLink[] = [
     { href: "/ops", label: "ภาพรวม", group: "primary" },
     { href: "/ops/quotes", label: "ใบเสนอราคา", group: "primary" },
-    { href: "/ops/orders", label: "ออเดอร์ / รับชำระ", group: "primary" },
-    { href: "/ops/approvals", label: "อนุมัติยอด", group: "primary" },
+    { href: "/ops/orders", label: "ออเดอร์", group: "primary" },
     { href: "/ops/customers", label: "ลูกค้า", group: "primary" },
-    { href: "/ops/cycle", label: "ปฏิบัติการ", group: "primary" },
+    { href: "/ops/approvals", label: "อนุมัติยอด", group: "more" },
+    { href: "/ops/cycle", label: "ปฏิบัติการ", group: "more" },
   ];
 
   if (actorMay(actor, "factory.read")) {
@@ -33,7 +33,7 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
     links.push({
       href: getStrapiAdminUrl(),
       label: "เข้า Strapi",
-      group: "primary",
+      group: "more",
       external: true,
     });
     links.push({ href: "/ops/catalog-images", label: "รูปโรงงาน", group: "more" });

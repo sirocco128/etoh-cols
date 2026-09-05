@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CatalogFilterTabs } from "@/components/CatalogFilterTabs";
 import { CatalogFlipbook } from "@/components/CatalogFlipbook";
 import { EmptyState } from "@/components/EmptyState";
-import { FadeIn } from "@/components/FadeIn";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
 import { buildCatalogBook } from "@/lib/catalog-book";
 import { flipHtml5EmbedUrl } from "@/lib/fliphtml5";
@@ -42,27 +40,20 @@ export default async function CatalogPage() {
 
   return (
     <div className="bg-premium-mesh">
-      <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-content px-4 py-6 sm:px-6 sm:py-8">
         <Breadcrumbs items={[{ label: FLIP_CATALOG_NAV }]} />
-        <FadeIn className="max-w-2xl">
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-paper/80 px-3 py-1 text-xs font-medium text-forest shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-forest/60 dark:text-brass-soft">
-            <BookOpen className="h-3.5 w-3.5 text-brass" aria-hidden />
-            {FLIP_CATALOG_NAV}
-          </p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-forest sm:text-4xl dark:text-paper">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl font-bold tracking-tight text-forest sm:text-3xl dark:text-paper">
             {FLIP_CATALOG_TITLE}
           </h1>
-          <p className="mt-3 text-base leading-relaxed text-ink/65 dark:text-paper/70">
-            {FLIP_CATALOG_LEAD}
-          </p>
-          <p className="mt-3 text-sm text-ink/55 dark:text-paper/60">
-            หน้านี้พลิกดูแคตตาล็อก ไม่ใช่รายการขอราคา ดูเป็น{" "}
+          <p className="mt-2 text-sm leading-relaxed text-ink/65 dark:text-paper/70">
+            {FLIP_CATALOG_LEAD} ดูเป็น{" "}
             <Link href="/products" className="font-medium text-forest underline-offset-4 hover:underline">
               สินค้าพรีเมียม
             </Link>{" "}
             เมื่อพร้อมเลือกเซ็ต
           </p>
-        </FadeIn>
+        </div>
 
         {categories.length > 0 ? (
           <CatalogFilterTabs

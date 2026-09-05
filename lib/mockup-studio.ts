@@ -1,12 +1,12 @@
 /**
  * Client-side product mockup: 3 style previews → customer picks one.
- * Preview only — files stay in the browser; TARABIZ watermark always applied.
+ * Preview only — files stay in the browser; เทราบิส watermark always applied.
  */
 
 export const MOCKUP_BRIEF_EVENT = "giftpro:mockup-brief";
 
 /** Preview watermark stamped on customer logos and the mockup canvas. */
-export const MOCKUP_WATERMARK_TEXT = "TARABIZ";
+export const MOCKUP_WATERMARK_TEXT = "เทราบิส";
 
 export type MockupBriefEventDetail = {
   text: string;
