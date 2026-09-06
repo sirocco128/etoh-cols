@@ -519,7 +519,7 @@ export function ensureOpsStaffBookingSlug(
     email.split("@")[0]?.replace(/[^a-z0-9]/gi, "").toLowerCase() ||
     name.replace(/[^a-z0-9]/gi, "").toLowerCase() ||
     `staff${staffId}`;
-  let candidate = base.slice(0, 24) || `s${staffId}`;
+  const candidate = base.slice(0, 24) || `s${staffId}`;
   for (let i = 0; i < 8; i += 1) {
     const trySlug = i === 0 ? candidate : `${candidate}${i + 1}`;
     const clash = getOpsStaffByBookingSlug(trySlug);

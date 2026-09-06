@@ -417,7 +417,7 @@ async function attachRdVatBranches(
   if (!hqRecords.length) return null;
   const hq = hqRecords[0];
   if (!hq) return null;
-  let records = [...hqRecords];
+  const records = [...hqRecords];
   if (hqRecords.length <= 1) {
     try {
       const firstExtra = await lookupRdVatBranch(
