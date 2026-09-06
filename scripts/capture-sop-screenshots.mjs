@@ -177,9 +177,10 @@ async function main() {
     try {
       console.log(`Capture ${target.id} ← ${path}`);
       await page.goto(`${BASE}${path}`, {
-        waitUntil: "networkidle",
-        timeout: 60_000,
+        waitUntil: "domcontentloaded",
+        timeout: 90_000,
       });
+      await page.waitForTimeout(800);
 
       // Try open first detail row for quote/order detail screenshots.
       if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
