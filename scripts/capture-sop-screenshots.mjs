@@ -52,10 +52,10 @@ const BASE = (process.env.SOP_CAPTURE_BASE_URL || "http://127.0.0.1:3000").repla
 );
 const ACTOR_EMAIL = (() => {
   const capture = (process.env.SOP_CAPTURE_EMAIL || "").trim().toLowerCase();
-  const admin = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   if (capture.includes("@")) return capture;
-  if (admin.includes("@")) return admin;
-  return capture || admin || "admin@local";
+  // Do not use ADMIN_EMAIL here — that address may exist in ops_staff with a
+  // narrower role, and hydrateOpsActor would replace the injected admin cookie.
+  return "sop-capture@local";
 })();
 const ACTOR_NAME = (process.env.ADMIN_NAME || "ผู้ดูแล").trim() || "ผู้ดูแล";
 const SESSION_SECRET = (process.env.ADMIN_SESSION_SECRET || "").trim();
@@ -189,7 +189,15 @@ async function main() {
         if (response && response.status() >= 500) {
           throw new Error(`HTTP ${response.status()}`);
         }
-        await page.waitForTimeout(1000);
+        await page
+          .locator('[aria-label="กำลังโหลดคอนโซล"]')
+          .waitFor({ state: "hidden", timeout: 90_000 })
+          .catch(() => null);
+        await page.locator("h1").first().waitFor({
+          state: "visible",
+          timeout: 60_000,
+        });
+        await page.waitForTimeout(600);
 
         if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
           const detail = page
@@ -201,7 +209,15 @@ async function main() {
               page.waitForLoadState("domcontentloaded").catch(() => null),
               detail.click(),
             ]);
-            await page.waitForTimeout(800);
+            await page
+              .locator('[aria-label="กำลังโหลดคอนโซล"]')
+              .waitFor({ state: "hidden", timeout: 90_000 })
+              .catch(() => null);
+            await page.locator("h1").first().waitFor({
+              state: "visible",
+              timeout: 60_000,
+            });
+            await page.waitForTimeout(400);
           }
         }
 
