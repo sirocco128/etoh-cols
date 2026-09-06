@@ -99,7 +99,7 @@ export function Footer() {
             ) : (
               <li>
                 <Link href="/contact?intent=message" className="hover:text-brass-soft">
-                  ส่งคำขอผ่านแบบฟอร์ม
+                  ส่งข้อความติดต่อ
                 </Link>
               </li>
             )}

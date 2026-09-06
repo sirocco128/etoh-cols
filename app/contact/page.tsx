@@ -24,6 +24,14 @@ function firstParam(
   return value ?? "";
 }
 
+function tabClass(active: boolean) {
+  return `inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-4 text-sm font-semibold sm:flex-none sm:px-5 ${
+    active
+      ? "bg-forest text-paper"
+      : "border border-forest/20 text-forest hover:border-forest/40"
+  }`;
+}
+
 export default async function ContactPage({ searchParams }: ContactPageProps) {
   const params = await searchParams;
   const note = firstParam(params.note);
@@ -41,46 +49,56 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
     region: site.localBusiness.region,
     postalCode: site.localBusiness.postalCode,
   });
-  const tabClass = (active: boolean) =>
-    `inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold ${
-      active
-        ? "bg-forest text-paper"
-        : "border border-forest/20 text-forest hover:border-forest/40"
-    }`;
+  const hasDirectChannel = contact.showPhone || contact.showEmail || contact.showLine;
 
   return (
     <div className="mx-auto max-w-content px-page py-12 sm:py-16">
       <Breadcrumbs items={[{ label: isMessage ? "ติดต่อเรา" : "ติดต่อ / ขอใบเสนอราคา" }]} />
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <h1 className="text-3xl font-bold text-forest sm:text-4xl">
+        {isMessage ? "ติดต่อ สอบถาม หรือร้องเรียน" : "ติดต่อ / ขอใบเสนอราคา"}
+      </h1>
+      <p className="mt-4 max-w-2xl text-ink/80 leading-relaxed">
+        {isMessage
+          ? `${COMPANY.legalName} — ${CONTACT_INQUIRY_INTRO}`
+          : `${COMPANY.legalName} — กรอกชื่อ บริษัท ช่องทางติดต่อ และจำนวนโดยประมาณ ทีมขายติดต่อกลับในเวลาทำการ หน้านี้ไม่ใช่การสั่งซื้อ และไม่มีการชำระเงิน หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์`}
+      </p>
+
+      <div
+        className="mt-6 flex w-full gap-2 sm:w-auto"
+        role="tablist"
+        aria-label="เลือกประเภทข้อความ"
+      >
+        <Link
+          href="/contact"
+          role="tab"
+          aria-selected={!isMessage}
+          className={tabClass(!isMessage)}
+        >
+          ขอใบเสนอราคา
+        </Link>
+        <Link
+          href="/contact?intent=message"
+          role="tab"
+          aria-selected={isMessage}
+          className={tabClass(isMessage)}
+        >
+          ติดต่อ / สอบถาม / ร้องเรียน
+        </Link>
+      </div>
+
+      {basketId ? (
+        <p
+          role="status"
+          className="mt-6 rounded-xl border border-brass/30 bg-brass/10 px-4 py-3 text-sm text-forest"
+        >
+          ตรวจพบตะกร้าใบเสนอราคา (<span className="font-mono text-xs">{basketId}</span>) —
+          รายละเอียดถูกเติมในฟอร์มแล้ว กรุณาตรวจสอบก่อนส่ง
+        </p>
+      ) : null}
+
+      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <section>
-          <h1 className="text-3xl font-bold text-forest sm:text-4xl">
-            {isMessage ? "ติดต่อ สอบถาม หรือร้องเรียน" : "ติดต่อ / ขอใบเสนอราคา"}
-          </h1>
-          <p className="mt-4 text-ink/80 leading-relaxed">
-            {isMessage
-              ? `${COMPANY.legalName} — ${CONTACT_INQUIRY_INTRO}`
-              : `${COMPANY.legalName} — กรอกชื่อ บริษัท ช่องทางติดต่อ และจำนวนโดยประมาณ ทีมขายติดต่อกลับในเวลาทำการ หน้านี้ไม่ใช่การสั่งซื้อ และไม่มีการชำระเงิน หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์`}
-          </p>
-          {basketId ? (
-            <p
-              role="status"
-              className="mt-4 rounded-xl border border-brass/30 bg-brass/10 px-4 py-3 text-sm text-forest"
-            >
-              ตรวจพบตะกร้าใบเสนอราคา (<span className="font-mono text-xs">{basketId}</span>) —
-              รายละเอียดถูกเติมในฟอร์มแล้ว กรุณาตรวจสอบก่อนส่ง
-            </p>
-          ) : null}
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Link href="/contact" className={tabClass(!isMessage)}>
-              ขอใบเสนอราคา
-            </Link>
-            <Link href="/contact?intent=message" className={tabClass(isMessage)}>
-              ติดต่อ / สอบถาม / ร้องเรียน
-            </Link>
-          </div>
-
-          <dl className="mt-8 space-y-5 text-sm">
+          <dl className="space-y-5 text-sm">
             <div>
               <dt className="font-semibold text-forest">นิติบุคคล</dt>
               <dd className="mt-1 text-ink/80">{site.legalName}</dd>
@@ -144,6 +162,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               </div>
             ) : null}
           </dl>
+          {!hasDirectChannel ? (
+            <p className="mt-6 rounded-xl border border-forest/10 bg-forest-mist/40 px-4 py-3 text-sm text-ink/75">
+              ขณะนี้รับเรื่องผ่านแบบฟอร์มทางขวาเท่านั้น ทีมงานจะติดต่อกลับตามอีเมลหรือเบอร์ที่ให้ไว้
+            </p>
+          ) : null}
         </section>
 
         {isMessage ? (

@@ -48,6 +48,17 @@ describe("contact inquiry mail copy", () => {
     if (prev) process.env.MAIL_SIGN_OFF = prev;
     else delete process.env.MAIL_SIGN_OFF;
   });
+
+  it("uses Thai labels for mail status instead of raw English", async () => {
+    const {
+      CONTACT_MAIL_STATUS_LABELS,
+      contactMailErrorLabel,
+    } = await import("../lib/contact-inquiry-types");
+    assert.equal(CONTACT_MAIL_STATUS_LABELS.sent, "ส่งแล้ว");
+    assert.equal(CONTACT_MAIL_STATUS_LABELS.skipped, "ไม่ส่งจดหมาย");
+    assert.equal(contactMailErrorLabel("not_configured"), "ยังไม่ได้ตั้งค่าจดหมายตอบรับ");
+    assert.equal(contactMailErrorLabel("ECONNRESET"), "ส่งจดหมายไม่สำเร็จ");
+  });
 });
 
 describe("gmail smtp config", () => {
@@ -123,6 +134,7 @@ describe("contact inquiry persistence", () => {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.mailSent, false);
+    assert.equal(result.mailStatus, "skipped");
     assert.match(result.inquiryId, /^CT-/);
     const row = getContactInquiryById(result.inquiryId);
     assert.ok(row);
