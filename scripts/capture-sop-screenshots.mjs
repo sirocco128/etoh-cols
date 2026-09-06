@@ -201,8 +201,9 @@ async function main() {
 
         if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
           const detail = page
-            .locator('a[href*="/ops/quotes/"], a[href*="/ops/orders/"]')
-            .locator("visible=true")
+            .locator(
+              'table a[href*="/ops/quotes/"], table a[href*="/ops/orders/"], a[href*="/ops/quotes/"]:visible, a[href*="/ops/orders/"]:visible',
+            )
             .first();
           if ((await detail.count()) > 0) {
             await Promise.all([

@@ -23,13 +23,14 @@ export function MonthCalendar({
   monthIndex,
   selectedYmd,
   events,
-  hrefForDay,
+  filterParams,
 }: {
   year: number;
   monthIndex: number;
   selectedYmd: string;
   events: ScheduleEvent[];
-  hrefForDay: (ymd: string) => string;
+  /** Query keys without `day` — built on the client so this stays serializable. */
+  filterParams: Record<string, string>;
 }) {
   const firstDow = new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
   const total = daysInMonth(year, monthIndex);
@@ -64,10 +65,14 @@ export function MonthCalendar({
           }
           const count = counts.get(cell.ymd) || 0;
           const selected = cell.ymd === selectedYmd;
+          const params = new URLSearchParams(filterParams);
+          params.set("day", cell.ymd);
+          params.set("month", cell.ymd.slice(0, 7));
+          const href = `/ops/schedule?${params.toString()}`;
           return (
             <Link
               key={cell.ymd}
-              href={hrefForDay(cell.ymd)}
+              href={href}
               className={cn(
                 "relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition",
                 selected

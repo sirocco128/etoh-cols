@@ -71,13 +71,18 @@ export default async function OpsSchedulePage({
       ? bangkokLocalToUtcIso(addDaysYmd(weekStart, 6), 24 * 60 - 1)
       : bangkokLocalToUtcIso(addDaysYmd(`${monthPrefix}-28`, 10), 24 * 60 - 1);
 
-  const events = listScheduleEventsForRange({
-    fromIso: rangeFrom,
-    toIso: rangeTo,
-    kind,
-    status,
-    includeCancelled: status === "cancelled" || status === "all",
-  });
+  let events: Awaited<ReturnType<typeof listScheduleEventsForRange>> = [];
+  try {
+    events = listScheduleEventsForRange({
+      fromIso: rangeFrom,
+      toIso: rangeTo,
+      kind,
+      status,
+      includeCancelled: status === "cancelled" || status === "all",
+    });
+  } catch (error) {
+    console.error("[ops-schedule] list failed", error);
+  }
 
   const qs = (extra: Record<string, string | undefined>) => {
     const params = new URLSearchParams();
@@ -204,7 +209,11 @@ export default async function OpsSchedulePage({
               monthIndex={monthIndex}
               selectedYmd={day}
               events={events}
-              hrefForDay={(ymd) => `/ops/schedule${qs({ day: ymd, month: ymd.slice(0, 7) })}`}
+              filterParams={{
+                view: "month",
+                ...(kind === "all" ? {} : { kind }),
+                ...(status === "all" ? {} : { status }),
+              }}
             />
             <div className="flex gap-2 text-xs">
               <Link
