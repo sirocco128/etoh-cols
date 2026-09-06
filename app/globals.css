@@ -260,9 +260,45 @@ html.dark[data-theme="teal"] {
 
   img,
   video,
-  canvas,
-  svg {
+  canvas {
     max-width: 100%;
+  }
+
+  img:not([data-nimg="fill"]),
+  video {
+    height: auto;
+  }
+
+  .media-frame {
+    @apply relative w-full overflow-hidden bg-forest-mist;
+  }
+
+  .media-frame--card {
+    @apply mx-auto aspect-square w-[min(100%,14rem)] sm:w-[min(100%,15rem)] lg:w-[min(100%,16rem)];
+  }
+
+  .media-frame--product {
+    @apply mx-auto aspect-square w-[min(100%,20rem,42dvh)] sm:w-[min(100%,22rem)] lg:w-[min(100%,24rem)];
+  }
+
+  .media-frame--tile {
+    @apply aspect-[4/3] max-h-[13rem] sm:max-h-none;
+  }
+
+  .media-frame--wide {
+    @apply aspect-[16/10] max-h-[12.5rem] sm:max-h-none;
+  }
+
+  .media-frame--hero {
+    @apply aspect-[4/3] max-h-[16rem] sm:max-h-[18rem] lg:max-h-[20rem];
+  }
+
+  .media-frame--cover {
+    @apply mt-8 aspect-[16/9] max-h-[16rem] sm:max-h-[18rem] lg:max-h-[20rem];
+  }
+
+  .media-frame--thumb {
+    @apply aspect-square;
   }
 
   h1,
@@ -392,7 +428,7 @@ html.dark .ops-shell .text-forest {
   }
 
   .flipbook-frame__ratio {
-    @apply relative aspect-[3/4] w-full max-h-[min(62dvh,34rem)] sm:max-h-none sm:aspect-[4/5] lg:aspect-[16/10];
+    @apply relative aspect-[3/4] w-full max-h-[min(52dvh,22rem)] sm:max-h-[min(56dvh,26rem)] sm:aspect-[4/5] lg:aspect-[16/10] lg:max-h-[min(58dvh,28rem)];
   }
 
   .glass-panel {

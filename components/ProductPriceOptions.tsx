@@ -13,6 +13,8 @@ import {
 type ProductPriceOptionsProps = ProductPriceBand & {
   productSlug: string;
   productName: string;
+  minOrder?: number;
+  skuCode?: string;
   enableP2QuoteTools?: boolean;
 };
 
@@ -72,6 +74,8 @@ function SwitchRow({
 export function ProductPriceOptions({
   productSlug,
   productName,
+  minOrder = 1,
+  skuCode,
   priceMin,
   priceMax,
   priceExFreightMin,
@@ -137,6 +141,8 @@ export function ProductPriceOptions({
         <AddToQuoteButton
           productSlug={productSlug}
           productName={productName}
+          minOrder={minOrder}
+          skuCode={skuCode}
           priceMin={priced.priceMin}
           priceMax={priced.priceMax}
         />

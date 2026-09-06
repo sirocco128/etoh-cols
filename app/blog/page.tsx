@@ -35,7 +35,7 @@ export default async function BlogPage() {
           {articles.map((article) => (
             <li key={article.slug}>
               <Link href={`/blog/${article.slug}`} className="group block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-forest-mist">
+                <div className="media-frame media-frame--wide rounded-2xl">
                   <Image
                     src={article.cover || "/images/article-cover.jpg"}
                     alt={article.title}

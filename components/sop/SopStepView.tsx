@@ -33,7 +33,7 @@ function ScreenshotFrame({
           alt={alt}
           width={1440}
           height={900}
-          className="h-auto w-full bg-paper object-contain object-top"
+          className="mx-auto max-h-[min(48dvh,22rem)] w-auto max-w-full bg-paper object-contain object-top"
           onError={() => setFailed(true)}
         />
       )}

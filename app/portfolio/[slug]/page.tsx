@@ -108,7 +108,7 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
           </p>
         </header>
 
-        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-3xl bg-forest-mist">
+        <div className="media-frame media-frame--cover rounded-3xl">
           <Image
             src={item.image}
             alt={item.title}
@@ -170,7 +170,7 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
               {others.map((row) => (
                 <li key={row.slug}>
                   <Link href={`/portfolio/${row.slug}`} className="group block">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-mist">
+                    <div className="media-frame media-frame--tile rounded-2xl">
                       <Image
                         src={row.image}
                         alt={row.title}

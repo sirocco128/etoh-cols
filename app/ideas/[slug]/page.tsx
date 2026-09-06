@@ -110,7 +110,7 @@ export default async function IdeaThemePage({ params }: PageProps) {
               ) : null}
             </div>
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest-mist">
+          <div className="media-frame media-frame--hero rounded-3xl">
             <Image
               src={theme.heroImage}
               alt={theme.headline}

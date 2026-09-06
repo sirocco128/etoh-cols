@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   lookupCompanyByTaxId,
+  lookupCompany,
   parseRdVatSoap,
   parseRdVatSoapRecords,
+  parseRdVatJsonRecords,
+  uniqueCompaniesByTaxId,
   formatVatBranchLabel,
 } from "../lib/company-lookup";
 import { COMPANY } from "../lib/company";
@@ -183,5 +186,146 @@ describe("company tax ID lookup", () => {
       assert.equal(result.code, "upstream");
       assert.match(result.error, /กรมสรรพากร/);
     }
+  });
+
+  it("parses a Revenue Department JSON name-search payload", () => {
+    const records = parseRdVatJsonRecords({
+      NID: ["0105556003873", "0105556003873", "0107546000342"],
+      TitleName: ["บริษัท", "บริษัท", "บริษัท"],
+      Name: ["เทราบิส จำกัด", "เทราบิส จำกัด", "ไทยเบฟเวอเรจ จำกัด (มหาชน)"],
+      BranchNumber: [0, 1, 0],
+      HouseNumber: ["50/238", "99", "14"],
+      SoiName: ["ประชาอุทิศ 72", "-", "-"],
+      StreetName: ["-", "สาทร", "-"],
+      Thambol: ["ทุ่งครุ", "สีลม", "จตุจักร"],
+      Amphur: ["ทุ่งครุ", "บางรัก", "จตุจักร"],
+      Province: ["กรุงเทพมหานคร", "กรุงเทพมหานคร", "กรุงเทพมหานคร"],
+      PostCode: ["10140", "10500", "10900"],
+    });
+    assert.equal(records.length, 3);
+    const unique = uniqueCompaniesByTaxId(records);
+    assert.equal(unique.length, 2);
+    assert.equal(unique[0]?.taxId, COMPANY.taxId);
+    assert.equal(unique[0]?.streetAddress, "50/238 ซอยประชาอุทิศ 72");
+    assert.equal(unique[1]?.name, "บริษัท ไทยเบฟเวอเรจ จำกัด (มหาชน)");
+  });
+
+  it("parses Revenue Department JSON when fields are objects instead of arrays", () => {
+    const records = parseRdVatJsonRecords({
+      NID: { 0: COMPANY.taxId },
+      TitleName: { 0: "บริษัท" },
+      Name: { 0: "เทราบิส จำกัด" },
+      HouseNumber: { 0: "50/238" },
+      SoiName: { 0: "ประชาอุทิศ 72" },
+      Province: { 0: "กรุงเทพมหานคร" },
+    });
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.name, "บริษัท เทราบิส จำกัด");
+    assert.equal(records[0]?.taxId, COMPANY.taxId);
+  });
+
+  it("searches the Revenue Department by company name and fills the HQ address", async () => {
+    const jsonBody = JSON.stringify({
+      NID: [COMPANY.taxId],
+      TitleName: ["บริษัท"],
+      Name: ["เทราบิส จำกัด"],
+      BranchNumber: [0],
+      HouseNumber: ["50/238"],
+      SoiName: ["ประชาอุทิศ 72"],
+      Thambol: ["ทุ่งครุ"],
+      Amphur: ["ทุ่งครุ"],
+      Province: ["กรุงเทพมหานคร"],
+      PostCode: ["10140"],
+    });
+    const result = await lookupCompany("เทราบิส", {
+      fetchImpl: async (input) => {
+        const url = String(input);
+        if (url.includes("jsonRD")) {
+          return {
+            ok: true,
+            text: async () =>
+              `<ServiceResult>${jsonBody.replace(/</g, "&lt;")}</ServiceResult>`,
+          } as Response;
+        }
+        return {
+          ok: true,
+          text: async () => RD_VAT_SOAP,
+        } as Response;
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.needsPick, undefined);
+      assert.equal(result.taxId, COMPANY.taxId);
+      assert.equal(result.name, COMPANY.legalName);
+      assert.equal(result.streetAddress, "50/238 ซอยประชาอุทิศ 72");
+    }
+  });
+
+  it("asks the buyer to pick when a name matches several tax IDs", async () => {
+    const jsonBody = JSON.stringify({
+      NID: ["0105544001528", "0107546000342"],
+      TitleName: ["บริษัท", "บริษัท"],
+      Name: ["ไทยเบฟเวอเรจ มาร์เก็ตติ้ง จำกัด", "ไทยเบฟเวอเรจ จำกัด (มหาชน)"],
+      BranchNumber: [0, 0],
+      HouseNumber: ["1", "14"],
+      Province: ["กรุงเทพมหานคร", "กรุงเทพมหานคร"],
+    });
+    const result = await lookupCompany("ไทยเบฟ", {
+      fetchImpl: async (input) => {
+        const url = String(input);
+        if (url.includes("jsonRD")) {
+          return {
+            ok: true,
+            text: async () =>
+              `<ServiceResult>${jsonBody.replace(/</g, "&lt;")}</ServiceResult>`,
+          } as Response;
+        }
+        throw new Error("should not fetch tax id until a company is picked");
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.needsPick, true);
+      assert.equal(result.matches?.length, 2);
+      assert.equal(result.matches?.[1]?.taxId, "0107546000342");
+    }
+  });
+
+  it("retries a name without spaces when the spaced query returns nothing", async () => {
+    const jsonBody = JSON.stringify({
+      NID: ["0105551000000"],
+      TitleName: ["บริษัท"],
+      Name: ["พีเคคอม จำกัด"],
+      BranchNumber: [0],
+      HouseNumber: ["1"],
+      Province: ["กรุงเทพมหานคร"],
+    });
+    const names: string[] = [];
+    const result = await lookupCompany("พีเค คอม", {
+      fetchImpl: async (_input, init) => {
+        const body = String(init?.body || "");
+        const name = body.match(/<vat:Name>([^<]*)<\/vat:Name>/)?.[1] || "";
+        names.push(name);
+        if (name === "พีเคคอม") {
+          return {
+            ok: true,
+            text: async () =>
+              `<ServiceResult>${jsonBody.replace(/</g, "&lt;")}</ServiceResult>`,
+          } as Response;
+        }
+        return {
+          ok: true,
+          text: async () => `<ServiceResult>{"NID":[]}</ServiceResult>`,
+        } as Response;
+      },
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.match(result.name, /พีเคคอม/);
+      assert.equal(result.taxId, "0105551000000");
+    }
+    assert.ok(names.includes("พีเค คอม"));
+    assert.ok(names.includes("พีเคคอม"));
   });
 });

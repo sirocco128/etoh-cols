@@ -31,7 +31,7 @@ export default function HomePage() {
   return (
     <>
       <JsonLd data={buildWebSiteJsonLd()} />
-      <section className="relative isolate min-h-[100svh] overflow-hidden bg-forest text-paper">
+      <section className="relative isolate min-h-[min(100svh,34rem)] overflow-hidden bg-forest text-paper">
         <Image
           src="/images/hero-giftset.jpg"
           alt="ชุดของขวัญองค์กรพรีเมียมในกล่องบรรจุภัณฑ์สีเข้ม"
@@ -41,7 +41,7 @@ export default function HomePage() {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/85 to-forest/40" />
-        <div className="relative mx-auto flex min-h-[100svh] max-w-content flex-col justify-end px-page pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))] pt-28 lg:pb-20">
+        <div className="relative mx-auto flex min-h-[min(100svh,34rem)] max-w-content flex-col justify-end px-page pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))] pt-28 lg:pb-20">
           <p className="inline-flex items-center gap-1.5 rounded-full border border-brass/25 bg-paper/15 px-3 py-1 text-xs font-medium text-brass-soft backdrop-blur-md">
             สินค้าพรีเมียม นำเข้าสั่งผลิตตามออเดอร์
           </p>
@@ -93,7 +93,7 @@ export default function HomePage() {
           {IDEA_THEMES.map((theme) => (
             <li key={theme.slug}>
               <Link href={ideaThemePath(theme.slug)} className="group block">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-mist">
+                <div className="media-frame media-frame--tile rounded-2xl">
                   <Image
                     src={theme.heroImage}
                     alt={theme.headline}
@@ -175,7 +175,7 @@ async function HomeCategories() {
           {categories.map((category) => (
             <li key={category.slug}>
               <Link href={`/giftset/${category.slug}`} className="group block">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-mist">
+                <div className="media-frame media-frame--tile rounded-2xl">
                   <Image
                     src={category.heroImage}
                     alt={category.name}

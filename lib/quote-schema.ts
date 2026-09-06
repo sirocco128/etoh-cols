@@ -2,12 +2,17 @@ import { z } from "zod";
 import { cleanText } from "@/lib/sanitize";
 import {
   DECORATION_METHODS,
+  PRODUCT_INTEREST_MAX,
   type QuoteRequestInput,
 } from "@/lib/quote-types";
 import { isValidThaiTaxId } from "@/lib/th-billing";
 import { formatThaiMailingAddress } from "@/lib/thai-address-format";
 import { isValidEmail, isValidThaiPhone } from "@/lib/contact-validate";
 import { EMAIL_INVALID, PHONE_INVALID } from "@/lib/ux-copy";
+import {
+  NEEDED_DATE_MIN_LEAD_DAYS,
+  minNeededDateYmd,
+} from "@/lib/bangkok-date";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -33,15 +38,6 @@ function optionalCleanedString(max: number) {
     },
     z.string().max(max).optional(),
   );
-}
-
-function bangkokTodayYmd(now = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
 }
 
 function isRealCalendarDate(ymd: string): boolean {
@@ -98,7 +94,7 @@ export const quoteSchema = z
       .refine((value) => isValidThaiTaxId(value), "Invalid tax ID")
       .optional()),
     billingBranch: optionalCleanedString(160),
-    productInterest: optionalCleanedString(200),
+    productInterest: optionalCleanedString(PRODUCT_INTEREST_MAX),
     productSlug: z.preprocess((value) => {
       if (value === undefined || value === null) return undefined;
       const cleaned = cleanText(String(value));
@@ -143,12 +139,12 @@ export const quoteSchema = z
       });
       return;
     }
-    const today = bangkokTodayYmd();
-    if (data.neededDate < today) {
+    const minDate = minNeededDateYmd();
+    if (data.neededDate < minDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["neededDate"],
-        message: "Date must not be in the past (Asia/Bangkok)",
+        message: `วันที่ต้องการใช้งานต้องไม่เร็วกว่า ${minDate} (วันนี้บวก ${NEEDED_DATE_MIN_LEAD_DAYS} วัน)`,
       });
     }
   });
@@ -223,4 +219,9 @@ export function parseQuoteFormData(
   };
 }
 
-export { bangkokTodayYmd };
+export {
+  NEEDED_DATE_MIN_LEAD_DAYS,
+  bangkokTodayYmd,
+  bangkokYmdPlusDays,
+  minNeededDateYmd,
+} from "@/lib/bangkok-date";

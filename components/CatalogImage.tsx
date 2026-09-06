@@ -12,6 +12,7 @@ type CatalogImageProps = {
   priority?: boolean;
   className?: string;
   fallbackSrc?: string;
+  objectFit?: "cover" | "contain";
 };
 
 export function CatalogImage({
@@ -21,6 +22,7 @@ export function CatalogImage({
   priority = false,
   className,
   fallbackSrc = PRODUCT_IMAGE_FALLBACK,
+  objectFit = "cover",
 }: CatalogImageProps) {
   const [failed, setFailed] = useState(false);
   const resolved = failed || !src ? fallbackSrc : src;
@@ -36,7 +38,8 @@ export function CatalogImage({
       unoptimized={localApi}
       sizes={sizes}
       className={cn(
-        "bg-forest-mist object-cover transition-transform duration-500 group-hover:scale-105",
+        "bg-forest-mist transition-transform duration-500 group-hover:scale-105",
+        objectFit === "contain" ? "object-contain p-3" : "object-cover",
         className,
       )}
       onError={() => {

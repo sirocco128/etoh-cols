@@ -35,7 +35,7 @@ export default function AboutPage() {
       <JsonLd data={breadcrumbs} />
 
       <section className="relative isolate overflow-hidden bg-forest text-paper">
-        <div className="relative min-h-[20rem] w-full sm:min-h-[26rem] lg:min-h-[32rem]">
+        <div className="relative min-h-[16rem] w-full sm:min-h-[20rem] lg:min-h-[22rem]">
           <Image
             src="/images/about-facility.jpg"
             alt="สำนักงานคอลเซ็นเตอร์และพื้นที่ผลิตของบริษัท เทราบิส จำกัด"
@@ -46,7 +46,7 @@ export default function AboutPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-forest/90 via-forest/40 to-forest/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-forest/75 via-transparent to-forest/20" />
-          <div className="relative mx-auto flex min-h-[20rem] max-w-content flex-col justify-end px-page py-10 sm:min-h-[26rem] sm:py-14 lg:min-h-[32rem]">
+          <div className="relative mx-auto flex min-h-[16rem] max-w-content flex-col justify-end px-page py-10 sm:min-h-[20rem] sm:py-14 lg:min-h-[22rem]">
             <p className="text-sm font-semibold uppercase tracking-wide text-brass-soft">
               {COMPANY.legalNameEn}
             </p>

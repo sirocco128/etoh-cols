@@ -26,8 +26,11 @@ export const QUOTE_NOT_AN_ORDER =
 export const CONTACT_INQUIRY_INTRO =
   "ใช้เมื่อต้องการติดต่อ สอบถาม ร้องเรียน หรือเรื่องอื่นที่ไม่ใช่ใบเสนอราคา กรอกอีเมลและเบอร์โทรเพื่อให้ทีมงานติดต่อกลับ — ไม่มีการชำระเงินในหน้านี้";
 
+export const NEEDED_DATE_MIN_HINT =
+  "เลือกได้ตั้งแต่วันนี้บวก 10 วัน เป็นต้นไป เพราะต้องใช้เวลาผลิตและขนส่ง";
+
 export const COMPANY_TAX_LOOKUP_HINT =
-  "ใส่เลข 13 หลักจากหนังสือรับรองบริษัท ระบบจะค้นชื่อจากกรมสรรพากรและกรมพัฒนาธุรกิจการค้าให้ ถ้ามีหลายสาขา ให้เลือกสาขาที่ใช้ออกใบกำกับภาษี";
+  "พิมพ์ชื่อบริษัทหรือเลขผู้เสียภาษี 13 หลัก ระบบจะเช็คกับกรมสรรพากร ถ้าชื่อตรงหลายบริษัท จะมีหน้าต่างให้เลือกชื่อและสาขาให้ตรง แล้วที่อยู่ด้านล่างจะถูกใส่ให้อัตโนมัติ";
 
 export const EMAIL_FORMAT_HINT = "เช่น name@company.co.th";
 export const PHONE_FORMAT_HINT = "เช่น 081-234-5678 หรือ 02-123-4567";
@@ -150,6 +153,18 @@ export const FLIP_CATALOG_EXTERNAL = "สมุดพลิกที่อัป
 export const QUOTE_BASKET_FAB = "ตะกร้าขอใบเสนอราคา";
 
 export const QUOTE_FAB_LABEL = "ขอใบเสนอราคา";
+
+export function quoteBasketAddLabel(qty: number): string {
+  return `เพิ่ม ${qty} ชุดเข้าตะกร้าใบเสนอราคา`;
+}
+
+export function quoteBasketAddedLabel(qty: number): string {
+  return `เพิ่มแล้ว ${qty} ชุด — เพิ่มอีก`;
+}
+
+export function quoteBasketLockNote(qty: number): string {
+  return `ล็อกจำนวนขั้นต่ำ ${qty} ชุด พร้อมราคาโดยประมาณตอนเพิ่ม — ลดต่ำกว่านี้ไม่ได้`;
+}
 
 export const LOGO_DECORATION_HEADING = "สกรีนโลโก้ใส่ได้";
 

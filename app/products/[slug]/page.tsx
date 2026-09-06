@@ -79,21 +79,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
         <div className="mt-8 grid gap-10 lg:grid-cols-2">
           <div>
-            <div className="relative aspect-square overflow-hidden rounded-3xl bg-forest-mist">
+            <div className="media-frame media-frame--product rounded-3xl">
               <CatalogImage
                 src={cover}
                 alt={product.name}
                 priority
+                objectFit="contain"
                 sizes="(max-width:1024px) 100vw, 50vw"
               />
             </div>
             {thumbnails.length > 1 ? (
               <ul className="mt-4 grid grid-cols-4 gap-3">
                 {thumbnails.map((src, index) => (
-                  <li key={`${src}-${index}`} className="relative aspect-square overflow-hidden rounded-xl bg-forest-mist">
+                  <li key={`${src}-${index}`} className="media-frame media-frame--thumb rounded-xl">
                     <CatalogImage
                       src={src}
                       alt={`${product.name} มุมที่ ${index + 1}`}
+                      objectFit="contain"
                       sizes="120px"
                     />
                   </li>
@@ -161,6 +163,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <ProductPriceOptions
               productSlug={product.slug}
               productName={product.name}
+              minOrder={product.minOrder}
+              skuCode={product.productId || product.slug}
               priceMin={product.priceMin}
               priceMax={product.priceMax}
               priceExFreightMin={product.priceExFreightMin}

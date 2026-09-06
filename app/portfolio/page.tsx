@@ -45,7 +45,7 @@ export default async function PortfolioPage() {
           {portfolios.map((item) => (
             <li key={item.slug}>
               <Link href={`/portfolio/${item.slug}`} className="group block">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-mist">
+              <div className="media-frame media-frame--tile rounded-2xl">
                 <Image
                   src={item.image}
                   alt={item.title}

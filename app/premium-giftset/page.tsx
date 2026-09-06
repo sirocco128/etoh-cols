@@ -96,7 +96,7 @@ export default async function PremiumGiftSetPage() {
               )}
             </div>
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
+          <div className="media-frame media-frame--hero rounded-3xl bg-forest">
             <Image
               src="/images/hero-giftset.jpg"
               alt="ตัวอย่างชุดของขวัญองค์กรในกล่อง"
@@ -117,7 +117,7 @@ export default async function PremiumGiftSetPage() {
             {categories.map((category) => (
               <li key={category.slug}>
                 <Link href={`/giftset/${category.slug}`} className="group block">
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-paper">
+                  <div className="media-frame media-frame--tile rounded-2xl bg-paper">
                     <Image
                       src={category.heroImage}
                       alt={category.name}

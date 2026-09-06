@@ -220,7 +220,7 @@ export function CatalogFlipbook({
                       : { rotateY: direction * -70, opacity: 0 }
                   }
                   transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                  className="catalog-flip-page relative min-h-[20rem] origin-center overflow-hidden rounded-2xl bg-paper shadow-[0_20px_50px_rgba(20,53,42,0.18)] xs:min-h-[24rem] sm:min-h-[34rem] dark:bg-forest-light/80"
+                  className="catalog-flip-page relative min-h-[16rem] origin-center overflow-hidden rounded-2xl bg-paper shadow-[0_20px_50px_rgba(20,53,42,0.18)] xs:min-h-[18rem] sm:min-h-[22rem] dark:bg-forest-light/80"
                   style={{ transformStyle: "preserve-3d" }}
                   aria-live="polite"
                   onTouchStart={(event) => {
@@ -304,13 +304,14 @@ export function CatalogFlipbook({
 function FlipPageBody({ page }: { page: CatalogBookPage }) {
   if (page.kind === "cover") {
     return (
-      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
-        <div className="relative h-full min-h-[16rem]">
+      <div className="grid min-h-[16rem] xs:min-h-[18rem] sm:min-h-[22rem] lg:grid-cols-2">
+        <div className="relative h-[12.5rem] overflow-hidden sm:h-[16rem] lg:h-full lg:min-h-[16rem] lg:max-h-[20rem]">
           <CatalogImage
             src={page.image}
             alt={page.title}
             sizes="(max-width:1024px) 100vw, 50vw"
             className="group-hover:scale-100"
+            objectFit="contain"
             priority
           />
         </div>
@@ -335,13 +336,14 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
 
   if (page.kind === "section") {
     return (
-      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
-        <div className="relative h-full min-h-[16rem]">
+      <div className="grid min-h-[16rem] xs:min-h-[18rem] sm:min-h-[22rem] lg:grid-cols-2">
+        <div className="relative h-[12.5rem] overflow-hidden sm:h-[16rem] lg:h-full lg:min-h-[16rem] lg:max-h-[20rem]">
           <CatalogImage
             src={page.image}
             alt={page.name}
             sizes="(max-width:1024px) 100vw, 50vw"
             className="group-hover:scale-100"
+            objectFit="contain"
           />
         </div>
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10">
@@ -365,7 +367,7 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
   if (page.kind === "file") {
     if (page.fileKind === "pdf") {
       return (
-        <div className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[24rem] sm:min-h-[34rem] sm:px-16">
+        <div className="flex min-h-[16rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[18rem] sm:min-h-[22rem] sm:px-16">
           <p className="text-xs font-medium uppercase tracking-wide text-brass">
             {page.groupName}
           </p>
@@ -388,13 +390,14 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
       );
     }
     return (
-      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
-        <div className="relative h-full min-h-[16rem]">
+      <div className="grid min-h-[16rem] xs:min-h-[18rem] sm:min-h-[22rem] lg:grid-cols-2">
+        <div className="relative h-[12.5rem] overflow-hidden sm:h-[16rem] lg:h-full lg:min-h-[16rem] lg:max-h-[20rem]">
           <CatalogImage
             src={page.image || ""}
             alt={page.title}
             sizes="(max-width:1024px) 100vw, 50vw"
             className="group-hover:scale-100"
+            objectFit="contain"
           />
         </div>
         <div className="flex flex-col justify-center px-6 py-10 sm:px-10">
@@ -410,7 +413,7 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
 
   if (page.kind === "closing") {
     return (
-      <div className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[24rem] sm:min-h-[34rem] sm:px-16">
+      <div className="flex min-h-[16rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[18rem] sm:min-h-[22rem] sm:px-16">
         <h2 className="text-3xl font-bold text-forest dark:text-paper">
           {page.title}
         </h2>
@@ -433,13 +436,14 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
   const quoteHref = `/contact?productSlug=${encodeURIComponent(product.slug)}&productInterest=${encodeURIComponent(product.name)}`;
 
   return (
-    <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
-      <div className="relative h-full min-h-[16rem]">
+    <div className="grid min-h-[16rem] xs:min-h-[18rem] sm:min-h-[22rem] lg:grid-cols-2">
+      <div className="relative h-[12.5rem] overflow-hidden sm:h-[16rem] lg:h-full lg:min-h-[16rem] lg:max-h-[20rem]">
         <CatalogImage
           src={product.image}
           alt={product.name}
           sizes="(max-width:1024px) 100vw, 50vw"
           className="group-hover:scale-100"
+          objectFit="contain"
         />
         <span className="absolute left-4 top-4 rounded-full bg-paper/90 px-3 py-1 text-xs font-medium text-forest shadow-sm backdrop-blur-md">
           {LOGO_SCREENING_BADGE}

@@ -6,6 +6,9 @@ export const DECORATION_METHODS = [
   "not-sure",
 ] as const;
 
+/** Max length for the submitted product-interest summary (DB column is TEXT). */
+export const PRODUCT_INTEREST_MAX = 800;
+
 export type DecorationMethod = (typeof DECORATION_METHODS)[number];
 
 export const WEBHOOK_STATUSES = [

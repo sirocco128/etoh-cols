@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ProductConfiguration } from "@/lib/product-configurator-types";
+import { minNeededDateYmd } from "@/lib/bangkok-date";
 
 const CONFIG_DISCLAIMER =
   "เครื่องมือนี้ช่วยร่างสเปคเบื้องต้นเท่านั้น ไม่คำนวณราคา และไม่ยืนยันวันส่งมอบ — ส่งคำขอเพื่อให้ทีมขายยืนยันสเปคจริง";
@@ -78,6 +79,7 @@ export function ProductConfiguratorStub({
   const patch = (partial: Partial<ProductConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...partial }));
   };
+  const minNeededDate = minNeededDateYmd();
 
   return (
     <section className="rounded-3xl border border-forest/10 bg-paper p-6 sm:p-8">
@@ -152,10 +154,19 @@ export function ProductConfiguratorStub({
           <span className="font-semibold text-forest">วันที่ต้องการใช้งาน</span>
           <input
             type="date"
-            value={config.deliveryDate ?? ""}
-            onChange={(e) =>
-              patch({ deliveryDate: e.target.value || undefined })
+            min={minNeededDate}
+            value={
+              config.deliveryDate && config.deliveryDate >= minNeededDate
+                ? config.deliveryDate
+                : ""
             }
+            onChange={(e) => {
+              const next = e.target.value;
+              patch({
+                deliveryDate:
+                  next && next < minNeededDate ? minNeededDate : next || undefined,
+              });
+            }}
             className="mt-1 min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           />
         </label>

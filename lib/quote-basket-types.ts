@@ -25,8 +25,12 @@ export type QuoteBasketItem = {
   basketId: string;
   productSlug: string;
   productName: string;
+  /** Catalog / SKU code shown on the card, e.g. DF1420. */
+  skuCode?: string;
   variantId?: string;
   quantity: number;
+  /** Floor qty locked from catalog min-order or SKU forced min. */
+  lockedMinQty: number;
   decorationMethod?: string;
   packagingOption?: string;
   note?: string;
@@ -39,6 +43,9 @@ export type QuoteBasketItem = {
 export type AddQuoteBasketItemInput = {
   productSlug: string;
   productName: string;
+  skuCode?: string;
+  /** Catalog min-order or SKU forced min — used when quantity is omitted. */
+  minOrder?: number;
   quantity?: number;
   estimatedUnitMin?: number;
   estimatedUnitMax?: number;

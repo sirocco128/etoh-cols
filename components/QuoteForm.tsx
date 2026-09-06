@@ -2,6 +2,7 @@
 
 import { CompanyLookupField } from "@/components/CompanyLookupField";
 import { ContactFields } from "@/components/ContactFields";
+import { ProductInterestField } from "@/components/ProductInterestField";
 import { ThaiAddressFields } from "@/components/ThaiAddressFields";
 import Link from "next/link";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/app/actions/quote";
 import {
   appendQuoteDetailTemplate,
+  NEEDED_DATE_MIN_HINT,
   QUOTE_DETAIL_HINT,
   QUOTE_DETAIL_TEMPLATES,
   QUOTE_NOT_AN_ORDER,
@@ -28,10 +30,15 @@ import { emailFieldError, phoneFieldError } from "@/lib/contact-validate";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 import {
+  basketInterestLines,
   clearBasketStorage,
+  formatBasketProductInterest,
   loadBasketFromStorage,
+  totalBasketQuantity,
+  type QuoteInterestLine,
 } from "@/lib/quote-basket";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
+import { minNeededDateYmd } from "@/lib/bangkok-date";
 import {
   MOCKUP_BRIEF_EVENT,
   type MockupBriefEventDetail,
@@ -145,6 +152,7 @@ export function QuoteForm({
   const [draftReady, setDraftReady] = useState(false);
   const [draft, setDraft] = useState<QuoteFormValues>({});
   const [contactAttempted, setContactAttempted] = useState(false);
+  const [interestLines, setInterestLines] = useState<QuoteInterestLine[]>([]);
   const startedRef = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -193,6 +201,20 @@ export function QuoteForm({
       seed.detail = seed.detail
         ? `${seed.detail}\n\n(รหัสตะกร้า: ${basketId})`
         : `อ้างอิงตะกร้าใบเสนอราคา: ${basketId}`;
+      try {
+        const storedBasket = loadBasketFromStorage();
+        if (storedBasket.id === basketId && storedBasket.items.length > 0) {
+          const lines = basketInterestLines(storedBasket);
+          setInterestLines(lines);
+          seed.productInterest = formatBasketProductInterest(storedBasket.items);
+          seed.quantity = String(totalBasketQuantity(storedBasket.items));
+          if (storedBasket.items.length !== 1) {
+            seed.productSlug = "";
+          }
+        }
+      } catch {
+        // ignore — URL prefill still applies
+      }
     }
     setDraft(seed);
     setDraftReady(true);
@@ -356,6 +378,14 @@ export function QuoteForm({
   const errors = state.fieldErrors;
   const errorSummaryId = "quote-error-summary";
   const openOptional = OPTIONAL_ERROR_KEYS.some((key) => Boolean(errors?.[key]));
+  const minNeededDate = minNeededDateYmd();
+  const draftedNeeded = val("neededDate");
+  const neededDateValue =
+    draftedNeeded && draftedNeeded >= minNeededDate
+      ? draftedNeeded
+      : draftedNeeded
+        ? minNeededDate
+        : undefined;
 
   return (
     <form
@@ -446,27 +476,43 @@ export function QuoteForm({
         defaultValue={val("name")}
       />
 
-      <div>
-        <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-ink">
-          บริษัท / องค์กร *
-        </label>
-        <input
-          id="company"
-          name="company"
-          required
-          autoComplete="organization"
-          value={val("company")}
-          onChange={(event) => patchDraft({ company: event.target.value })}
-          className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
-          aria-invalid={Boolean(fieldError(errors, "company"))}
-          aria-describedby={fieldError(errors, "company") ? "company-error" : undefined}
-        />
-        {fieldError(errors, "company") ? (
-          <p id="company-error" className="mt-1 text-sm text-red-700">
-            {fieldError(errors, "company")}
-          </p>
-        ) : null}
-      </div>
+      <CompanyLookupField
+        taxId={val("taxId")}
+        company={val("company")}
+        billingBranch={val("billingBranch")}
+        taxError={fieldError(errors, "taxId")}
+        companyError={fieldError(errors, "company")}
+        onTaxIdChange={(value) =>
+          patchDraft({
+            taxId: value,
+            ...(value.replace(/\D/g, "").length !== 13 ? { billingBranch: "" } : {}),
+          })
+        }
+        onCompanyChange={(value) => patchDraft({ company: value })}
+        onFill={(fill) =>
+          patchDraft({
+            taxId: fill.taxId,
+            company: fill.company,
+            ...(fill.billingBranch ? { billingBranch: fill.billingBranch } : {}),
+            ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
+            ...(fill.province ? { province: fill.province } : {}),
+            ...(fill.district ? { district: fill.district } : {}),
+            ...(fill.subdistrict ? { subdistrict: fill.subdistrict } : {}),
+            ...(fill.zip ? { zip: fill.zip } : {}),
+          })
+        }
+      />
+
+      <ThaiAddressFields
+        streetAddress={val("streetAddress")}
+        province={val("province")}
+        district={val("district")}
+        subdistrict={val("subdistrict")}
+        zip={val("zip")}
+        streetError={fieldError(errors, "streetAddress")}
+        provinceError={fieldError(errors, "province")}
+        onChange={(next) => patchDraft(next)}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ContactFields
@@ -479,24 +525,34 @@ export function QuoteForm({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="max-w-xs">
         <Field
           id="quantity"
           name="quantity"
           type="number"
-          label="จำนวนโดยประมาณ (เซ็ต) *"
+          label={
+            interestLines.length > 1
+              ? "จำนวนรวมโดยประมาณ (เซ็ต) *"
+              : "จำนวนโดยประมาณ (เซ็ต) *"
+          }
           error={fieldError(errors, "quantity")}
           min={Math.max(1, minOrder)}
           defaultValue={val("quantity") || (minOrder > 1 ? String(minOrder) : "")}
-        />
-        <Field
-          id="productInterest"
-          name="productInterest"
-          label="สินค้า / เซ็ตที่สนใจ"
-          defaultValue={val("productInterest", productInterest)}
-          error={fieldError(errors, "productInterest")}
+          hint={
+            interestLines.length > 1
+              ? "รวมทุกสายในตะกร้า — จำนวนต่อชิ้นอยู่ในรายการสินค้าด้านล่าง"
+              : undefined
+          }
         />
       </div>
+
+      <ProductInterestField
+        lines={interestLines}
+        value={val("productInterest", productInterest)}
+        error={fieldError(errors, "productInterest")}
+        showBasketLink={Boolean(basketId) && isP2QuoteToolsEnabled()}
+        onChange={(next) => patchDraft({ productInterest: next })}
+      />
 
       <div>
         <label htmlFor="detail" className="mb-1.5 block text-sm font-medium text-ink">
@@ -561,37 +617,9 @@ export function QuoteForm({
           รายละเอียดเพิ่มเติม (ไม่บังคับ)
         </summary>
         <p className="mt-2 text-xs text-ink/60">
-          เลขผู้เสียภาษี ที่อยู่ งบ และวันที่ใช้ ใส่ทีหลังก็ได้ ทีมขายถามต่อเมื่อต้องออกใบเสนอราคา
+          งบต่อเซ็ต วันที่ใช้ และวิธีใส่โลโก้ ใส่ทีหลังก็ได้ ทีมขายถามต่อเมื่อต้องออกใบเสนอราคา
         </p>
         <div className="mt-4 space-y-5">
-          <CompanyLookupField
-            taxId={val("taxId")}
-            company={val("company")}
-            billingBranch={val("billingBranch")}
-            taxError={fieldError(errors, "taxId")}
-            companyError={fieldError(errors, "company")}
-            showCompanyField={false}
-            onTaxIdChange={(value) =>
-              patchDraft({
-                taxId: value,
-                ...(value.replace(/\D/g, "").length !== 13 ? { billingBranch: "" } : {}),
-              })
-            }
-            onCompanyChange={(value) => patchDraft({ company: value })}
-            onFill={(fill) =>
-              patchDraft({
-                taxId: fill.taxId,
-                company: fill.company,
-                ...(fill.billingBranch ? { billingBranch: fill.billingBranch } : {}),
-                ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
-                ...(fill.province ? { province: fill.province } : {}),
-                ...(fill.district ? { district: fill.district } : {}),
-                ...(fill.subdistrict ? { subdistrict: fill.subdistrict } : {}),
-                ...(fill.zip ? { zip: fill.zip } : {}),
-              })
-            }
-          />
-
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               id="budgetPerSet"
@@ -608,7 +636,9 @@ export function QuoteForm({
               type="date"
               label="วันที่ต้องการใช้งาน"
               error={fieldError(errors, "neededDate")}
-              defaultValue={val("neededDate")}
+              hint={NEEDED_DATE_MIN_HINT}
+              min={minNeededDate}
+              defaultValue={neededDateValue}
             />
           </div>
 
@@ -643,17 +673,6 @@ export function QuoteForm({
               </p>
             ) : null}
           </div>
-
-          <ThaiAddressFields
-            streetAddress={val("streetAddress")}
-            province={val("province")}
-            district={val("district")}
-            subdistrict={val("subdistrict")}
-            zip={val("zip")}
-            streetError={fieldError(errors, "streetAddress")}
-            provinceError={fieldError(errors, "province")}
-            onChange={(next) => patchDraft(next)}
-          />
         </div>
       </details>
 
@@ -698,11 +717,12 @@ type FieldProps = {
   name: string;
   label: string;
   error?: string;
+  hint?: string;
   type?: string;
   required?: boolean;
   autoComplete?: string;
   defaultValue?: string;
-  min?: number;
+  min?: number | string;
 };
 
 function Field({
@@ -710,6 +730,7 @@ function Field({
   name,
   label,
   error,
+  hint,
   type = "text",
   required,
   autoComplete,
@@ -717,6 +738,10 @@ function Field({
   min,
 }: FieldProps) {
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint ? hintId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div>
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink">
@@ -732,8 +757,13 @@ function Field({
         min={min}
         className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy || undefined}
       />
+      {hint ? (
+        <p id={hintId} className="mt-1 text-xs leading-relaxed text-ink/55">
+          {hint}
+        </p>
+      ) : null}
       {error ? (
         <p id={errorId} className="mt-1 text-sm text-red-700">
           {error}

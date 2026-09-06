@@ -48,7 +48,7 @@ export default function IdeasIndexPage() {
           {IDEA_THEMES.map((theme) => (
             <li key={theme.slug}>
               <Link href={ideaThemePath(theme.slug)} className="group block">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-forest-mist">
+                <div className="media-frame media-frame--wide rounded-2xl">
                   <Image
                     src={theme.heroImage}
                     alt={theme.headline}

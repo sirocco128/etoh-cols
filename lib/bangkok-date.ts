@@ -2,6 +2,9 @@
 
 export const BANGKOK_TZ = "Asia/Bangkok";
 
+/** Earliest usable quote date = Bangkok calendar today plus this many days. */
+export const NEEDED_DATE_MIN_LEAD_DAYS = 10;
+
 export function bangkokDateYmd(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: BANGKOK_TZ,
@@ -22,6 +25,8 @@ export function bangkokYmdDash(date = new Date()): string {
     day: "2-digit",
   }).format(date);
 }
+
+export const bangkokTodayYmd = bangkokYmdDash;
 
 export function bangkokWeekday(date = new Date()): number {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -110,6 +115,14 @@ export function addDaysYmd(ymd: string, days: number): string {
   if (!match) throw new Error("invalid_ymd");
   const utc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]) + days);
   return bangkokYmdDash(new Date(utc + 7 * 60 * 60 * 1000));
+}
+
+export function bangkokYmdPlusDays(days: number, now = new Date()): string {
+  return addDaysYmd(bangkokYmdDash(now), days);
+}
+
+export function minNeededDateYmd(now = new Date()): string {
+  return addDaysYmd(bangkokYmdDash(now), NEEDED_DATE_MIN_LEAD_DAYS);
 }
 
 export function startOfBangkokWeekYmd(ymd: string): string {

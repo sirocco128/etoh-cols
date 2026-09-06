@@ -1,7 +1,8 @@
 /**
- * Lookup a Thai juristic person by 13-digit registration / tax ID.
- * Order: local CRM → Revenue Department VAT (public) → MOC/DBD juristic.
- * Optional: DBD Open API when DBD_OPENAPI_KEY is set.
+ * Lookup a Thai juristic person by 13-digit tax ID or company name.
+ * Tax ID: local CRM → Revenue Department VAT XML → MOC/DBD.
+ * Name: Revenue Department VAT JSON (empty TIN) → unique companies.
+ * Branch details load later, after the buyer picks a company.
  */
 
 import { isValidThaiTaxId, normalizeThaiTaxId } from "@/lib/th-billing";
@@ -11,6 +12,11 @@ export type CompanyLookupSource = "crm" | "rd_vat" | "dbd_moc" | "dbd_openapi";
 
 const RD_VAT_URL = "https://rdws.rd.go.th/serviceRD3/vatserviceRD3.asmx";
 const RD_VAT_NS = "https://rdws.rd.go.th/serviceRD3/vatserviceRD3";
+const RD_VAT_JSON_URL = "https://rdws.rd.go.th/jsonRD/vatserviceRD3.asmx";
+const RD_VAT_JSON_NS = "https://rdws.rd.go.th/JserviceRD3/vatserviceRD3";
+const RD_NAME_MATCH_CAP = 15;
+const RD_NAME_MIN_LEN = 2;
+const RD_JSON_ROW_SCAN_CAP = 400;
 
 export type CompanyBranch = {
   code: string;
@@ -39,7 +45,11 @@ export type CompanyRecord = {
   branches?: CompanyBranch[];
 };
 
-export type CompanyLookupOk = { ok: true } & CompanyRecord;
+export type CompanyLookupOk = {
+  ok: true;
+  matches?: CompanyRecord[];
+  needsPick?: boolean;
+} & CompanyRecord;
 
 export type CompanyLookupFail = {
   ok: false;
@@ -72,6 +82,28 @@ function joinAddress(parts: Array<string | null | undefined>): string | null {
     .map((part) => String(part || "").trim())
     .filter((part) => part && part !== "-");
   return cleaned.length ? cleaned.join(" ") : null;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function normalizeCompanyNameQuery(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+function companyNameQueryVariants(raw: string): string[] {
+  const collapsed = normalizeCompanyNameQuery(raw);
+  const nospace = collapsed.replace(/\s+/g, "");
+  const stripped = collapsed
+    .replace(/^บริษัท\s+/u, "")
+    .replace(/\s+จำกัด(?:\s*\(มหาชน\))?$/u, "")
+    .trim();
+  return [...new Set([collapsed, nospace, stripped].filter((item) => item.length >= RD_NAME_MIN_LEN))];
 }
 
 function decodeXmlText(raw: string): string {
@@ -293,6 +325,120 @@ export function parseRdVatSoap(xml: string, taxId: string): CompanyRecord | null
   return parseRdVatSoapRecords(xml, taxId, "0")[0] ?? null;
 }
 
+function jsonStringList(payload: Record<string, unknown>, keys: string[]): string[] {
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value) && value.length) {
+      return value.slice(0, RD_JSON_ROW_SCAN_CAP).map((item) =>
+        item == null || item === "-" ? "" : String(item).trim(),
+      );
+    }
+    if (typeof value === "string" && value && value !== "-") {
+      return [value.trim()];
+    }
+    if (value && typeof value === "object") {
+      const values = Object.values(value as Record<string, unknown>)
+        .slice(0, RD_JSON_ROW_SCAN_CAP)
+        .map((item) => (item == null || item === "-" ? "" : String(item).trim()));
+      if (values.some(Boolean)) return values;
+    }
+  }
+  return [];
+}
+
+function extractServiceResultJson(xml: string): Record<string, unknown> | null {
+  const match = xml.match(/<ServiceResult\b[^>]*>([\s\S]*?)<\/ServiceResult>/i);
+  if (!match?.[1]) return null;
+  const raw = decodeXmlText(match[1]);
+  if (!raw || raw === "null") return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+export function parseRdVatJsonRecords(payload: Record<string, unknown>): CompanyRecord[] {
+  const nids = jsonStringList(payload, ["vNID", "NID"]);
+  const titles = jsonStringList(payload, ["vtitleName", "TitleName"]);
+  const names = jsonStringList(payload, ["vName", "Name"]);
+  const branchNames = jsonStringList(payload, ["vBranchName", "BranchName"]);
+  const branchTitles = jsonStringList(payload, ["vBranchTitleName", "BranchTitleName"]);
+  const provinces = jsonStringList(payload, ["vProvince", "Province"]);
+  const districts = jsonStringList(payload, ["vAmphur", "Amphur"]);
+  const subdistricts = jsonStringList(payload, ["vThambol", "Thambol"]);
+  const moos = jsonStringList(payload, ["vMooNumber", "MooNumber"]);
+  const sois = jsonStringList(payload, ["vSoiName", "SoiName"]);
+  const streets = jsonStringList(payload, ["vStreetName", "StreetName"]);
+  const houses = jsonStringList(payload, ["vHouseNumber", "HouseNumber"]);
+  const postCodes = jsonStringList(payload, ["vPostCode", "PostCode"]);
+  const branchNumbers = jsonStringList(payload, ["vBranchNumber", "BranchNumber"]);
+  const count = Math.max(nids.length, names.length, branchNames.length, 0);
+  if (!count) return [];
+  const records: CompanyRecord[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const title = titles[index] || branchTitles[index] || "";
+    const name = names[index] || branchNames[index] || "";
+    if (!name) continue;
+    const taxId = nids[index] || "";
+    const province = provinces[index] || "";
+    const district = districts[index] || "";
+    const subdistrict = subdistricts[index] || "";
+    const streetLine = joinAddress([
+      houses[index],
+      moos[index] ? `หมู่ ${moos[index]}` : "",
+      sois[index] ? `ซอย${sois[index]}` : "",
+      streets[index] ? `ถ.${streets[index]}` : "",
+    ]);
+    const matched = matchThaiAddressParts({ province, district, subdistrict });
+    records.push({
+      taxId,
+      name: [title, name].filter(Boolean).join(" "),
+      nameEn: null,
+      status: null,
+      streetAddress: streetLine,
+      address: joinAddress([
+        streetLine,
+        subdistrict,
+        district,
+        province,
+        postCodes[index],
+      ]),
+      province: matched.province || province || null,
+      district: matched.district || district || null,
+      subdistrict: matched.subdistrict || subdistrict || null,
+      zip: postCodes[index] || matched.zip || null,
+      source: "rd_vat",
+      branchCode: String(branchNumbers[index] || "0").replace(/\D/g, "") || "0",
+    });
+  }
+  return records;
+}
+
+export function uniqueCompaniesByTaxId(
+  records: CompanyRecord[],
+  cap = RD_NAME_MATCH_CAP,
+): CompanyRecord[] {
+  const byTax = new Map<string, CompanyRecord>();
+  for (const record of records) {
+    const taxId = normalizeThaiTaxId(record.taxId) || record.taxId;
+    if (!taxId) continue;
+    const existing = byTax.get(taxId);
+    const isHq = (record.branchCode || "0") === "0";
+    if (!existing) {
+      if (byTax.size >= cap) continue;
+      byTax.set(taxId, { ...record, taxId, branches: undefined });
+      continue;
+    }
+    if (isHq && existing.branchCode !== "0") {
+      byTax.set(taxId, { ...record, taxId, branches: undefined });
+    }
+  }
+  return [...byTax.values()];
+}
+
 async function fetchJson(
   url: string,
   init: RequestInit,
@@ -450,6 +596,67 @@ async function attachRdVatBranches(
   }
   const branches = uniqueBranches(records.map(toCompanyBranch));
   return { ...hq, branches };
+}
+
+function rdVatJsonSoapBody(tin: string, name: string, branchNumber: number): string {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:vat="${RD_VAT_JSON_NS}">
+  <soap:Header/>
+  <soap:Body>
+    <vat:Service>
+      <vat:username>anonymous</vat:username>
+      <vat:password>anonymous</vat:password>
+      <vat:TIN>${escapeXml(tin)}</vat:TIN>
+      <vat:Name>${escapeXml(name)}</vat:Name>
+      <vat:ProvinceCode>0</vat:ProvinceCode>
+      <vat:BranchNumber>${branchNumber}</vat:BranchNumber>
+      <vat:AmphurCode>0</vat:AmphurCode>
+    </vat:Service>
+  </soap:Body>
+</soap:Envelope>`;
+}
+
+async function fetchRdVatJsonXml(
+  tin: string,
+  name: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(RD_VAT_JSON_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/soap+xml; charset=utf-8",
+        SOAPAction: `${RD_VAT_JSON_NS}/Service`,
+      },
+      body: rdVatJsonSoapBody(tin, name, 0),
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function lookupRdVatByName(
+  rawName: string,
+  fetchImpl: FetchLike,
+): Promise<CompanyRecord[]> {
+  const queries = companyNameQueryVariants(rawName);
+  for (const name of queries) {
+    const xml = await fetchRdVatJsonXml("", name, fetchImpl, 8_000);
+    if (!xml) continue;
+    const payload = extractServiceResultJson(xml);
+    if (!payload) continue;
+    const matches = uniqueCompaniesByTaxId(parseRdVatJsonRecords(payload));
+    if (matches.length) return matches;
+  }
+  return [];
 }
 
 async function lookupRdVat(
@@ -626,5 +833,67 @@ export async function lookupCompanyByTaxId(
     ok: false,
     code: "not_found",
     error: "ไม่พบบริษัทจากเลขทะเบียนนี้ กรอกชื่อบริษัทเองได้",
+  };
+}
+
+export async function lookupCompany(
+  raw: string,
+  options?: {
+    fetchImpl?: FetchLike;
+    localRecord?: CompanyRecord | null;
+    localRecords?: CompanyRecord[];
+    preferRdMs?: number;
+  },
+): Promise<CompanyLookupResult> {
+  const trimmed = normalizeCompanyNameQuery(raw);
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 13) {
+    return lookupCompanyByTaxId(digits, options);
+  }
+  if (trimmed.length < RD_NAME_MIN_LEN) {
+    return {
+      ok: false,
+      code: "invalid",
+      error: "พิมพ์ชื่อบริษัทอย่างน้อย 2 ตัวอักษร หรือเลขผู้เสียภาษี 13 หลัก",
+    };
+  }
+
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const errors: string[] = [];
+  let rdMatches: CompanyRecord[] = [];
+  try {
+    rdMatches = await lookupRdVatByName(trimmed, fetchImpl);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : "rd-name");
+  }
+
+  const crmMatches = (options?.localRecords || []).filter((item) => item.name);
+  const merged = uniqueCompaniesByTaxId([...rdMatches, ...crmMatches]);
+  if (!merged.length) {
+    if (errors.length) {
+      return {
+        ok: false,
+        code: "upstream",
+        error: "ค้นหาจากกรมสรรพากรไม่สำเร็จในตอนนี้ ลองเลขผู้เสียภาษี 13 หลักได้",
+      };
+    }
+    return {
+      ok: false,
+      code: "not_found",
+      error:
+        "ไม่พบบริษัทจากชื่อนี้ ลองเลขผู้เสียภาษี 13 หลัก หรือพิมพ์ชื่อให้ใกล้เคียงกว่านี้",
+    };
+  }
+
+  if (merged.length === 1) {
+    return { ok: true, ...withDefaultBranches(merged[0]!) };
+  }
+
+  const first = merged[0]!;
+  return {
+    ok: true,
+    ...withDefaultBranches(first),
+    matches: merged.map((item) => withDefaultBranches(item)),
+    needsPick: true,
   };
 }

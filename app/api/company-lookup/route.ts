@@ -1,11 +1,65 @@
 import { NextResponse } from "next/server";
-import { lookupCompanyByTaxId } from "@/lib/company-lookup";
-import { getCustomerByTaxId } from "@/lib/customer-repository";
+import { lookupCompany, type CompanyRecord } from "@/lib/company-lookup";
+import { getCustomerByTaxId, listCustomers } from "@/lib/customer-repository";
 import { allowPublicLookup } from "@/lib/public-api-limit";
 import { normalizeThaiTaxId } from "@/lib/th-billing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+function customerToRecord(
+  customer: NonNullable<ReturnType<typeof getCustomerByTaxId>>,
+  taxId: string,
+): CompanyRecord {
+  return {
+    taxId: customer.taxId || taxId,
+    name: customer.company,
+    address: customer.billingAddress,
+    province: customer.defaultShipProvince,
+    source: "crm",
+    branches: [
+      {
+        code: "0",
+        label: customer.billingBranch || "สำนักงานใหญ่",
+        address: customer.billingAddress,
+        province: customer.defaultShipProvince,
+      },
+    ],
+  };
+}
+
+function localFromQuery(query: string): {
+  localRecord: CompanyRecord | null;
+  localRecords: CompanyRecord[];
+} {
+  const localRecords: CompanyRecord[] = [];
+  let localRecord: CompanyRecord | null = null;
+  try {
+    const digits = query.replace(/\D/g, "");
+    const normalized = normalizeThaiTaxId(digits);
+    const byTax = normalized ? getCustomerByTaxId(normalized) : null;
+    if (byTax) {
+      localRecord = customerToRecord(byTax, normalized || "");
+      localRecords.push(localRecord);
+    }
+    if (query.replace(/\D/g, "").length !== 13 && query.trim().length >= 2) {
+      for (const customer of listCustomers({ q: query.trim(), limit: 8 })) {
+        if (!customer.company) continue;
+        const taxId = customer.taxId || "";
+        if (localRecords.some((item) => item.taxId && taxId && item.taxId === taxId)) {
+          continue;
+        }
+        localRecords.push(
+          customerToRecord(customer, taxId),
+        );
+      }
+    }
+  } catch {
+    return { localRecord, localRecords };
+  }
+  return { localRecord, localRecords };
+}
 
 export async function GET(request: Request) {
   if (!allowPublicLookup(request, "company-lookup")) {
@@ -15,34 +69,23 @@ export async function GET(request: Request) {
     );
   }
 
-  const taxId = new URL(request.url).searchParams.get("taxId") || "";
-  let localRecord = null;
-  try {
-    const normalized = normalizeThaiTaxId(taxId);
-    const customer = normalized ? getCustomerByTaxId(normalized) : null;
-    if (customer) {
-      localRecord = {
-        taxId: customer.taxId || normalized || "",
-        name: customer.company,
-        address: customer.billingAddress,
-        province: customer.defaultShipProvince,
-        source: "crm" as const,
-        branches: [
-          {
-            code: "0",
-            label: customer.billingBranch || "สำนักงานใหญ่",
-            address: customer.billingAddress,
-            province: customer.defaultShipProvince,
-          },
-        ],
-      };
-    }
-  } catch {
-    localRecord = null;
-  }
+  const url = new URL(request.url);
+  const query = (
+    url.searchParams.get("q") ||
+    url.searchParams.get("taxId") ||
+    url.searchParams.get("name") ||
+    ""
+  ).trim();
 
-  const result = await lookupCompanyByTaxId(taxId, { localRecord });
-  const status =
-    result.ok ? 200 : result.code === "invalid" ? 400 : result.code === "upstream" ? 502 : 404;
-  return NextResponse.json(result, { status });
+  const { localRecord, localRecords } = localFromQuery(query);
+  try {
+    const result = await lookupCompany(query, { localRecord, localRecords });
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json({
+      ok: false,
+      code: "upstream",
+      error: "ค้นหาจากกรมสรรพากรไม่สำเร็จในตอนนี้ ลองเลขผู้เสียภาษี 13 หลักได้",
+    });
+  }
 }

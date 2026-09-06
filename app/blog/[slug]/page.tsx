@@ -91,7 +91,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
         </header>
 
         {article.cover ? (
-          <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-3xl bg-forest-mist">
+          <div className="media-frame media-frame--cover rounded-3xl">
             <Image
               src={article.cover}
               alt={article.title}

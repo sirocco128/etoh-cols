@@ -92,12 +92,13 @@ export function ProductCard({
     >
       <Link
         href={`/products/${product.slug}`}
-        className="group relative block aspect-square w-full overflow-hidden rounded-xl bg-forest-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+        className="media-frame media-frame--card group block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
       >
         <CatalogImage
           src={imageUrl}
           alt={product.name}
           sizes="(max-width:768px) 100vw, 33vw"
+          objectFit="contain"
           fallbackSrc={productCoverImage([], product.categorySlug)}
         />
         <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-white/40 bg-paper/90 px-3 py-1 text-xs font-medium text-forest shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-forest/80 dark:text-paper">
@@ -191,6 +192,8 @@ export function ProductCard({
               <AddToQuoteButton
                 productSlug={product.slug}
                 productName={product.name}
+                minOrder={product.minOrder}
+                skuCode={product.productId || product.slug}
                 priceMin={product.priceMin}
                 priceMax={product.priceMax}
               />

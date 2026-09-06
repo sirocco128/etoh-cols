@@ -21,7 +21,7 @@ export function CatalogSkeleton({
             key={key}
             className="overflow-hidden rounded-2xl border border-forest/10 bg-paper/80 p-3"
           >
-            <div className="aspect-square animate-pulse rounded-xl bg-forest-mist" />
+            <div className="media-frame media-frame--card animate-pulse rounded-xl" />
             <div className="mt-4 h-4 w-3/4 animate-pulse rounded bg-forest-mist" />
             <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-forest-mist/70" />
             <div className="mt-4 h-8 w-full animate-pulse rounded-full bg-forest-mist/80" />

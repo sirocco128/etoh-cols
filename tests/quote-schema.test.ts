@@ -1,22 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { quoteSchema, parseQuoteFormData } from "../lib/quote-schema";
-
-function bangkokTomorrowISODate(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const get = (type: string) =>
-    Number(parts.find((p) => p.type === type)?.value ?? 0);
-  const dt = new Date(Date.UTC(get("year"), get("month") - 1, get("day") + 1));
-  const y = dt.getUTCFullYear();
-  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(dt.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+import { quoteSchema, parseQuoteFormData, minNeededDateYmd } from "../lib/quote-schema";
 
 const basePayload = {
   name: "สมชาย ใจดี",
@@ -25,7 +9,7 @@ const basePayload = {
   phone: "02-123-4567",
   quantity: 100,
   budgetPerSet: 500,
-  neededDate: bangkokTomorrowISODate(),
+  neededDate: minNeededDateYmd(),
   province: "กรุงเทพมหานคร",
   productInterest: "Welcome Kit",
   productSlug: "tumbler-notebook-pen-set",
@@ -46,6 +30,16 @@ const basePayload = {
 describe("quote-schema (§31.1)", () => {
   it("accepts a complete valid request", () => {
     const parsed = quoteSchema.safeParse(basePayload);
+    assert.equal(parsed.success, true);
+  });
+
+  it("accepts a joined multi-item product interest string", () => {
+    const parsed = quoteSchema.safeParse({
+      ...basePayload,
+      productInterest:
+        "พัดลมห้อยคอ DF1420 × 10 · เครื่องทำความชื้น(แมว) DS0260 × 11",
+      productSlug: undefined,
+    });
     assert.equal(parsed.success, true);
   });
 

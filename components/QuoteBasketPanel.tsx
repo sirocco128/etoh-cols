@@ -15,6 +15,8 @@ import {
   updateItemFields,
   updateQuantity,
 } from "@/lib/quote-basket";
+import { quoteBasketLockNote } from "@/lib/ux-copy";
+import { minNeededDateYmd } from "@/lib/bangkok-date";
 
 const DECORATION_OPTIONS = [
   { value: "", label: "ยังไม่เลือก" },
@@ -45,6 +47,11 @@ export function QuoteBasketPanel() {
     () => buildContactHrefFromBasket(basket),
     [basket],
   );
+  const minNeededDate = minNeededDateYmd();
+  const neededDate =
+    basket.neededDate && basket.neededDate >= minNeededDate
+      ? basket.neededDate
+      : "";
 
   if (!hydrated) {
     return (
@@ -96,6 +103,9 @@ export function QuoteBasketPanel() {
                     {item.productName}
                   </Link>
                   <p className="mt-1 text-xs text-ink/50">/{item.productSlug}</p>
+                  {item.skuCode ? (
+                    <p className="mt-0.5 font-mono text-xs text-ink/45">รหัส {item.skuCode}</p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -108,12 +118,13 @@ export function QuoteBasketPanel() {
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm">
-                  <span className="font-semibold text-forest">จำนวน</span>
+                  <span className="font-semibold text-forest">จำนวน (ชุด)</span>
                   <input
                     type="number"
-                    min={1}
+                    min={item.lockedMinQty || 1}
                     step={1}
                     value={item.quantity}
+                    aria-describedby={`lock-${item.id}`}
                     onChange={(event) => {
                       const value = Number(event.target.value);
                       if (!Number.isFinite(value)) return;
@@ -121,6 +132,9 @@ export function QuoteBasketPanel() {
                     }}
                     className="mt-1 min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
                   />
+                  <span id={`lock-${item.id}`} className="mt-1 block text-xs text-ink/55">
+                    {quoteBasketLockNote(item.lockedMinQty || 1)}
+                  </span>
                 </label>
 
                 <label className="block text-sm">
@@ -186,8 +200,15 @@ export function QuoteBasketPanel() {
               {typeof item.estimatedUnitMin === "number" &&
               typeof item.estimatedUnitMax === "number" ? (
                 <p className="mt-3 text-xs text-ink/60">
-                  ประมาณการต่อหน่วย:{" "}
+                  ราคาที่ล็อกต่อชุด:{" "}
                   {formatBahtRange(item.estimatedUnitMin, item.estimatedUnitMax)}
+                  <span className="mt-1 block">
+                    ประมาณการรายการ:{" "}
+                    {formatBahtRange(
+                      item.estimatedUnitMin * item.quantity,
+                      item.estimatedUnitMax * item.quantity,
+                    )}
+                  </span>
                 </p>
               ) : null}
             </li>
@@ -211,16 +232,22 @@ export function QuoteBasketPanel() {
           <span className="font-semibold text-forest">วันส่งมอบที่ต้องการ</span>
           <input
             type="date"
-            value={basket.neededDate ?? ""}
-            onChange={(event) =>
+            min={minNeededDate}
+            value={neededDate}
+            onChange={(event) => {
+              const next = event.target.value;
               persist({
                 ...basket,
-                neededDate: event.target.value || undefined,
+                neededDate:
+                  next && next < minNeededDate ? minNeededDate : next || undefined,
                 updatedAt: new Date().toISOString(),
-              })
-            }
+              });
+            }}
             className="mt-1 min-h-11 w-full max-w-xs rounded-xl border border-forest/20 bg-paper px-3 text-ink"
           />
+          <span className="mt-1 block text-xs text-ink/55">
+            เลือกได้ตั้งแต่วันนี้บวก 10 วัน เป็นต้นไป
+          </span>
         </label>
         <Link
           href={basket.items.length ? contactHref : "/contact"}

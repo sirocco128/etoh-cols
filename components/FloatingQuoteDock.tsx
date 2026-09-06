@@ -4,7 +4,10 @@ import Link from "next/link";
 import { MessageCircle, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { loadBasketFromStorage } from "@/lib/quote-basket";
+import {
+  loadBasketFromStorage,
+  QUOTE_BASKET_EVENT,
+} from "@/lib/quote-basket";
 import { quoteShortcutHref } from "@/lib/nav";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
@@ -31,14 +34,16 @@ export function FloatingQuoteDock({
     if (!showBasket) return;
     const sync = () => {
       const basket = loadBasketFromStorage();
-      setCount(basket.items.reduce((sum, item) => sum + item.quantity, 0));
+      setCount(basket.items.length);
     };
     sync();
     window.addEventListener("storage", sync);
     window.addEventListener("focus", sync);
+    window.addEventListener(QUOTE_BASKET_EVENT, sync);
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener("focus", sync);
+      window.removeEventListener(QUOTE_BASKET_EVENT, sync);
     };
   }, [showBasket]);
 

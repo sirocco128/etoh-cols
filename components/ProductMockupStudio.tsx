@@ -1223,7 +1223,7 @@ export function ProductMockupStudio({
                     <img
                       src={item.photo}
                       alt=""
-                      className="aspect-[4/3] w-full object-cover"
+                      className="aspect-[4/3] max-h-24 w-full object-cover lg:max-h-28"
                     />
                     <span
                       className={`block px-3 py-2 text-sm font-semibold ${
@@ -1398,7 +1398,7 @@ export function ProductMockupStudio({
                         <img
                           src={item.dataUrl}
                           alt={item.label}
-                          className="aspect-[4/5] w-full object-cover transition group-hover:brightness-[0.97]"
+                          className="aspect-[4/5] max-h-64 w-full bg-forest-mist object-contain sm:max-h-72"
                         />
                         <span className="pointer-events-none absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-paper/95 text-forest shadow-md ring-1 ring-forest/15 transition group-hover:bg-brass group-hover:text-forest">
                           <svg
