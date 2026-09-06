@@ -50,13 +50,13 @@ const BASE = (process.env.SOP_CAPTURE_BASE_URL || "http://127.0.0.1:3000").repla
   /\/+$/,
   "",
 );
-const ACTOR_EMAIL = (
-  process.env.SOP_CAPTURE_EMAIL ||
-  process.env.ADMIN_EMAIL ||
-  "admin"
-)
-  .trim()
-  .toLowerCase();
+const ACTOR_EMAIL = (() => {
+  const capture = (process.env.SOP_CAPTURE_EMAIL || "").trim().toLowerCase();
+  const admin = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  if (capture.includes("@")) return capture;
+  if (admin.includes("@")) return admin;
+  return capture || admin || "admin@local";
+})();
 const ACTOR_NAME = (process.env.ADMIN_NAME || "ผู้ดูแล").trim() || "ผู้ดูแล";
 const SESSION_SECRET = (process.env.ADMIN_SESSION_SECRET || "").trim();
 
@@ -66,10 +66,11 @@ function createOpsSessionCookieValue() {
     throw new Error("ADMIN_SESSION_SECRET missing or too short");
   }
   const exp = Date.now() + 12 * 60 * 60 * 1000;
+  const email = ACTOR_EMAIL.includes("@") ? ACTOR_EMAIL : "admin@local";
   const body = Buffer.from(
     JSON.stringify({
       v: 2,
-      email: ACTOR_EMAIL.includes("@") ? ACTOR_EMAIL : "admin@local",
+      email,
       name: ACTOR_NAME,
       role: "admin",
       exp,
@@ -157,7 +158,7 @@ async function main() {
   console.log(`Injected ops_session for ${ACTOR_EMAIL} → ${BASE}`);
 
   const page = await context.newPage();
-  await page.goto(`${BASE}/ops`, { waitUntil: "domcontentloaded", timeout: 90_000 });
+  await page.goto(`${BASE}/ops`, { waitUntil: "domcontentloaded", timeout: 180_000 });
   if (page.url().includes("/ops/login")) {
     console.error("Session cookie rejected — check ADMIN_SESSION_SECRET matches the running server");
     await page.screenshot({
@@ -172,35 +173,67 @@ async function main() {
   const results = [];
   for (const target of targets) {
     const outFile = resolve(OUT_DIR, `${target.id}.png`);
-    let path = target.path;
-    // Public contact does not need ops session but works either way.
-    try {
-      console.log(`Capture ${target.id} ← ${path}`);
-      await page.goto(`${BASE}${path}`, {
-        waitUntil: "domcontentloaded",
-        timeout: 90_000,
-      });
-      await page.waitForTimeout(800);
+    const path = target.path;
+    let lastError = null;
+    let captured = false;
 
-      // Try open first detail row for quote/order detail screenshots.
-      if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
-        const detail = page
-          .locator('a[href*="/ops/quotes/"], a[href*="/ops/orders/"]')
-          .locator("visible=true")
-          .first();
-        if (await detail.count()) {
-          await detail.click();
-          await page.waitForLoadState("networkidle").catch(() => null);
+    for (let attempt = 1; attempt <= 3 && !captured; attempt++) {
+      try {
+        console.log(
+          `Capture ${target.id} ← ${path}${attempt > 1 ? ` (retry ${attempt})` : ""}`,
+        );
+        const response = await page.goto(`${BASE}${path}`, {
+          waitUntil: "load",
+          timeout: 120_000,
+        });
+        if (response && response.status() >= 500) {
+          throw new Error(`HTTP ${response.status()}`);
         }
-      }
+        await page.waitForTimeout(1000);
 
-      await page.waitForTimeout(400);
-      await page.screenshot({ path: outFile, fullPage: true });
-      results.push({ id: target.id, ok: true, file: outFile });
-    } catch (err) {
-      console.warn(`  failed: ${target.id}`, err instanceof Error ? err.message : err);
-      writePlaceholderPng(outFile, target.id, path);
-      results.push({ id: target.id, ok: false, file: outFile });
+        if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
+          const detail = page
+            .locator('a[href*="/ops/quotes/"], a[href*="/ops/orders/"]')
+            .locator("visible=true")
+            .first();
+          if ((await detail.count()) > 0) {
+            await Promise.all([
+              page.waitForLoadState("domcontentloaded").catch(() => null),
+              detail.click(),
+            ]);
+            await page.waitForTimeout(800);
+          }
+        }
+
+        await page.screenshot({ path: outFile, fullPage: true });
+        results.push({ id: target.id, ok: true, file: outFile, attempt });
+        captured = true;
+      } catch (err) {
+        lastError = err;
+        console.warn(
+          `  failed attempt ${attempt}: ${target.id}`,
+          err instanceof Error ? err.message.split("\n")[0] : err,
+        );
+        await page.waitForTimeout(1500 * attempt);
+      }
+    }
+
+    if (!captured) {
+      // Keep any previous good PNG; only write placeholder if missing/tiny.
+      const keepExisting =
+        existsSync(outFile) && readFileSync(outFile).byteLength > 5000;
+      if (!keepExisting) {
+        writePlaceholderPng(outFile, target.id, path);
+      } else {
+        console.warn(`  keeping previous screenshot for ${target.id}`);
+      }
+      results.push({
+        id: target.id,
+        ok: false,
+        file: outFile,
+        keptPrevious: keepExisting,
+        error: lastError instanceof Error ? lastError.message : String(lastError),
+      });
     }
   }
 

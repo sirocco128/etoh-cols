@@ -7,7 +7,6 @@ import {
   bangkokMinutesOfDay,
   bangkokYmdDash,
   formatMinuteLabel,
-  startOfBangkokWeekYmd,
 } from "@/lib/bangkok-date";
 import type { ScheduleEvent } from "@/lib/schedule-types";
 import { SCHEDULE_KIND_LABELS } from "@/lib/schedule-types";
@@ -131,11 +130,4 @@ export function WeekTimeline({
       </div>
     </div>
   );
-}
-
-export function weekStartFromParam(dayYmd?: string): string {
-  const base = dayYmd && /^\d{4}-\d{2}-\d{2}$/.test(dayYmd)
-    ? dayYmd
-    : bangkokYmdDash();
-  return startOfBangkokWeekYmd(base);
 }

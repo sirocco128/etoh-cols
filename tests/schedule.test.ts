@@ -195,3 +195,32 @@ describe("schedule mail", () => {
     if (prevPass) process.env.GMAIL_APP_PASSWORD = prevPass;
   });
 });
+
+describe("schedule form mapping", () => {
+  it("maps an event into Bangkok form values from a server-safe module", async () => {
+    const { eventToFormValues } = await import("../lib/schedule-form");
+    const values = eventToFormValues({
+      id: "SCH-TEST",
+      kind: "sales_meeting",
+      title: "คุยเซลล์",
+      notes: null,
+      startsAt: "2026-09-06T03:00:00.000Z",
+      endsAt: "2026-09-06T03:30:00.000Z",
+      timezone: "Asia/Bangkok",
+      status: "scheduled",
+      customerId: null,
+      orderId: null,
+      location: null,
+      hostEmail: "sales@example.com",
+      createdByEmail: "sales@example.com",
+      createdByName: "เซลล์",
+      createdAt: "2026-09-06T03:00:00.000Z",
+      updatedAt: "2026-09-06T03:00:00.000Z",
+      attendees: [],
+    });
+    assert.equal(values.ymd, "2026-09-06");
+    assert.equal(values.startHm, "10:00");
+    assert.equal(values.endHm, "10:30");
+    assert.equal(values.hostEmail, "sales@example.com");
+  });
+});

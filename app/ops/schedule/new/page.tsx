@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { createScheduleEventAction } from "@/app/actions/ops-schedule";
-import {
-  EventForm,
-  type EventFormStaffOption,
-  type EventFormValues,
-} from "@/components/schedule/EventForm";
+import { EventForm } from "@/components/schedule/EventForm";
+import type {
+  EventFormStaffOption,
+  EventFormValues,
+} from "@/lib/schedule-form";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listOpsUserSeeds } from "@/lib/ops-roles";
 import { listOpsStaff } from "@/lib/ops-staff";

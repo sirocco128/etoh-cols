@@ -5,11 +5,11 @@ import {
   resendScheduleNotifyAction,
   updateScheduleEventAction,
 } from "@/app/actions/ops-schedule";
+import { EventForm } from "@/components/schedule/EventForm";
 import {
-  EventForm,
   eventToFormValues,
   type EventFormStaffOption,
-} from "@/components/schedule/EventForm";
+} from "@/lib/schedule-form";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listOpsUserSeeds } from "@/lib/ops-roles";
 import { listOpsStaff } from "@/lib/ops-staff";

@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { DayAgenda, MonthCalendar } from "@/components/schedule/MonthCalendar";
-import {
-  WeekTimeline,
-  weekStartFromParam,
-} from "@/components/schedule/WeekTimeline";
+import { WeekTimeline } from "@/components/schedule/WeekTimeline";
 import {
   addDaysYmd,
   bangkokLocalToUtcIso,
   bangkokYmdDash,
+  startOfBangkokWeekYmd,
 } from "@/lib/bangkok-date";
 import { listScheduleEventsForRange } from "@/lib/schedule-service";
 import {
@@ -63,7 +61,7 @@ export default async function OpsSchedulePage({
     : Number(day.slice(5, 7)) - 1;
   const monthPrefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 
-  const weekStart = weekStartFromParam(day);
+  const weekStart = startOfBangkokWeekYmd(day);
   const rangeFrom =
     view === "week"
       ? bangkokLocalToUtcIso(weekStart, 0)
