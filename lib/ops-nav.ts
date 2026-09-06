@@ -41,6 +41,7 @@ export type OpsNavGroup = {
 export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   const links: OpsNavLink[] = [
     { href: "/ops", label: "ภาพรวม", group: "today" },
+    { href: "/ops/board", label: "บอร์ดงาน", group: "today" },
   ];
   if (actorMay(actor, "reports.read")) {
     links.push({ href: "/ops/reports", label: "รายงาน", group: "finance" });
@@ -136,6 +137,9 @@ export function isOpsNavActive(pathname: string, href: string): boolean {
   if (href.startsWith("http://") || href.startsWith("https://")) return false;
   if (href === "/ops") return pathname === "/ops";
   if (href === "/") return pathname === "/";
+  if (href === "/ops/board") {
+    return pathname === "/ops/board" || pathname.startsWith("/ops/board/");
+  }
   if (href === "/ops/pricing") {
     return pathname === "/ops/pricing";
   }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BoardStatusRulesNote } from "@/components/BoardStatusRulesNote";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { countQuoteRequests } from "@/lib/quote-repository";
 import { countApprovalQueue } from "@/lib/payment-approval";
@@ -65,6 +66,14 @@ export default async function OpsIndexPage() {
       <p className="mt-1 text-sm text-ink/70">
         คิวที่ต้องเคลียร์ — เปิดรายการจากบัตรด้านล่าง
       </p>
+      <div className="mt-4 max-w-2xl">
+        <BoardStatusRulesNote compact />
+        <p className="mt-2 text-sm">
+          <Link href="/ops/board" className="text-brass hover:underline">
+            เปิดบอร์ดงานและกติกาครบ →
+          </Link>
+        </p>
+      </div>
       {cards.length ? (
         <ul className="mt-6 grid gap-4 sm:grid-cols-3">
           {cards.map((card) => (

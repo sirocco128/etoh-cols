@@ -24,6 +24,10 @@ describe("ops nav", () => {
       role: "admin",
     });
     assert.equal(admin.some((link) => link.href === "/ops" && link.group === "today"), true);
+    assert.equal(admin.some((link) => link.href === "/ops/board" && link.group === "today"), true);
+    assert.equal(admin.find((link) => link.href === "/ops/board")?.label, "บอร์ดงาน");
+    assert.equal(isOpsNavActive("/ops/board", "/ops/board"), true);
+    assert.equal(isOpsNavActive("/ops", "/ops/board"), false);
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "system"), true);
     assert.equal(admin.some((link) => link.href === "/ops/holds" && link.group === "cycle"), true);
     assert.equal(admin.find((link) => link.href === "/ops/holds")?.label, "พักเอกสาร");

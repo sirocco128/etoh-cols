@@ -9,6 +9,7 @@ Local staff UI for RFQ leads and a lightweight CRM. **Not** Strapi CMS and **not
 ## URL
 
 - Login: http://localhost:3000/ops/login
+- Board (งาน / กติกาสถานะการ์ด): http://localhost:3000/ops/board — [BOARD-STATUS-RULES.md](./BOARD-STATUS-RULES.md)
 - Quotes: http://localhost:3000/ops/quotes
 - Inquiries (contact / inquiry / complaint): http://localhost:3000/ops/inquiries
 - Schedule (calendar / agenda / availability / booking): http://localhost:3000/ops/schedule
