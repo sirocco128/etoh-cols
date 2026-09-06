@@ -1,11 +1,12 @@
 /**
  * Ops console roles. Not TMS roles and not Strapi CMS roles.
  * admin = full console including factory PO + finance
- * sales = quotes/customers/orders (no factory CNY, no GP)
- * viewer = read only (no factory, no finance)
+ * accountant = books, COA, slip approval, pay factory/freight (no factory CNY write)
+ * sales = quotes/customers/orders + รายงานวงจร (no factory CNY, no GP)
+ * viewer = read only + รายงานวงจร (no factory, no finance / GP)
  */
 
-export const OPS_ROLES = ["admin", "sales", "viewer"] as const;
+export const OPS_ROLES = ["admin", "accountant", "sales", "viewer"] as const;
 
 export type OpsRole = (typeof OPS_ROLES)[number];
 
@@ -19,15 +20,23 @@ export const OPS_PERMISSIONS = [
   "orders.read",
   "orders.write",
   "audit.read",
+  "documents.read",
+  "documents.write",
+  "documents.restricted",
+  "documents.hold",
+  "documents.hold.release",
   "assistant.use",
   "seo.write",
   "factory.read",
   "factory.write",
   "finance.read",
   "finance.write",
+  "reports.read",
   "catalog.write",
   "users.read",
   "users.write",
+  "schedule.read",
+  "schedule.write",
 ] as const;
 
 export type OpsPermission = (typeof OPS_PERMISSIONS)[number];
@@ -43,6 +52,22 @@ export type OpsActor = {
 
 export const ROLE_PERMISSIONS: Record<OpsRole, OpsPermission[]> = {
   admin: [...OPS_PERMISSIONS],
+  accountant: [
+    "quotes.read",
+    "customers.read",
+    "orders.read",
+    "orders.write",
+    "factory.read",
+    "finance.read",
+    "finance.write",
+    "reports.read",
+    "audit.read",
+    "documents.read",
+    "documents.write",
+    "documents.restricted",
+    "documents.hold",
+    "schedule.read",
+  ],
   sales: [
     "quotes.read",
     "quotes.write",
@@ -50,15 +75,30 @@ export const ROLE_PERMISSIONS: Record<OpsRole, OpsPermission[]> = {
     "customers.write",
     "orders.read",
     "orders.write",
+    "documents.read",
+    "documents.write",
+    "documents.restricted",
+    "documents.hold",
     "assistant.use",
     "seo.write",
     "catalog.write",
+    "reports.read",
+    "schedule.read",
+    "schedule.write",
   ],
-  viewer: ["quotes.read", "customers.read", "orders.read"],
+  viewer: [
+    "quotes.read",
+    "customers.read",
+    "orders.read",
+    "documents.read",
+    "reports.read",
+    "schedule.read",
+  ],
 };
 
 export const ROLE_LABELS: Record<OpsRole, string> = {
   admin: "ผู้ดูแล",
+  accountant: "ผู้ทำบัญชี",
   sales: "เซลล์",
   viewer: "ดูอย่างเดียว",
 };
@@ -73,15 +113,23 @@ export const PERMISSION_LABELS: Record<OpsPermission, string> = {
   "orders.read": "ดูออเดอร์ / รับชำระ",
   "orders.write": "แก้ออเดอร์ / อนุมัติยอด",
   "audit.read": "ดูบันทึกการใช้งาน",
+  "documents.read": "ดูเอกสารบัญชี / PDF",
+  "documents.write": "อัปโหลดเอกสารสำคัญ",
+  "documents.restricted": "เปิดสลิปและเอกสารส่วนบุคคล",
+  "documents.hold": "พักลบเอกสาร (legal hold)",
+  "documents.hold.release": "ปลด legal hold (คนละคนกับผู้พัก)",
   "assistant.use": "ใช้ผู้ช่วยเซลล์",
   "seo.write": "แก้ SEO",
-  "factory.read": "ดูใบสั่งโรงงาน",
-  "factory.write": "แก้ใบสั่งโรงงาน",
-  "finance.read": "ดูงบผู้บริหาร",
-  "finance.write": "แก้บัญชี / ทรัพย์สิน",
-  "catalog.write": "จัดการรูปโรงงาน",
+  "factory.read": "ดูใบสั่งและทะเบียนโรงงาน",
+  "factory.write": "แก้ใบสั่งและทะเบียนโรงงาน",
+  "finance.read": "ดูงบผู้บริหาร / สมุดบัญชี",
+  "finance.write": "ลงบัญชี / ผังบัญชี / ทรัพย์สิน",
+  "reports.read": "ดูรายงานวงจรรายได้",
+  "catalog.write": "จัดการสินค้า / สมุดแคตตาล็อก",
   "users.read": "ดูรายชื่อพนักงาน",
   "users.write": "เพิ่ม/แก้สิทธิ์พนักงาน",
+  "schedule.read": "ดูนัดหมาย",
+  "schedule.write": "สร้าง / แก้ / ยกเลิกนัดหมาย",
 };
 
 export const STAFF_DEPARTMENTS = [
@@ -134,10 +182,22 @@ export const PERMISSION_GROUPS: Array<{
   },
   { title: "ออเดอร์", items: ["orders.read", "orders.write"] },
   {
+    title: "เอกสาร",
+    items: [
+      "documents.read",
+      "documents.write",
+      "documents.restricted",
+      "documents.hold",
+      "documents.hold.release",
+    ],
+  },
+  {
     title: "โรงงาน",
     items: ["factory.read", "factory.write", "catalog.write"],
   },
   { title: "บัญชี", items: ["finance.read", "finance.write"] },
+  { title: "รายงาน", items: ["reports.read"] },
+  { title: "นัดหมาย", items: ["schedule.read", "schedule.write"] },
   {
     title: "ระบบ",
     items: [

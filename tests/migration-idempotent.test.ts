@@ -56,16 +56,28 @@ describe("migration-idempotent (§31 required)", () => {
       assert.match(second.stdout, /skip\s+013_payment_reject_reason\.sql/);
       assert.match(second.stdout, /skip\s+014_ops_entity_tags\.sql/);
       assert.match(second.stdout, /skip\s+015_ops_staff\.sql/);
+      assert.match(second.stdout, /skip\s+016_quote_sales_timeline\.sql/);
+      assert.match(second.stdout, /skip\s+017_factory_po_currency\.sql/);
+      assert.match(second.stdout, /skip\s+018_ops_price_batches\.sql/);
+      assert.match(second.stdout, /skip\s+019_quote_billing_branch\.sql/);
+      assert.match(second.stdout, /skip\s+020_coa_books_accountant\.sql/);
+      assert.match(second.stdout, /skip\s+021_factory_registry\.sql/);
+      assert.match(second.stdout, /skip\s+022_ops_audit_context\.sql/);
+      assert.match(second.stdout, /skip\s+023_object_legal_holds\.sql/);
+      assert.match(second.stdout, /skip\s+024_catalog_albums\.sql/);
+      assert.match(second.stdout, /skip\s+025_contact_inquiries\.sql/);
+      assert.match(second.stdout, /skip\s+026_schedule\.sql/);
 
       const db = new DatabaseSync(sqlitePath);
       try {
         const columns = db
           .prepare("PRAGMA table_info(quote_requests)")
           .all() as Array<{ name: string }>;
-        assert.equal(columns.length, 37);
+        assert.equal(columns.length, 38);
         const names = new Set(columns.map((c) => c.name));
         assert.ok(names.has("customer_id"));
         assert.ok(names.has("sales_notes"));
+        assert.ok(names.has("billing_branch"));
 
         const customers = db
           .prepare("PRAGMA table_info(customers)")
@@ -84,6 +96,14 @@ describe("migration-idempotent (§31 required)", () => {
           .prepare("PRAGMA table_info(ops_audit_log)")
           .all() as Array<{ name: string }>;
         assert.ok(audit.length >= 10);
+        const auditNames = new Set(audit.map((c) => c.name));
+        assert.ok(auditNames.has("ip_address"));
+        assert.ok(auditNames.has("geo_label"));
+        assert.ok(auditNames.has("device_label"));
+        assert.ok(auditNames.has("machine_hint"));
+        assert.ok(auditNames.has("impact"));
+        assert.ok(auditNames.has("report_name"));
+        assert.ok(auditNames.has("report_filters"));
 
         const orders = db
           .prepare("PRAGMA table_info(orders)")
@@ -101,6 +121,17 @@ describe("migration-idempotent (§31 required)", () => {
         assert.ok(customerNames.has("tax_id"));
         assert.ok(customerNames.has("line_id"));
         assert.ok(customerNames.has("merged_into_id"));
+
+        const albums = db
+          .prepare("PRAGMA table_info(catalog_albums)")
+          .all() as Array<{ name: string }>;
+        const albumNames = new Set(albums.map((c) => c.name));
+        assert.ok(albumNames.has("album_id"));
+        assert.ok(albumNames.has("snapshot_json"));
+        const albumFiles = db
+          .prepare("PRAGMA table_info(catalog_album_files)")
+          .all() as Array<{ name: string }>;
+        assert.ok(albumFiles.some((c) => c.name === "group_slug"));
 
         const contacts = db
           .prepare("PRAGMA table_info(customer_contacts)")
@@ -122,6 +153,16 @@ describe("migration-idempotent (§31 required)", () => {
         assert.ok(poNames.has("last_mile_thb"));
         assert.ok(poNames.has("destination_mode"));
         assert.ok(poNames.has("received_qty"));
+        assert.ok(poNames.has("factory_currency"));
+        assert.ok(poNames.has("factory_id"));
+
+        const factories = db
+          .prepare("PRAGMA table_info(factories)")
+          .all() as Array<{ name: string }>;
+        const factoryNames = new Set(factories.map((c) => c.name));
+        assert.ok(factoryNames.has("factory_code"));
+        assert.ok(factoryNames.has("wechat"));
+        assert.ok(factoryNames.has("status"));
 
         const goodsReceipts = db
           .prepare("PRAGMA table_info(goods_receipts)")
@@ -135,6 +176,7 @@ describe("migration-idempotent (§31 required)", () => {
           .all() as Array<{ name: string }>;
         const jeNames = new Set(journals.map((c) => c.name));
         assert.ok(jeNames.has("source_key"));
+        assert.ok(jeNames.has("book_type"));
 
         const catalogImages = db
           .prepare("PRAGMA table_info(catalog_source_images)")
@@ -172,6 +214,66 @@ describe("migration-idempotent (§31 required)", () => {
         assert.ok(staffNames.has("password_hash"));
         assert.ok(staffNames.has("extra_grants"));
         assert.ok(staffNames.has("extra_denies"));
+        assert.ok(staffNames.has("booking_slug"));
+
+        const scheduleEvents = db
+          .prepare("PRAGMA table_info(schedule_events)")
+          .all() as Array<{ name: string }>;
+        const scheduleNames = new Set(scheduleEvents.map((c) => c.name));
+        assert.ok(scheduleNames.has("id"));
+        assert.ok(scheduleNames.has("kind"));
+        assert.ok(scheduleNames.has("starts_at"));
+        assert.ok(scheduleNames.has("host_email"));
+        const scheduleAttendees = db
+          .prepare("PRAGMA table_info(schedule_attendees)")
+          .all() as Array<{ name: string }>;
+        assert.ok(scheduleAttendees.some((c) => c.name === "event_id"));
+        assert.ok(scheduleAttendees.some((c) => c.name === "notify"));
+        const scheduleAvail = db
+          .prepare("PRAGMA table_info(schedule_availability)")
+          .all() as Array<{ name: string }>;
+        assert.ok(scheduleAvail.some((c) => c.name === "staff_email"));
+        assert.ok(scheduleAvail.some((c) => c.name === "start_minute"));
+
+        const timeline = db
+          .prepare("PRAGMA table_info(quote_sales_timeline)")
+          .all() as Array<{ name: string }>;
+        const timelineNames = new Set(timeline.map((c) => c.name));
+        assert.ok(timelineNames.has("request_id"));
+        assert.ok(timelineNames.has("from_status"));
+        assert.ok(timelineNames.has("to_status"));
+        assert.ok(timelineNames.has("note"));
+        assert.ok(timelineNames.has("actor_name"));
+
+        const priceConfigs = db
+          .prepare("PRAGMA table_info(ops_price_configs)")
+          .all() as Array<{ name: string }>;
+        const priceConfigNames = new Set(priceConfigs.map((c) => c.name));
+        assert.ok(priceConfigNames.has("payload_json"));
+        const priceBatches = db
+          .prepare("PRAGMA table_info(ops_price_batches)")
+          .all() as Array<{ name: string }>;
+        const priceBatchNames = new Set(priceBatches.map((c) => c.name));
+        assert.ok(priceBatchNames.has("payload_json"));
+        assert.ok(priceBatchNames.has("status"));
+
+        const holds = db
+          .prepare("PRAGMA table_info(object_legal_holds)")
+          .all() as Array<{ name: string }>;
+        const holdNames = new Set(holds.map((c) => c.name));
+        assert.ok(holdNames.has("object_key"));
+        assert.ok(holdNames.has("held_by_email"));
+        assert.ok(holdNames.has("released_at"));
+        assert.ok(holdNames.has("release_reason"));
+
+        const inquiries = db
+          .prepare("PRAGMA table_info(contact_inquiries)")
+          .all() as Array<{ name: string }>;
+        const inquiryNames = new Set(inquiries.map((c) => c.name));
+        assert.ok(inquiryNames.has("inquiry_id"));
+        assert.ok(inquiryNames.has("topic"));
+        assert.ok(inquiryNames.has("callback_channel"));
+        assert.ok(inquiryNames.has("mail_status"));
       } finally {
         db.close();
       }
