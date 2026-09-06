@@ -45,7 +45,7 @@ export function MobileStickyCta() {
           </a>
         ) : (
           <Link
-            href="/contact"
+            href="/contact?intent=message"
             className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest transition hover:bg-forest-mist focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           >
             ส่งแบบฟอร์ม

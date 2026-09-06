@@ -103,7 +103,7 @@ export default async function OpsQuotesPage({
         <p className="mt-6 rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">
           ยังไม่มีคำขอ —{" "}
           <Link href="/contact" className="text-forest underline-offset-2 hover:underline">
-            ส่งแบบฟอร์มติดต่อ
+            ขอใบเสนอราคา
           </Link>
         </p>
       ) : (

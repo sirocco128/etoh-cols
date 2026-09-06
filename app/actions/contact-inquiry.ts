@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { parseContactInquiryFormData } from "@/lib/contact-inquiry-schema";
 import { submitContactInquiryPayload } from "@/lib/contact-inquiry-service";
+import type { ContactMailStatus } from "@/lib/contact-inquiry-types";
 
 export type ContactInquiryFormValues = Record<string, string>;
 
@@ -10,6 +11,7 @@ export type ContactInquiryActionState = {
   ok: boolean;
   inquiryId?: string;
   mailSent?: boolean;
+  mailStatus?: ContactMailStatus;
   fieldErrors?: Record<string, string[]>;
   formError?: string;
   values?: ContactInquiryFormValues;
@@ -52,6 +54,7 @@ export async function submitContactInquiry(
         ok: true,
         inquiryId: result.inquiryId,
         mailSent: result.mailSent,
+        mailStatus: result.mailStatus,
       };
     }
     return {

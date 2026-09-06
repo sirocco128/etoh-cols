@@ -183,7 +183,10 @@ async function main() {
 
       // Try open first detail row for quote/order detail screenshots.
       if (target.id === "ops-quote-detail" || target.id === "ops-order-detail") {
-        const detail = page.locator('a[href*="/ops/quotes/"], a[href*="/ops/orders/"]').first();
+        const detail = page
+          .locator('a[href*="/ops/quotes/"], a[href*="/ops/orders/"]')
+          .locator("visible=true")
+          .first();
         if (await detail.count()) {
           await detail.click();
           await page.waitForLoadState("networkidle").catch(() => null);

@@ -5,7 +5,10 @@ import {
   wantsEmailCallback,
 } from "@/lib/contact-inquiry-mail";
 import { insertContactInquiry } from "@/lib/contact-inquiry-repository";
-import type { ContactInquiryInput } from "@/lib/contact-inquiry-types";
+import type {
+  ContactInquiryInput,
+  ContactMailStatus,
+} from "@/lib/contact-inquiry-types";
 import { isGmailSmtpConfigured, sendGmail } from "@/lib/gmail-smtp";
 import { consumeRateLimit } from "@/lib/quote-repository";
 import { hashIp, resolveClientIp } from "@/lib/quote-service";
@@ -17,6 +20,7 @@ export type ContactInquirySubmitSuccess = {
   ok: true;
   inquiryId: string;
   mailSent: boolean;
+  mailStatus: ContactMailStatus;
   neutral?: boolean;
 };
 
@@ -56,7 +60,13 @@ export async function submitContactInquiryPayload(
   context: SubmitContactInquiryContext,
 ): Promise<ContactInquirySubmitResult> {
   if (input.website && input.website.trim().length > 0) {
-    return { ok: true, inquiryId: createInquiryId(), mailSent: false, neutral: true };
+    return {
+      ok: true,
+      inquiryId: createInquiryId(),
+      mailSent: false,
+      mailStatus: "skipped",
+      neutral: true,
+    };
   }
 
   const startedAt = input.startedAt;
@@ -91,7 +101,7 @@ export async function submitContactInquiryPayload(
   const inquiryId = createInquiryId();
   const submittedAt = new Date().toISOString();
   const shouldMail = wantsEmailCallback(input.callbackChannel);
-  let mailStatus: "sent" | "skipped" | "failed" = "skipped";
+  let mailStatus: ContactMailStatus = "skipped";
   let mailError: string | null = null;
   let mailSentAt: string | null = null;
   let mailSent = false;
@@ -143,5 +153,5 @@ export async function submitContactInquiryPayload(
     landingPath: input.landingPath || "/contact",
   });
 
-  return { ok: true, inquiryId, mailSent };
+  return { ok: true, inquiryId, mailSent, mailStatus };
 }

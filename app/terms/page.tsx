@@ -406,7 +406,7 @@ export default function TermsPage() {
             ) : null}
             <li>
               หน้า{" "}
-              <Link href="/contact">ติดต่อเรา</Link>
+              <Link href="/contact?intent=message">ติดต่อเรา</Link>
             </li>
           </ul>
         </section>

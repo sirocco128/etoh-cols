@@ -199,7 +199,7 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                 </a>
               ) : (
                 <NavLink
-                  href="/contact"
+                  href="/contact?intent=message"
                   onClick={close}
                   className="flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-4 text-sm font-semibold text-forest"
                 >

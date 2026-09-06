@@ -5,6 +5,7 @@ import {
   countArticles,
   countArticlesByStatus,
   listArticles,
+  type ArticleListFilter,
 } from "@/lib/article-repository";
 import {
   ARTICLE_STATUS_LABELS,
@@ -73,8 +74,8 @@ export default async function OpsBlogPage({
     if (!mysqlOn) {
       error = "ยังไม่ได้เปิด SMARTGIFT_MYSQL_ENABLED";
     } else {
-      const filter = {
-        status: (status === "all" ? "" : status) as "" | ArticleStatus,
+      const filter: ArticleListFilter = {
+        status: status === "all" ? "" : status,
         q,
       };
       [total, statusCounts] = await Promise.all([

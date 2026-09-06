@@ -44,6 +44,19 @@ export const CONTACT_MAIL_STATUSES = [
 
 export type ContactMailStatus = (typeof CONTACT_MAIL_STATUSES)[number];
 
+export const CONTACT_MAIL_STATUS_LABELS: Record<ContactMailStatus, string> = {
+  pending: "รอส่ง",
+  sent: "ส่งแล้ว",
+  skipped: "ไม่ส่งจดหมาย",
+  failed: "ส่งไม่ถึง",
+};
+
+export function contactMailErrorLabel(error: string | null): string | null {
+  if (!error) return null;
+  if (error === "not_configured") return "ยังไม่ได้ตั้งค่าจดหมายตอบรับ";
+  return "ส่งจดหมายไม่สำเร็จ";
+}
+
 export type ContactInquiryInput = {
   topic: ContactTopic;
   name: string;

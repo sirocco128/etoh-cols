@@ -318,7 +318,9 @@ export default function PrivacyPage() {
             ) : null}
             <li>
               หรือผ่านหน้า{" "}
-              <Link href="/contact">ติดต่อเรา / ขอใบเสนอราคา</Link>
+              <Link href="/contact">ติดต่อเรา</Link>
+              {" / "}
+              <Link href="/contact?intent=message">ส่งข้อความเรื่องข้อมูลส่วนบุคคล</Link>
             </li>
           </ul>
           <p>
