@@ -22,8 +22,9 @@ import {
 } from "@/lib/promptpay";
 import { getCustomerById, recomputeCustomerRollups, updateCustomer } from "@/lib/customer-repository";
 import { getQuoteByRequestId } from "@/lib/quote-repository";
-import { bangkokDateYmd } from "@/lib/quote-service";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { bahtText } from "@/lib/th-baht-text";
+import { composeOrderShipTo, quoteShipToParts } from "@/lib/thai-address-format";
 import {
   calculateDepositPlan,
   normalizeThaiTaxId,
@@ -267,11 +268,21 @@ export function createOrderFromQuote(input: CreateOrderFromQuoteInput): OrderRec
     customer?.billingBranch ||
     "สำนักงานใหญ่"
   ).trim();
+  const quoteShip = quoteShipToParts(quote);
+  const fallbackShip = composeOrderShipTo(quoteShip);
   const shipToProvince =
     input.shipToProvince?.trim() ||
-    quote.province ||
+    fallbackShip.shipToProvince ||
     customer?.defaultShipProvince ||
     null;
+  const shipToAddress =
+    input.shipToAddress?.trim() ||
+    (quoteShip.streetAddress ||
+    quoteShip.district ||
+    quoteShip.subdistrict ||
+    quoteShip.zip
+      ? fallbackShip.shipToAddress
+      : null);
 
   const now = new Date().toISOString();
   const order = repo.insertOrder({
@@ -288,7 +299,7 @@ export function createOrderFromQuote(input: CreateOrderFromQuoteInput): OrderRec
     billingBranch,
     shipToName: input.shipToName?.trim() || quote.name,
     shipToPhone: input.shipToPhone?.trim() || quote.phone,
-    shipToAddress: input.shipToAddress?.trim() || null,
+    shipToAddress,
     shipToProvince,
     productSummary:
       (input.productSummary ||

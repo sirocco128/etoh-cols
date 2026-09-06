@@ -138,7 +138,7 @@ export function updateItemFields(
   basket: QuoteBasket,
   itemId: string,
   patch: Partial<
-    Pick<QuoteBasketItem, "note" | "decorationMethod" | "packagingOption">
+    Pick<QuoteBasketItem, "note" | "decorationMethod" | "packagingOption" | "logoColorCount">
   >,
 ): QuoteBasket {
   return {
@@ -236,6 +236,7 @@ export function buildContactHrefFromBasket(basket: QuoteBasket): string {
       (item, index) =>
         `${index + 1}. ${item.productName} (/${item.productSlug}) × ${item.quantity}` +
         (item.decorationMethod ? ` | ตกแต่ง: ${item.decorationMethod}` : "") +
+        (item.logoColorCount ? ` | สีโลโก้: ${item.logoColorCount}` : "") +
         (item.note ? ` | โน้ต: ${item.note}` : ""),
     ),
   ];
@@ -253,6 +254,9 @@ export function buildContactHrefFromBasket(basket: QuoteBasket): string {
     if (first.decorationMethod) {
       params.set("decorationMethod", first.decorationMethod);
     }
+  }
+  if (basket.neededDate) {
+    params.set("neededDate", basket.neededDate);
   }
   return `/contact?${params.toString()}`;
 }

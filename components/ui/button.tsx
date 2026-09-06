@@ -11,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-brass text-forest shadow-sm hover:bg-brass-soft hover:shadow-md",
+          "bg-brass text-[color:var(--accent-foreground)] shadow-sm hover:bg-brass-soft hover:shadow-md",
         forest:
           "bg-forest text-paper shadow-sm hover:bg-forest-light",
         outline:

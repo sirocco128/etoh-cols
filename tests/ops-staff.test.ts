@@ -1,10 +1,11 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { closeDb } from "../lib/database";
+import { teardownTempDir } from "./teardown-temp";
 
 function resolveProjectRoot(): string {
   if (
@@ -48,8 +49,7 @@ describe("ops staff RBAC", () => {
   });
 
   after(() => {
-    closeDb();
-    if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+    teardownTempDir(dataDir);
   });
 
   it("creates an employee, hashes the password, and applies extra grants/denies", async () => {
@@ -74,6 +74,7 @@ describe("ops staff RBAC", () => {
     const actor = authenticateOpsStaff("somchai@terabis.local", "sales-pass-12x");
     assert.ok(actor);
     assert.equal(actorMay(actor!, "quotes.write"), true);
+    assert.equal(actorMay(actor!, "documents.restricted"), true);
     assert.equal(actorMay(actor!, "audit.read"), true);
     assert.equal(actorMay(actor!, "seo.write"), false);
     assert.equal(actorMay(actor!, "users.write"), false);
@@ -162,5 +163,37 @@ describe("ops staff RBAC", () => {
     assert.equal(dbHit?.name, "จากฐานข้อมูล");
     assert.equal(dbHit?.role, "viewer");
     assert.equal(authenticateOpsUser("sales@local", "env-pass-word12"), null);
+  });
+
+  it("lets Google Sign-In use the database staff email and blocks inactive accounts", async () => {
+    const { createOpsStaff, updateOpsStaff } = await import("../lib/ops-staff");
+    const { authenticateOpsGoogleEmail } = await import("../lib/ops-auth");
+
+    const staff = createOpsStaff({
+      email: "nida@terabis.example",
+      name: "นิดา",
+      role: "sales",
+      password: "sales-pass-12x",
+    });
+    const viaGoogle = authenticateOpsGoogleEmail("nida@terabis.example");
+    assert.equal(viaGoogle?.staffId, staff.id);
+    assert.equal(viaGoogle?.name, "นิดา");
+    const { actorMay } = await import("../lib/ops-roles");
+    assert.equal(
+      actorMay({ email: "view@local", name: "ดู", role: "viewer" }, "documents.read"),
+      true,
+    );
+    assert.equal(
+      actorMay(
+        { email: "view@local", name: "ดู", role: "viewer" },
+        "documents.restricted",
+      ),
+      false,
+    );
+
+    updateOpsStaff({ id: staff.id, active: false });
+    assert.equal(authenticateOpsGoogleEmail("nida@terabis.example"), null);
+    updateOpsStaff({ id: staff.id, active: true });
+    assert.equal(authenticateOpsGoogleEmail("nida@terabis.example")?.role, "sales");
   });
 });

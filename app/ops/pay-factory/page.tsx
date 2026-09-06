@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { payFactoryAction } from "@/app/actions/ops-cycle";
-import { listPos } from "@/lib/factory-po-service";
+import { listPos } from "@/lib/factory-po-queries";
 import { requireOpsPage } from "@/lib/ops-auth";
 import {
   factoryPayableSnapshot,
@@ -35,9 +35,9 @@ export default async function PayFactoryPage({
           ← วงจรปฏิบัติการ
         </Link>
       </p>
-      <h1 className="mt-3 text-2xl font-bold text-forest">จ่ายโรงงานตามของที่รับ</h1>
+      <h1 className="mt-3 text-2xl font-bold text-forest">จ่ายเจ้าหนี้โรงงานและขนส่ง</h1>
       <p className="mt-1 text-sm text-ink/70">
-        จ่ายได้ไม่เกินยอดสินค้าที่รับตามใบสั่งโรงงาน — ของที่ยังไม่รับจ่ายไม่ได้
+        จ่ายเจ้าหนี้โรงงานได้ไม่เกินยอดสินค้าที่รับ — จ่ายขนส่ง/นำเข้าได้ตามยอดที่ตั้งค้างในสมุด
       </p>
       {sp.ok ? (
         <p className="mt-4 rounded-lg bg-forest/10 px-3 py-2 text-sm text-forest">
@@ -56,12 +56,19 @@ export default async function PayFactoryPage({
             >
               {snaps.map((s) => (
                 <option key={s.poId} value={s.poId}>
-                  {s.poId} · ค้างจ่าย {formatThb(s.unpaidAmount)} · รับแล้ว {s.receivedQty}/{s.orderedQty}
+                  {s.poId} · โรงงานค้าง {formatThb(s.unpaidAmount)} · ขนส่งค้าง {formatThb(s.unpaidFreight)} · รับแล้ว {s.receivedQty}/{s.orderedQty}
                 </option>
               ))}
             </select>
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="font-medium">จ่ายให้</span>
+              <select name="payableKind" defaultValue="factory" className="mt-1 w-full rounded border border-forest/20 px-3 py-2">
+                <option value="factory">เจ้าหนี้โรงงาน (2130)</option>
+                <option value="freight">เจ้าหนี้ขนส่งและนำเข้า (2140)</option>
+              </select>
+            </label>
             <label className="block text-sm">
               <span className="font-medium">ยอดจ่าย (บาท)</span>
               <input
@@ -101,6 +108,7 @@ export default async function PayFactoryPage({
             <tr className="border-b border-forest/15 text-forest">
               <th className="px-2 py-2">เลขที่</th>
               <th className="px-2 py-2">PO</th>
+              <th className="px-2 py-2">จ่ายให้</th>
               <th className="px-2 py-2 text-right">ยอด</th>
               <th className="px-2 py-2">เมื่อ</th>
             </tr>
@@ -110,13 +118,14 @@ export default async function PayFactoryPage({
               <tr key={row.payId} className="border-b border-forest/10">
                 <td className="px-2 py-2 font-mono text-xs">{row.payId}</td>
                 <td className="px-2 py-2 font-mono text-xs">{row.poId}</td>
+                <td className="px-2 py-2">{row.payableKind === "freight" ? "ขนส่ง/นำเข้า" : "โรงงาน"}</td>
                 <td className="px-2 py-2 text-right">{formatThb(row.amount)}</td>
                 <td className="px-2 py-2 text-ink/70">{formatThaiDateTime(row.paidAt)}</td>
               </tr>
             ))}
             {payments.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-2 py-6 text-ink/55">
+                <td colSpan={5} className="px-2 py-6 text-ink/55">
                   ยังไม่มีการจ่ายโรงงาน
                 </td>
               </tr>

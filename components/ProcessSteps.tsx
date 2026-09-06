@@ -20,11 +20,11 @@ export function ProcessSteps({
       <p className="mt-3 max-w-2xl text-ink/75">
         ไม่ใช่ร้านค้าออนไลน์ชำระเงินทันที — เป็นบริการรับผลิตของขวัญองค์กรแบบขอใบเสนอราคา
       </p>
-      <ol className="mt-10 grid gap-6 md:grid-cols-3">
+      <ol className="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
         {HOW_IT_WORKS.map((item) => (
           <li
             key={item.step}
-            className="relative rounded-2xl border border-forest/10 bg-paper px-5 py-6"
+            className="relative rounded-2xl border border-forest/10 bg-paper/90 px-5 py-6 shadow-sm backdrop-blur-md"
           >
             <span
               className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-forest text-sm font-bold text-paper"

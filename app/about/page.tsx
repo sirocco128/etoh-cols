@@ -46,7 +46,7 @@ export default function AboutPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-forest/90 via-forest/40 to-forest/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-forest/75 via-transparent to-forest/20" />
-          <div className="relative mx-auto flex min-h-[20rem] max-w-content flex-col justify-end px-4 py-10 sm:min-h-[26rem] sm:px-6 sm:py-14 lg:min-h-[32rem]">
+          <div className="relative mx-auto flex min-h-[20rem] max-w-content flex-col justify-end px-page py-10 sm:min-h-[26rem] sm:py-14 lg:min-h-[32rem]">
             <p className="text-sm font-semibold uppercase tracking-wide text-brass-soft">
               {COMPANY.legalNameEn}
             </p>
@@ -60,7 +60,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-content px-page py-12 sm:py-16">
         <Breadcrumbs items={[{ label: "เกี่ยวกับเรา" }]} />
 
         <section className="max-w-3xl">

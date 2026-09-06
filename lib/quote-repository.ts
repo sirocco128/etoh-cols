@@ -18,6 +18,7 @@ import type {
   DecorationMethod,
   LeadStatus,
   QuoteRequestRecord,
+  QuoteSalesTimelineEntry,
   WebhookStatus,
 } from "@/lib/quote-types";
 import { LEAD_STATUSES } from "@/lib/quote-types";
@@ -30,11 +31,20 @@ export type ListQuotesOptions = {
   offset?: number;
 };
 
+export type QuoteOpsActor = {
+  email: string;
+  name: string;
+  role: string;
+};
+
 export type UpdateQuoteOpsParams = {
   requestId: string;
   leadStatus?: LeadStatus;
   salesNotes?: string | null;
   customerId?: number | null;
+  actor?: QuoteOpsActor | null;
+  /** Note written to the timeline. Empty string is ignored. */
+  timelineNote?: string | null;
 };
 
 export type {
@@ -44,6 +54,39 @@ export type {
   QuoteRepository,
   WebhookStatusUpdate,
 } from "@/lib/quote-repository-types";
+
+function asLeadStatus(value: string | null | undefined): LeadStatus | null {
+  if (!value) return null;
+  return (LEAD_STATUSES as readonly string[]).includes(value)
+    ? (value as LeadStatus)
+    : null;
+}
+
+type QuoteTimelineRow = {
+  id: number;
+  request_id: string;
+  created_at: string;
+  actor_email: string | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  from_status: string | null;
+  to_status: string;
+  note: string | null;
+};
+
+function mapTimelineRow(row: QuoteTimelineRow): QuoteSalesTimelineEntry {
+  return {
+    id: row.id,
+    requestId: row.request_id,
+    createdAt: row.created_at,
+    actorEmail: row.actor_email,
+    actorName: row.actor_name,
+    actorRole: row.actor_role,
+    fromStatus: asLeadStatus(row.from_status),
+    toStatus: (asLeadStatus(row.to_status) ?? "new") as LeadStatus,
+    note: row.note,
+  };
+}
 
 type QuoteRow = {
   id: number;
@@ -57,6 +100,7 @@ type QuoteRow = {
   budget_per_set: number | null;
   needed_date: string | null;
   province: string | null;
+  billing_branch: string | null;
   product_interest: string | null;
   product_slug: string | null;
   decoration_method: string;
@@ -98,6 +142,7 @@ function mapRow(row: QuoteRow): QuoteRequestRecord {
     budgetPerSet: row.budget_per_set,
     neededDate: row.needed_date,
     province: row.province,
+    billingBranch: row.billing_branch ?? null,
     productInterest: row.product_interest,
     productSlug: row.product_slug,
     decorationMethod: row.decoration_method as DecorationMethod,
@@ -137,14 +182,14 @@ export class SqliteQuoteRepository implements QuoteRepository {
     db.prepare(
       `INSERT INTO quote_requests (
         request_id, submitted_at, name, company, email, phone, quantity,
-        budget_per_set, needed_date, province, product_interest, product_slug,
+        budget_per_set, needed_date, province, billing_branch, product_interest, product_slug,
         decoration_method, detail, consent_at, landing_path, referrer,
         utm_source, utm_medium, utm_campaign, utm_term, utm_content,
         ip_hash, user_agent, lead_status, webhook_status, webhook_attempt_count,
         webhook_next_attempt_at, raw_payload, created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, 'new', ?, 0,
@@ -161,6 +206,7 @@ export class SqliteQuoteRepository implements QuoteRepository {
       input.budgetPerSet ?? null,
       input.neededDate ?? null,
       input.province ?? null,
+      input.billingBranch ?? null,
       input.productInterest ?? null,
       input.productSlug ?? null,
       input.decorationMethod,
@@ -417,29 +463,78 @@ export class SqliteQuoteRepository implements QuoteRepository {
       throw new Error("invalid_lead_status");
     }
 
+    const nextStatus = params.leadStatus ?? existing.leadStatus;
+    const nextNotes =
+      params.salesNotes !== undefined ? params.salesNotes : existing.salesNotes;
+    const nextCustomerId =
+      params.customerId !== undefined ? params.customerId : existing.customerId;
+    const rawTimelineNote =
+      params.timelineNote !== undefined
+        ? params.timelineNote
+        : params.salesNotes;
+    const timelineNote =
+      typeof rawTimelineNote === "string" ? rawTimelineNote.trim() || null : null;
+    const statusChanged = nextStatus !== existing.leadStatus;
+    const shouldLog = statusChanged || Boolean(timelineNote);
+
     const now = new Date().toISOString();
-    getDb()
-      .prepare(
+    const db = getDb();
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare(
         `UPDATE quote_requests SET
           lead_status = ?,
           sales_notes = ?,
           customer_id = ?,
           updated_at = ?
          WHERE request_id = ?`,
-      )
-      .run(
-        params.leadStatus ?? existing.leadStatus,
-        params.salesNotes !== undefined
-          ? params.salesNotes
-          : existing.salesNotes,
-        params.customerId !== undefined
-          ? params.customerId
-          : existing.customerId,
-        now,
-        params.requestId,
-      );
+      ).run(nextStatus, nextNotes, nextCustomerId, now, params.requestId);
+
+      if (shouldLog) {
+        db.prepare(
+          `INSERT INTO quote_sales_timeline (
+            request_id, created_at, actor_email, actor_name, actor_role,
+            from_status, to_status, note
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(
+          params.requestId,
+          now,
+          params.actor?.email ?? null,
+          params.actor?.name ?? null,
+          params.actor?.role ?? null,
+          existing.leadStatus,
+          nextStatus,
+          timelineNote,
+        );
+      }
+
+      db.exec("COMMIT");
+    } catch (error) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        // ignore
+      }
+      throw error;
+    }
 
     return this.getByRequestId(params.requestId);
+  }
+
+  listSalesTimeline(
+    requestId: string,
+    limit = 100,
+  ): QuoteSalesTimelineEntry[] {
+    const capped = Math.min(Math.max(limit, 1), 200);
+    const rows = getDb()
+      .prepare(
+        `SELECT * FROM quote_sales_timeline
+         WHERE request_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`,
+      )
+      .all(requestId, capped) as QuoteTimelineRow[];
+    return rows.map(mapTimelineRow);
   }
 
   linkCustomer(requestId: string, customerId: number): void {
@@ -511,6 +606,16 @@ export function updateQuoteOps(
   params: UpdateQuoteOpsParams,
 ): QuoteRequestRecord | null {
   return (getQuoteRepository() as SqliteQuoteRepository).updateOps(params);
+}
+
+export function listQuoteSalesTimeline(
+  requestId: string,
+  limit?: number,
+): QuoteSalesTimelineEntry[] {
+  return (getQuoteRepository() as SqliteQuoteRepository).listSalesTimeline(
+    requestId,
+    limit,
+  );
 }
 
 export function linkQuoteCustomer(

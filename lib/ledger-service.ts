@@ -1,13 +1,22 @@
 import { randomBytes } from "node:crypto";
+import { listFactoryPosByOrder } from "@/lib/factory-po-repository";
+import type { FactoryPoRecord } from "@/lib/factory-po-types";
 import {
   deleteJournalBySourceKey,
+  getAccount,
   getJournalBySourceKey,
   insertJournal,
+  listJournals,
+  sumAccountActivity,
 } from "@/lib/ledger-repository";
-import { ACCOUNT_CODES, type JournalLineInput } from "@/lib/ledger-types";
-import type { FactoryPoRecord } from "@/lib/factory-po-types";
+import {
+  ACCOUNT_CODES,
+  bookTypeFromSourceKey,
+  type JournalBookType,
+  type JournalLineInput,
+} from "@/lib/ledger-types";
 import { costFromPo } from "@/lib/po-cost";
-import { bangkokDateYmd } from "@/lib/quote-service";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { roundSatang } from "@/lib/th-billing";
 
 function createPrefixedId(prefix: string, now = new Date()): string {
@@ -40,6 +49,7 @@ export function upsertJournal(params: {
   poId?: string | null;
   postedBy?: string | null;
   at?: string;
+  bookType?: JournalBookType;
   lines: JournalLineInput[];
 }): void {
   const lines = compactLines(params.lines);
@@ -48,11 +58,19 @@ export function upsertJournal(params: {
     return;
   }
   assertBalanced(lines);
+  for (const line of lines) {
+    const account = getAccount(line.accountCode);
+    if (!account || !account.isPostable) {
+      throw new Error("unknown_account");
+    }
+  }
   const existing = getJournalBySourceKey(params.sourceKey);
   const now = params.at ?? new Date().toISOString();
+  const bookType = params.bookType ?? bookTypeFromSourceKey(params.sourceKey);
   if (existing) {
     const same =
       existing.memo === params.memo &&
+      existing.bookType === bookType &&
       existing.lines.length === lines.length &&
       existing.lines.every((line, index) => {
         const next = lines[index];
@@ -75,6 +93,7 @@ export function upsertJournal(params: {
     poId: params.poId,
     postedBy: params.postedBy,
     createdAt: now,
+    bookType,
     lines,
   });
 }
@@ -91,6 +110,7 @@ export function postCashReceived(params: {
   if (amount <= 0) return;
   upsertJournal({
     sourceKey: `cash:${params.paymentId}`,
+    bookType: "cash_in",
     memo: `รับชำระ${params.kind} ${amount.toFixed(2)} บาท · ${params.orderId}`,
     orderId: params.orderId,
     postedBy: params.actor,
@@ -102,6 +122,203 @@ export function postCashReceived(params: {
         debit: 0,
         credit: amount,
         memo: "เงินรับล่วงหน้า",
+      },
+    ],
+  });
+}
+
+function inventoriableFromPo(po: FactoryPoRecord): {
+  factory: number;
+  freight: number;
+  importCost: number;
+  total: number;
+  packing: number;
+  lastMile: number;
+  factoryPayable: number;
+  freightPayable: number;
+} {
+  const cost = costFromPo(po);
+  const importCost = roundSatang(cost.importDutyThb + cost.customsFeeThb);
+  const total = roundSatang(cost.productCostThb + cost.freightThb + importCost);
+  return {
+    factory: cost.productCostThb,
+    freight: cost.freightThb,
+    importCost,
+    total,
+    packing: cost.packingThb,
+    lastMile: cost.lastMileThb,
+    factoryPayable: cost.productCostThb,
+    freightPayable: roundSatang(
+      cost.freightThb + importCost + cost.packingThb + cost.lastMileThb,
+    ),
+  };
+}
+
+export function postPoLandedCost(params: {
+  po: FactoryPoRecord;
+  actor?: string | null;
+  at?: string;
+}): void {
+  const po = params.po;
+  const gitKey = `git:${po.poId}`;
+  const cogsKey = `cogs:${po.poId}`;
+  if (po.status === "cancelled" || po.status === "draft" || po.status === "sent") {
+    deleteJournalBySourceKey(gitKey);
+    deleteJournalBySourceKey(cogsKey);
+    for (const entry of listJournals({ poId: po.poId, limit: 200 })) {
+      if (entry.sourceKey.startsWith("inv:")) {
+        deleteJournalBySourceKey(entry.sourceKey);
+      }
+    }
+    return;
+  }
+  const cost = inventoriableFromPo(po);
+  upsertJournal({
+    sourceKey: gitKey,
+    bookType: "purchase",
+    memo: `ซื้อ / สินค้าระหว่างทาง · ${po.poId} · ${po.productName}`,
+    orderId: po.orderId,
+    poId: po.poId,
+    postedBy: params.actor,
+    at: params.at ?? po.updatedAt,
+    lines: [
+      {
+        accountCode: ACCOUNT_CODES.inTransit,
+        debit: cost.total,
+        credit: 0,
+        memo: "โรงงาน + ขนส่ง + นำเข้า",
+      },
+      {
+        accountCode: ACCOUNT_CODES.lastMileExpense,
+        debit: cost.lastMile,
+        credit: 0,
+        memo: "จัดส่งถึงลูกค้า",
+      },
+      {
+        accountCode: ACCOUNT_CODES.packingExpense,
+        debit: cost.packing,
+        credit: 0,
+        memo: "แพ็กในไทย",
+      },
+      {
+        accountCode: ACCOUNT_CODES.factoryPayable,
+        debit: 0,
+        credit: cost.factoryPayable,
+        memo: "เจ้าหนี้โรงงาน",
+      },
+      {
+        accountCode: ACCOUNT_CODES.freightPayable,
+        debit: 0,
+        credit: cost.freightPayable,
+        memo: "เจ้าหนี้ขนส่งและนำเข้า",
+      },
+    ],
+  });
+}
+
+export function postInventoryReceipt(params: {
+  po: FactoryPoRecord;
+  receiptId: string;
+  qtyReceived: number;
+  destination: string;
+  actor?: string | null;
+  at?: string;
+}): void {
+  postPoLandedCost({ po: params.po, actor: params.actor, at: params.at });
+  const sourceKey = `inv:${params.receiptId}`;
+  if (params.destination !== "warehouse" || params.qtyReceived <= 0) {
+    deleteJournalBySourceKey(sourceKey);
+    return;
+  }
+  const cost = inventoriableFromPo(params.po);
+  const share =
+    params.po.quantity > 0
+      ? roundSatang((cost.total * params.qtyReceived) / params.po.quantity)
+      : 0;
+  upsertJournal({
+    sourceKey,
+    bookType: "purchase",
+    memo: `รับเข้าคลัง · ${params.receiptId} · ${params.po.poId}`,
+    orderId: params.po.orderId,
+    poId: params.po.poId,
+    postedBy: params.actor,
+    at: params.at,
+    lines: [
+      {
+        accountCode: ACCOUNT_CODES.inventory,
+        debit: share,
+        credit: 0,
+        memo: "สินค้าคงเหลือ",
+      },
+      {
+        accountCode: ACCOUNT_CODES.inTransit,
+        debit: 0,
+        credit: share,
+        memo: "โอนจากระหว่างทาง",
+      },
+    ],
+  });
+}
+
+function postCogsForPo(params: {
+  po: FactoryPoRecord;
+  actor?: string | null;
+  at: string;
+}): void {
+  if (params.po.status === "cancelled") {
+    deleteJournalBySourceKey(`cogs:${params.po.poId}`);
+    return;
+  }
+  postPoLandedCost({ po: params.po, actor: params.actor, at: params.at });
+  const cost = inventoriableFromPo(params.po);
+  const movedToStock = roundSatang(
+    sumAccountActivity({
+      accountCode: ACCOUNT_CODES.inventory,
+      side: "debit",
+      poId: params.po.poId,
+      sourcePrefix: "inv:",
+    }),
+  );
+  const fromStock = Math.min(cost.total, movedToStock);
+  const fromTransit = roundSatang(cost.total - fromStock);
+  upsertJournal({
+    sourceKey: `cogs:${params.po.poId}`,
+    bookType: "general",
+    memo: `รับรู้ต้นทุนขาย · ${params.po.poId}`,
+    orderId: params.po.orderId,
+    poId: params.po.poId,
+    postedBy: params.actor,
+    at: params.at,
+    lines: [
+      {
+        accountCode: ACCOUNT_CODES.factoryCogs,
+        debit: cost.factory,
+        credit: 0,
+        memo: "ต้นทุนโรงงาน",
+      },
+      {
+        accountCode: ACCOUNT_CODES.freightCogs,
+        debit: cost.freight,
+        credit: 0,
+        memo: "ขนส่งจีน–ไทย",
+      },
+      {
+        accountCode: ACCOUNT_CODES.importCogs,
+        debit: cost.importCost,
+        credit: 0,
+        memo: "นำเข้า / พิธีการ",
+      },
+      {
+        accountCode: ACCOUNT_CODES.inventory,
+        debit: 0,
+        credit: fromStock,
+        memo: "ตัดสินค้าคงเหลือ",
+      },
+      {
+        accountCode: ACCOUNT_CODES.inTransit,
+        debit: 0,
+        credit: fromTransit,
+        memo: "ตัดสินค้าระหว่างทาง",
       },
     ],
   });
@@ -119,8 +336,19 @@ export function postRevenueRecognition(params: {
   const vat = roundSatang(params.vatAmount);
   const grand = roundSatang(params.grandTotal);
   if (grand <= 0) return;
+  const cashIn = roundSatang(
+    sumAccountActivity({
+      accountCode: ACCOUNT_CODES.unearnedDeposit,
+      side: "credit",
+      orderId: params.orderId,
+      sourcePrefix: "cash:",
+    }),
+  );
+  const unearned = Math.min(grand, cashIn);
+  const ar = roundSatang(Math.max(0, grand - unearned));
   upsertJournal({
     sourceKey: `revenue:${params.orderId}`,
+    bookType: "sales",
     memo: `รับรู้รายได้และ VAT ขาออก · ${params.orderId}`,
     orderId: params.orderId,
     postedBy: params.actor,
@@ -128,88 +356,23 @@ export function postRevenueRecognition(params: {
     lines: [
       {
         accountCode: ACCOUNT_CODES.unearnedDeposit,
-        debit: grand,
+        debit: unearned,
         credit: 0,
         memo: "โอนเงินมัดจำเป็นรายได้",
+      },
+      {
+        accountCode: ACCOUNT_CODES.ar,
+        debit: ar,
+        credit: 0,
+        memo: "ลูกหนี้ตามใบกำกับ",
       },
       { accountCode: ACCOUNT_CODES.sales, debit: 0, credit: subtotal, memo: "รายได้ขาย" },
       { accountCode: ACCOUNT_CODES.outputVat, debit: 0, credit: vat, memo: "VAT 7%" },
     ],
   });
-}
-
-export function postPoLandedCost(params: {
-  po: FactoryPoRecord;
-  actor?: string | null;
-  at?: string;
-}): void {
-  const po = params.po;
-  const sourceKey = `cogs:${po.poId}`;
-  if (po.status === "cancelled" || po.status === "draft" || po.status === "sent") {
-    deleteJournalBySourceKey(sourceKey);
-    return;
+  for (const po of listFactoryPosByOrder(params.orderId)) {
+    postCogsForPo({ po, actor: params.actor, at: params.at });
   }
-  const cost = costFromPo(po);
-  const factoryPayable = cost.productCostThb;
-  const freightPayable = roundSatang(
-    cost.freightThb +
-      cost.importDutyThb +
-      cost.customsFeeThb +
-      cost.packingThb +
-      cost.lastMileThb,
-  );
-  upsertJournal({
-    sourceKey,
-    memo: `ต้นทุนลงเรือ · ${po.poId} · ${po.productName}`,
-    orderId: po.orderId,
-    poId: po.poId,
-    postedBy: params.actor,
-    at: params.at ?? po.updatedAt,
-    lines: [
-      {
-        accountCode: ACCOUNT_CODES.factoryCogs,
-        debit: cost.productCostThb,
-        credit: 0,
-        memo: "โรงงาน + ขนส่งในจีน",
-      },
-      {
-        accountCode: ACCOUNT_CODES.freightCogs,
-        debit: cost.freightThb,
-        credit: 0,
-        memo: "ขนส่งจีน–ไทย",
-      },
-      {
-        accountCode: ACCOUNT_CODES.importCogs,
-        debit: roundSatang(cost.importDutyThb + cost.customsFeeThb),
-        credit: 0,
-        memo: "ภาษีนำเข้า / พิธีการ",
-      },
-      {
-        accountCode: ACCOUNT_CODES.lastMileExpense,
-        debit: cost.lastMileThb,
-        credit: 0,
-        memo: "จัดส่งถึงลูกค้า",
-      },
-      {
-        accountCode: ACCOUNT_CODES.packingExpense,
-        debit: cost.packingThb,
-        credit: 0,
-        memo: "แพ็กในไทย",
-      },
-      {
-        accountCode: ACCOUNT_CODES.factoryPayable,
-        debit: 0,
-        credit: factoryPayable,
-        memo: "เจ้าหนี้โรงงาน",
-      },
-      {
-        accountCode: ACCOUNT_CODES.freightPayable,
-        debit: 0,
-        credit: freightPayable,
-        memo: "เจ้าหนี้ขนส่งและนำเข้า",
-      },
-    ],
-  });
 }
 
 export function postSupplierPayment(params: {
@@ -219,31 +382,63 @@ export function postSupplierPayment(params: {
   amount: number;
   at: string;
   actor?: string | null;
+  payableKind?: "factory" | "freight";
 }): void {
   const amount = roundSatang(params.amount);
   if (amount <= 0) return;
+  const kind = params.payableKind === "freight" ? "freight" : "factory";
+  const payable =
+    kind === "freight" ? ACCOUNT_CODES.freightPayable : ACCOUNT_CODES.factoryPayable;
+  const label = kind === "freight" ? "เจ้าหนี้ขนส่งและนำเข้า" : "เจ้าหนี้โรงงาน";
   upsertJournal({
     sourceKey: `spay:${params.payId}`,
-    memo: `จ่ายโรงงานตามของที่รับ ${amount.toFixed(2)} บาท · ${params.poId}`,
+    bookType: "cash_out",
+    memo: `จ่าย${label} ${amount.toFixed(2)} บาท · ${params.poId}`,
     orderId: params.orderId,
     poId: params.poId,
     postedBy: params.actor,
     at: params.at,
     lines: [
       {
-        accountCode: ACCOUNT_CODES.factoryPayable,
+        accountCode: payable,
         debit: amount,
         credit: 0,
-        memo: "ลดเจ้าหนี้โรงงาน",
+        memo: `ลด${label}`,
       },
       {
         accountCode: ACCOUNT_CODES.cash,
         debit: 0,
         credit: amount,
-        memo: "จ่ายโรงงาน",
+        memo: kind === "freight" ? "จ่ายขนส่ง/นำเข้า" : "จ่ายโรงงาน",
       },
     ],
   });
+}
+
+export function postManualJournal(params: {
+  memo: string;
+  entryDate: string;
+  lines: JournalLineInput[];
+  actor?: string | null;
+  orderId?: string | null;
+  poId?: string | null;
+}): string {
+  const now = new Date().toISOString();
+  const entryId = createPrefixedId("JE", new Date(params.entryDate || now));
+  const sourceKey = `manual:${entryId}`;
+  upsertJournal({
+    sourceKey,
+    bookType: "general",
+    memo: params.memo.trim() || "ใบสำคัญทั่วไป",
+    orderId: params.orderId,
+    poId: params.poId,
+    postedBy: params.actor,
+    at: `${params.entryDate}T12:00:00+07:00`,
+    lines: params.lines,
+  });
+  const saved = getJournalBySourceKey(sourceKey);
+  if (!saved) throw new Error("journal_insert_failed");
+  return saved.entryId;
 }
 
 export function csvEscape(value: string | number | null | undefined): string {
@@ -259,6 +454,7 @@ export function journalsToCsv(
     memo: string;
     orderId: string | null;
     poId: string | null;
+    bookType?: string;
     lines: Array<{
       accountCode: string;
       debit: number;
@@ -269,6 +465,7 @@ export function journalsToCsv(
   accountName: (code: string) => string,
 ): string {
   const header = [
+    "สมุด",
     "วันที่",
     "เลขที่เอกสาร",
     "รหัสบัญชี",
@@ -284,6 +481,7 @@ export function journalsToCsv(
     for (const line of entry.lines) {
       rows.push(
         [
+          csvEscape(entry.bookType || ""),
           csvEscape(entry.entryDate),
           csvEscape(entry.entryId),
           csvEscape(line.accountCode),

@@ -6,6 +6,7 @@ import {
   isUsableImageSrc,
   productCoverImage,
   PRODUCT_IMAGE_FALLBACK,
+  skuOpsImageSrc,
 } from "../lib/product-media";
 
 describe("cn()", () => {
@@ -34,5 +35,24 @@ describe("product catalog images", () => {
       "/images/product-it-set.jpg",
     );
     assert.equal(categoryTabLabel("it-set", "Gift Set อุปกรณ์ไอที"), "สายไอที");
+    assert.equal(
+      productCoverImage([], "executive-smart-tech"),
+      "/images/product-it-set.jpg",
+    );
+    assert.equal(categoryTabLabel("eco-friendly", "Eco"), "รักษ์โลก");
+  });
+
+  it("ops SKU thumbs use a real URL or the licensed placeholder, never a category mockup", () => {
+    assert.equal(skuOpsImageSrc(""), PRODUCT_IMAGE_FALLBACK);
+    assert.equal(skuOpsImageSrc(null, "  "), PRODUCT_IMAGE_FALLBACK);
+    assert.equal(
+      skuOpsImageSrc("", "https://smartgiftthailand.com/assets/products/tdd03-2.jpg"),
+      "https://smartgiftthailand.com/assets/products/tdd03-2.jpg",
+    );
+    assert.equal(
+      skuOpsImageSrc("/images/saved.jpg", "https://offer.example/x.jpg"),
+      "/images/saved.jpg",
+    );
+    assert.notEqual(skuOpsImageSrc(""), "/images/product-it-set.jpg");
   });
 });

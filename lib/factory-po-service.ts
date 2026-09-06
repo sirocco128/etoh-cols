@@ -1,29 +1,30 @@
 import { randomBytes } from "node:crypto";
-import { SMARTGIFT_FX_CNY_THB } from "@/lib/alibaba/rates";
+import { FACTORY_MARKET_FX_USD_THB, SMARTGIFT_FX_CNY_THB } from "@/lib/alibaba/rates";
 import {
-  countOpenInboundPos,
   getFactoryPoByPoId,
   insertFactoryPo,
-  listFactoryPos,
-  listFactoryPosByOrder,
   updateFactoryPo,
 } from "@/lib/factory-po-repository";
 import {
   FACTORY_PO_STATUSES,
   isFactoryPlatform,
   isFactoryPoStatus,
+  isFactoryCurrency,
   isFreightMode,
   type FactoryPlatform,
   type FactoryPoRecord,
   type FactoryPoStatus,
+  type FactoryCurrency,
   type FreightMode,
 } from "@/lib/factory-po-types";
+import { resolveFactoryForPo } from "@/lib/factory-registry-service";
+import { factoryContactLine } from "@/lib/factory-registry-types";
 import { postPoLandedCost } from "@/lib/ledger-service";
 import { patchPoReceived } from "@/lib/ops-cycle-repository";
 import { isDestination } from "@/lib/ops-cycle-types";
 import { getOrderRepository } from "@/lib/order-repository";
 import { computePoCost } from "@/lib/po-cost";
-import { bangkokDateYmd } from "@/lib/quote-service";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 
 const PO_FLOW: FactoryPoStatus[] = FACTORY_PO_STATUSES.filter((s) => s !== "cancelled");
 
@@ -41,6 +42,7 @@ export type SaveFactoryPoInput = {
   poId?: string;
   orderId: string;
   status?: FactoryPoStatus;
+  factoryId?: number | null;
   factoryName: string;
   factoryContact?: string | null;
   factoryPlatform?: string;
@@ -54,6 +56,7 @@ export type SaveFactoryPoInput = {
   logoNotes?: string | null;
   packagingNotes?: string | null;
   qcNotes?: string | null;
+  factoryCurrency?: string;
   fxCnyThb?: number;
   factoryUnitCny?: number;
   factoryAmountCny?: number;
@@ -88,23 +91,31 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
   const order = getOrderRepository().getOrderByOrderId(input.orderId);
   if (!order) throw new Error("order_not_found");
 
-  const factoryName = input.factoryName.trim();
+  const existing = input.poId ? getFactoryPoByPoId(input.poId) : null;
+  const factoryIdRaw = Number(input.factoryId || 0);
+  const linked = resolveFactoryForPo(factoryIdRaw || null, Boolean(existing));
+  const factoryName = (input.factoryName || linked?.name || "").trim();
   if (!factoryName) throw new Error("factory_name_required");
 
   const quantity = Math.max(1, Math.floor(input.quantity || order.quantity || 1));
-  const platformRaw = input.factoryPlatform || "other";
+  const platformRaw = input.factoryPlatform || linked?.platform || "other";
   const factoryPlatform: FactoryPlatform = isFactoryPlatform(platformRaw)
     ? platformRaw
     : "other";
   const freightMode: FreightMode | null = input.freightMode && isFreightMode(input.freightMode)
     ? input.freightMode
     : null;
+  const factoryCurrency: FactoryCurrency = isFactoryCurrency(input.factoryCurrency || "")
+    ? (input.factoryCurrency as FactoryCurrency)
+    : existing?.factoryCurrency ?? linked?.defaultCurrency ?? "CNY";
+  const defaultFx =
+    factoryCurrency === "USD" ? FACTORY_MARKET_FX_USD_THB : SMARTGIFT_FX_CNY_THB;
 
   const cost = computePoCost({
     quantity,
     factoryUnitCny: input.factoryUnitCny ?? 0,
     factoryAmountCny: input.factoryAmountCny,
-    fxCnyThb: input.fxCnyThb ?? SMARTGIFT_FX_CNY_THB,
+    fxCnyThb: input.fxCnyThb ?? defaultFx,
     inlandThb: input.inlandThb ?? 0,
     freightThb: input.freightThb ?? 0,
     importDutyThb: input.importDutyThb ?? 0,
@@ -114,7 +125,6 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
   });
 
   const now = new Date().toISOString();
-  const existing = input.poId ? getFactoryPoByPoId(input.poId) : null;
   const status: FactoryPoStatus = input.status && isFactoryPoStatus(input.status)
     ? input.status
     : existing?.status ?? "draft";
@@ -124,8 +134,11 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
     poId: existing?.poId ?? createPoId(),
     orderId: order.orderId,
     status,
+    factoryId: linked?.id ?? (existing && factoryIdRaw ? factoryIdRaw : null),
     factoryName,
-    factoryContact: blankToNull(input.factoryContact),
+    factoryContact:
+      blankToNull(input.factoryContact) ??
+      (linked ? blankToNull(factoryContactLine(linked)) : null),
     factoryPlatform,
     sourceOfferId: blankToNull(input.sourceOfferId),
     productName: (input.productName || order.productSummary).trim() || order.productSummary,
@@ -137,7 +150,8 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
     logoNotes: blankToNull(input.logoNotes),
     packagingNotes: blankToNull(input.packagingNotes),
     qcNotes: blankToNull(input.qcNotes),
-    fxCnyThb: input.fxCnyThb ?? SMARTGIFT_FX_CNY_THB,
+    factoryCurrency,
+    fxCnyThb: input.fxCnyThb ?? defaultFx,
     factoryUnitCny: input.factoryUnitCny ?? 0,
     factoryAmountCny: cost.factoryAmountCny,
     factoryThb: cost.factoryThb,
@@ -183,38 +197,11 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
   return withDest;
 }
 
-export function getFactoryPo(poId: string): FactoryPoRecord | null {
-  return getFactoryPoByPoId(poId);
-}
-
-export function listPosForOrder(orderId: string): FactoryPoRecord[] {
-  return listFactoryPosByOrder(orderId);
-}
-
-export function listPos(params?: {
-  q?: string;
-  status?: FactoryPoStatus | "all";
-}): FactoryPoRecord[] {
-  return listFactoryPos(params);
-}
-
-export function countInboundPos(): number {
-  return countOpenInboundPos();
-}
-
-export function draftFromOrder(orderId: string): SaveFactoryPoInput | null {
-  const order = getOrderRepository().getOrderByOrderId(orderId);
-  if (!order) return null;
-  return {
-    orderId: order.orderId,
-    factoryName: "",
-    productName: order.productSummary,
-    quantity: order.quantity,
-    fxCnyThb: SMARTGIFT_FX_CNY_THB,
-    shipToName: order.shipToName ?? order.contactName,
-    shipToPhone: order.shipToPhone ?? order.phone,
-    shipToAddress: order.shipToAddress,
-    shipToProvince: order.shipToProvince,
-    destinationMode: "warehouse",
-  };
-}
+export {
+  countInboundPos,
+  draftFromOrder,
+  getFactoryPo,
+  listPos,
+  listPosForFactory,
+  listPosForOrder,
+} from "@/lib/factory-po-queries";

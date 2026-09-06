@@ -38,14 +38,14 @@ export default async function HomePage() {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/85 to-forest/40" />
-        <div className="relative mx-auto flex min-h-[100svh] max-w-content flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20">
+        <div className="relative mx-auto flex min-h-[100svh] max-w-content flex-col justify-end px-page pb-16 pt-28 sm:pb-20">
           <p className="inline-flex items-center gap-1.5 rounded-full border border-brass/25 bg-paper/15 px-3 py-1 text-xs font-medium text-brass-soft backdrop-blur-md">
             สินค้าพรีเมียม นำเข้าสั่งผลิตตามออเดอร์
           </p>
           <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-brass-soft sm:text-base">
             {site.name}
           </p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="mt-3 max-w-3xl font-display text-fluid-2xl font-bold leading-tight tracking-tight">
             รับผลิต Gift Set ของขวัญองค์กร
           </h1>
           <p className="mt-4 max-w-xl text-base text-paper/70 sm:text-lg">
@@ -69,11 +69,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-content px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-content px-page py-16">
         <ProcessSteps />
       </section>
 
-      <section className="mx-auto max-w-content px-4 pb-16 sm:px-6">
+      <section className="mx-auto max-w-content px-page pb-12 sm:pb-16">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-bold text-forest sm:text-3xl">เลือกหมวด Gift Set</h2>
           <p className="mt-3 text-ink/75">
@@ -113,7 +113,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="mx-auto max-w-content px-4 pb-16 sm:px-6">
+      <section className="mx-auto max-w-content px-page pb-12 sm:pb-16">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-bold text-forest sm:text-3xl">
             ไอเดียชุดของขวัญตามธีม
@@ -147,7 +147,7 @@ export default async function HomePage() {
       </section>
 
       <section className="bg-forest-mist/50 py-16">
-        <div className="mx-auto max-w-content px-4 sm:px-6">
+        <div className="mx-auto max-w-content px-page">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-bold text-forest sm:text-3xl">เซ็ตแนะนำ</h2>
             <p className="mt-3 text-ink/75">
@@ -161,7 +161,7 @@ export default async function HomePage() {
             />
           ) : (
             <>
-              <ul className="mt-10 grid gap-6 md:grid-cols-3">
+              <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {featured.map((product) => (
                   <li key={product.slug}>
                     <ProductCard product={product} />
@@ -182,8 +182,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-content px-4 py-16 sm:px-6">
-        <div className="rounded-3xl bg-forest px-6 py-12 text-paper sm:px-10">
+      <section className="mx-auto max-w-content px-page py-16">
+        <div className="rounded-3xl border border-white/10 bg-forest px-5 py-10 text-paper shadow-lift sm:px-10 sm:py-12">
           <h2 className="text-2xl font-bold sm:text-3xl">พร้อมเริ่มโปรเจกต์?</h2>
           <p className="mt-3 max-w-xl text-paper/80">
             แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้ของขวัญ

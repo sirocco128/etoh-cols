@@ -451,8 +451,8 @@ DATABASE_POOL_MIN=0
 
 # MinIO — public catalog media (docker compose up -d minio minio-init)
 MINIO_ENDPOINT=http://127.0.0.1:9000
-MINIO_ACCESS_KEY=terabis
-MINIO_SECRET_KEY=terabisMinioDev1
+MINIO_ACCESS_KEY=giftset-app
+MINIO_SECRET_KEY=giftsetAppDevKey1
 MINIO_BUCKET_PUBLIC=terabis-public
 MINIO_REGION=us-east-1
 MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000/terabis-public
@@ -578,8 +578,8 @@ DATABASE_SSL=false
 DATABASE_POOL_MIN=0
 
 MINIO_ENDPOINT=http://127.0.0.1:9000
-MINIO_ACCESS_KEY=terabis
-MINIO_SECRET_KEY=terabisMinioDev1
+MINIO_ACCESS_KEY=giftset-app
+MINIO_SECRET_KEY=giftsetAppDevKey1
 MINIO_BUCKET_PUBLIC=terabis-public
 MINIO_REGION=us-east-1
 MINIO_PUBLIC_BASE_URL=http://127.0.0.1:9000/terabis-public

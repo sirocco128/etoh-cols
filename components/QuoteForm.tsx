@@ -56,6 +56,7 @@ type QuoteFormProps = {
   initialDetail?: string;
   initialQuantity?: string;
   basketId?: string;
+  minOrder?: number;
 };
 
 const QUOTE_STEPS = ["ผู้ติดต่อ", "งานที่ต้องการ", "ที่อยู่และส่งคำขอ"] as const;
@@ -81,6 +82,8 @@ function readQueryPrefill(): Partial<QuoteFormValues> {
   if (slug) prefill.productSlug = slug;
   if (quantity) prefill.quantity = quantity;
   if (decoration) prefill.decorationMethod = decoration;
+  const neededDate = params.get("neededDate");
+  if (neededDate) prefill.neededDate = neededDate;
   return prefill;
 }
 
@@ -122,6 +125,7 @@ export function QuoteForm({
   initialDetail = "",
   initialQuantity = "",
   basketId = "",
+  minOrder = 1,
 }: QuoteFormProps) {
   const [state, formAction, pending] = useActionState(submitQuote, initialState);
   const contact = getPublicContact(site);
@@ -228,7 +232,7 @@ export function QuoteForm({
   useEffect(() => {
     if (!state.fieldErrors) return;
     const keys = Object.keys(state.fieldErrors);
-    if (keys.some((key) => ["name", "company", "email", "phone", "taxId"].includes(key))) {
+    if (keys.some((key) => ["name", "company", "email", "phone", "taxId", "billingBranch"].includes(key))) {
       setStep(0);
     } else if (
       keys.some((key) =>
@@ -392,7 +396,7 @@ export function QuoteForm({
           setContactAttempted(true);
         }
       }}
-      className="relative space-y-5 rounded-2xl border border-forest/10 bg-paper p-5 sm:p-8"
+      className="relative space-y-5 rounded-2xl border border-white/20 bg-paper/90 p-4 shadow-glass backdrop-blur-md sm:p-8 dark:border-white/10"
       noValidate
     >
       <div>
@@ -486,14 +490,21 @@ export function QuoteForm({
       <CompanyLookupField
         taxId={val("taxId")}
         company={val("company")}
+        billingBranch={val("billingBranch")}
         taxError={fieldError(errors, "taxId")}
         companyError={fieldError(errors, "company")}
-        onTaxIdChange={(value) => patchDraft({ taxId: value })}
+        onTaxIdChange={(value) =>
+          patchDraft({
+            taxId: value,
+            ...(value.replace(/\D/g, "").length !== 13 ? { billingBranch: "" } : {}),
+          })
+        }
         onCompanyChange={(value) => patchDraft({ company: value })}
         onFill={(fill) =>
           patchDraft({
             taxId: fill.taxId,
             company: fill.company,
+            ...(fill.billingBranch ? { billingBranch: fill.billingBranch } : {}),
             ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
             ...(fill.province ? { province: fill.province } : {}),
             ...(fill.district ? { district: fill.district } : {}),
@@ -523,8 +534,8 @@ export function QuoteForm({
           type="number"
           label="จำนวนโดยประมาณ (เซ็ต) *"
           error={fieldError(errors, "quantity")}
-          min={1}
-          defaultValue={val("quantity")}
+          min={Math.max(1, minOrder)}
+          defaultValue={val("quantity") || (minOrder > 1 ? String(minOrder) : "")}
         />
         <Field
           id="budgetPerSet"

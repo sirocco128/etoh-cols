@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { OrderLookupForm } from "@/components/OrderLookupForm";
-import { ORDER_TRACKING_INTRO } from "@/lib/ux-copy";
+import {
+  ACCOUNT_HUB_TITLE,
+  ORDER_TRACKING_INTRO,
+} from "@/lib/ux-copy";
 
 export const metadata: Metadata = {
   title: "ติดตามออเดอร์และชำระเงิน",
@@ -10,8 +13,13 @@ export const metadata: Metadata = {
 
 export default function OrdersLookupPage() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">
-      <Breadcrumbs items={[{ label: "ออเดอร์ของฉัน" }]} />
+    <div className="mx-auto max-w-xl px-page py-12 sm:py-16">
+      <Breadcrumbs
+        items={[
+          { href: "/account", label: ACCOUNT_HUB_TITLE },
+          { label: "ออเดอร์ของฉัน" },
+        ]}
+      />
       <h1 className="text-3xl font-bold text-forest">ออเดอร์และการชำระเงิน</h1>
       <p className="mt-4 text-sm leading-relaxed text-ink/80">
         {ORDER_TRACKING_INTRO}

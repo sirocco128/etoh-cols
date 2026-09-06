@@ -6,6 +6,10 @@ export function Toaster() {
   return (
     <Sonner
       theme="system"
+      position="top-center"
+      richColors
+      closeButton
+      offset="5rem"
       className="toaster group"
       toastOptions={{
         classNames: {

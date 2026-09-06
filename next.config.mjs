@@ -131,6 +131,12 @@ function buildContentSecurityPolicy() {
     "media-src": ["'self'"],
     "worker-src": ["'self'", "blob:"],
     "manifest-src": ["'self'"],
+    "frame-src": [
+      "'self'",
+      "https://online.fliphtml5.com",
+      "https://fliphtml5.com",
+      "https://*.fliphtml5.com",
+    ],
   };
 
   if (isSecureProduction) {

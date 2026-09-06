@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { pingDb } from "@/lib/database";
-import { isMinioConfigured, pingMinio } from "@/lib/object-storage";
+import { pingClamd } from "@/lib/object-scan";
+import {
+  isMinioConfigured,
+  pingMinio,
+  pingMinioReplica,
+} from "@/lib/object-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +40,13 @@ export async function GET(request: Request) {
     if (isMinioConfigured()) {
       objects = (await pingMinio()) ? "minio" : "minio-error";
     }
+    const replica = await pingMinioReplica();
+    const clamavHost = (process.env.CLAMD_HOST || "").trim();
+    const clamav = clamavHost
+      ? (await pingClamd())
+        ? "ok"
+        : "error"
+      : "unset";
     return NextResponse.json(
       {
         status: "ok",
@@ -42,6 +54,8 @@ export async function GET(request: Request) {
         storage,
         database: "ok",
         objects,
+        replica,
+        clamav,
         timestamp,
       },
       {

@@ -73,7 +73,7 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
       <JsonLd data={breadcrumbs} />
       <JsonLd data={buildCreativeWorkJsonLd(item)} />
 
-      <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <article className="mx-auto max-w-3xl px-page py-10 sm:py-14">
         <Breadcrumbs
           items={[
             { href: "/portfolio", label: "ผลงาน" },

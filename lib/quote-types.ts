@@ -54,6 +54,7 @@ export type QuoteRequestInput = {
   subdistrict?: string;
   zip?: string;
   taxId?: string;
+  billingBranch?: string;
   productInterest?: string;
   productSlug?: string;
   decorationMethod: DecorationMethod;
@@ -85,6 +86,7 @@ export type QuoteLeadPayload = {
   subdistrict?: string | null;
   zip?: string | null;
   taxId?: string | null;
+  billingBranch?: string | null;
   productInterest?: string | null;
   productSlug?: string | null;
   decorationMethod: DecorationMethod;
@@ -107,6 +109,18 @@ export type QuoteWebhookEvent = {
   lead: QuoteLeadPayload;
 };
 
+export type QuoteSalesTimelineEntry = {
+  id: number;
+  requestId: string;
+  createdAt: string;
+  actorEmail: string | null;
+  actorName: string | null;
+  actorRole: string | null;
+  fromStatus: LeadStatus | null;
+  toStatus: LeadStatus;
+  note: string | null;
+};
+
 export type QuoteRequestRecord = {
   id: number;
   requestId: string;
@@ -119,6 +133,7 @@ export type QuoteRequestRecord = {
   budgetPerSet: number | null;
   neededDate: string | null;
   province: string | null;
+  billingBranch: string | null;
   productInterest: string | null;
   productSlug: string | null;
   decorationMethod: DecorationMethod;

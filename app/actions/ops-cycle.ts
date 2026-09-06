@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { OpsActionResult } from "@/app/actions/ops";
@@ -21,18 +20,7 @@ import {
   setIssueStatus,
 } from "@/lib/ops-cycle-service";
 import { parseOpsTags } from "@/lib/ops-tags";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 
 function text(form: FormData, key: string): string {
   return String(form.get(key) || "").trim();
@@ -51,7 +39,8 @@ const ERRORS: Record<string, string> = {
   qty_required: "กรุณาระบุจำนวนที่รับ",
   over_received: "รับเกินจำนวนในใบสั่งโรงงาน",
   amount_required: "กรุณาระบุยอดเงิน",
-  pay_exceeds_received: "จ่ายได้ไม่เกินยอดของที่รับตาม PO",
+  pay_exceeds_received: "จ่ายเจ้าหนี้โรงงานได้ไม่เกินยอดของที่รับตาม PO",
+  pay_exceeds_freight: "จ่ายเจ้าหนี้ขนส่งได้ไม่เกินยอดที่ตั้งค้าง",
   receipt_not_found: "ไม่พบใบรับสินค้า",
   payer_required: "กรุณาระบุชื่อผู้จ่าย",
   lines_required: "กรุณาระบุรายการรับอย่างน้อยหนึ่งบรรทัด",
@@ -111,8 +100,7 @@ export async function receiveGoodsAction(
     resourceType: "goods_receipt",
     resourceId: receipt.receiptId,
     detail: { poId: receipt.poId, qty: receipt.qtyReceived, dest: receipt.destination },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/inbound");
   revalidatePath("/ops/cycle");
@@ -141,6 +129,7 @@ export async function payFactoryAction(
       method: text(formData, "method") || "bank",
       notes: text(formData, "notes"),
       actor: actor.email,
+      payableKind: text(formData, "payableKind") || "factory",
     });
   } catch (error) {
     return fail(error);
@@ -152,8 +141,7 @@ export async function payFactoryAction(
     resourceType: "supplier_payment",
     resourceId: pay.payId,
     detail: { poId: pay.poId, amount: pay.amount },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/pay-factory");
   revalidatePath("/ops/finance");
@@ -200,8 +188,7 @@ export async function createCashReceiptAction(
     resourceType: "cash_receipt",
     resourceId: voucher.voucherId,
     detail: { total: voucher.totalAmount, lines: voucher.lines.length },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/receipts");
   revalidatePath("/ops/qr-pay");
@@ -232,8 +219,7 @@ export async function confirmCashReceiptAction(
     resourceType: "cash_receipt",
     resourceId: voucher.voucherId,
     detail: { total: voucher.totalAmount },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/receipts");
   revalidatePath("/ops/qr-pay");
@@ -272,8 +258,7 @@ export async function rejectCashReceiptAction(
     resourceType: "cash_receipt",
     resourceId: voucher.voucherId,
     detail: { reason: voucher.rejectReason },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/receipts");
   revalidatePath("/ops/qr-pay");
@@ -317,8 +302,7 @@ export async function createAssetAction(
     resourceType: "asset",
     resourceId: asset.assetCode,
     detail: { name: asset.name, value: asset.valueThb },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/assets");
   redirect(`/ops/assets?ok=${encodeURIComponent(asset.assetCode)}`);
@@ -354,8 +338,7 @@ export async function createClaimAction(
     resourceType: "claim",
     resourceId: claim.claimId,
     detail: { against: claim.against },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/claims");
   redirect(`/ops/claims?ok=${encodeURIComponent(claim.claimId)}`);
@@ -364,6 +347,7 @@ export async function createClaimAction(
 export async function claimFromIssueAction(formData: FormData): Promise<void> {
   const actor = await requireOpsActor("factory.write");
   if (!actor) return;
+  const meta = await requestMeta();
   const claim = claimFromIssue({
     issueId: text(formData, "issueId"),
     actor: actor.email,
@@ -375,6 +359,7 @@ export async function claimFromIssueAction(formData: FormData): Promise<void> {
     resourceType: "claim",
     resourceId: claim.claimId,
     detail: { issueId: text(formData, "issueId") },
+    ...meta,
   });
   revalidatePath("/ops/claims");
   revalidatePath("/ops/issues");
@@ -384,9 +369,19 @@ export async function claimFromIssueAction(formData: FormData): Promise<void> {
 export async function setClaimStatusAction(formData: FormData): Promise<void> {
   const actor = await requireOpsActor("factory.write");
   if (!actor) return;
+  const meta = await requestMeta();
   const claim = setClaimStatus({
     claimId: text(formData, "claimId"),
     status: text(formData, "status"),
+  });
+  writeOpsAudit({
+    actor,
+    action: "claim.status",
+    status: "ok",
+    resourceType: "claim",
+    resourceId: claim.claimId,
+    detail: { status: text(formData, "status") },
+    ...meta,
   });
   revalidatePath("/ops/claims");
   redirect(`/ops/claims?ok=${encodeURIComponent(claim.claimId)}`);
@@ -421,8 +416,7 @@ export async function createOpsIssueAction(
     status: "ok",
     resourceType: "issue",
     resourceId: issue.issueId,
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/issues");
   redirect(`/ops/issues?ok=${encodeURIComponent(issue.issueId)}`);
@@ -431,9 +425,19 @@ export async function createOpsIssueAction(
 export async function setIssueStatusAction(formData: FormData): Promise<void> {
   const actor = await requireOpsActor("orders.write");
   if (!actor) return;
+  const meta = await requestMeta();
   const issue = setIssueStatus({
     issueId: text(formData, "issueId"),
     status: text(formData, "status"),
+  });
+  writeOpsAudit({
+    actor,
+    action: "issue.status",
+    status: "ok",
+    resourceType: "issue",
+    resourceId: issue.issueId,
+    detail: { status: text(formData, "status") },
+    ...meta,
   });
   revalidatePath("/ops/issues");
   redirect(`/ops/issues?ok=${encodeURIComponent(issue.issueId)}`);

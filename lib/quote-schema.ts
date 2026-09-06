@@ -97,6 +97,7 @@ export const quoteSchema = z
       .length(13)
       .refine((value) => isValidThaiTaxId(value), "Invalid tax ID")
       .optional()),
+    billingBranch: optionalCleanedString(160),
     productInterest: optionalCleanedString(200),
     productSlug: z.preprocess((value) => {
       if (value === undefined || value === null) return undefined;
@@ -178,6 +179,7 @@ export function parseQuoteFormData(
     streetAddress: formData.get("streetAddress") ?? undefined,
     zip: formData.get("zip") ?? undefined,
     taxId: formData.get("taxId") ?? undefined,
+    billingBranch: formData.get("billingBranch") ?? undefined,
     productInterest: formData.get("productInterest") ?? undefined,
     productSlug: formData.get("productSlug") ?? undefined,
     decorationMethod: formData.get("decorationMethod") ?? undefined,

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FactoryPoForm } from "@/components/FactoryPoForm";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
-import { getFactoryPo } from "@/lib/factory-po-service";
+import { getFactoryPo } from "@/lib/factory-po-queries";
+import { listFactoriesForPoForm } from "@/lib/factory-registry-service";
 import { FACTORY_PO_STATUS_LABELS } from "@/lib/factory-po-types";
 import { getOrderRepository } from "@/lib/order-repository";
 import { formatThb } from "@/lib/th-billing";
@@ -103,7 +104,11 @@ export default async function FactoryPoDetailPage({
 
       {canWrite ? (
         <div className="mt-8">
-          <FactoryPoForm orderId={po.orderId} po={po} />
+          <FactoryPoForm
+            orderId={po.orderId}
+            po={po}
+            factories={listFactoriesForPoForm(po.factoryId)}
+          />
         </div>
       ) : (
         <p className="mt-6 text-sm text-ink/70">ดูได้อย่างเดียว</p>

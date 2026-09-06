@@ -4,11 +4,9 @@
  */
 
 import {
-  FACTORY_LEAK_REFUSAL_TH,
-  FIRM_QUOTE_REFUSAL_TH,
-  INJECTION_REFUSAL_TH,
   detectPromptInjection,
   looksFactoryLeak,
+  looksPublicScopeOverreach,
   postCheckPublicAnswer,
   sanitizeUserInstruction,
 } from "@/lib/ai-safety";
@@ -19,7 +17,12 @@ import {
 } from "@/lib/assistant-knowledge";
 import type { Faq } from "@/lib/data";
 import { completeOpenRouterChat } from "@/lib/openrouter-chat";
-import { HOW_IT_WORKS } from "@/lib/ux-copy";
+import {
+  buyerCopy,
+  buyerLanguageInstruction,
+  detectReplyLang,
+  snippetFallback,
+} from "@/lib/reply-lang";
 
 export type BuyerAssistantTurn = {
   role: "user" | "assistant";
@@ -32,24 +35,12 @@ export type BuyerAssistantResult = {
   refused: boolean;
 };
 
-const SYSTEM_SKILL = [
-  "คุณเป็นผู้ช่วยร้านของขวัญองค์กรที่สั่งผลิตจากจีนและสกรีนโลโก้ได้",
-  "ตอบภาษาไทย สุภาพ สั้น 2–6 ประโยค",
-  "ใช้เฉพาะข้อมูลในคลังความรู้ที่ให้มา ห้ามแต่งราคา วันส่งของจริง หรือต้นทุนโรงงาน",
-  "ห้ามใช้คำว่า 1688, MOQ, SKU, RFQ, P2",
-  "ถ้าถามราคา: อธิบายว่าเป็นช่วงโดยประมาณ แล้วชวนกรอกแบบฟอร์มขอใบเสนอราคา",
-  "ถ้าไม่รู้ ให้บอกตรง ๆ แล้วชี้ไปที่ /contact",
-].join("\n");
-
-function fallbackFromSnippets(snippets: KnowledgeSnippet[]): string {
-  if (snippets.length === 0) {
-    return [
-      HOW_IT_WORKS[0]?.body,
-      "หากต้องการตัวเลขที่ตรงงาน กรอกแบบฟอร์มขอใบเสนอราคาที่หน้าติดต่อ — ไม่มีการชำระเงินบนเว็บ",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
+function fallbackFromSnippets(snippets: KnowledgeSnippet[], lang: ReturnType<typeof detectReplyLang>): string {
+  const translated = snippets
+    .map((item) => snippetFallback(item.id, lang))
+    .filter((row): row is string => Boolean(row));
+  if (translated.length > 0) return translated.slice(0, 2).join(" ");
+  if (snippets.length === 0) return buyerCopy(lang, "empty");
   return snippets
     .slice(0, 2)
     .map((item) => item.body)
@@ -61,13 +52,11 @@ export async function runBuyerAssistant(input: {
   faqs: Faq[];
   history?: BuyerAssistantTurn[];
 }): Promise<BuyerAssistantResult> {
+  const lang = detectReplyLang(input.message);
   const cleaned = sanitizeUserInstruction(input.message, 500);
   if (!cleaned.ok) {
     return {
-      reply:
-        cleaned.reason === "injection"
-          ? INJECTION_REFUSAL_TH
-          : FACTORY_LEAK_REFUSAL_TH,
+      reply: cleaned.reason === "injection" ? buyerCopy(lang, "inject") : buyerCopy(lang, "factory"),
       sources: [],
       refused: true,
     };
@@ -76,17 +65,23 @@ export async function runBuyerAssistant(input: {
   const message = cleaned.text;
   if (!message) {
     return {
-      reply: "พิมพ์คำถามสั้น ๆ ได้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ หรือขั้นตอนสั่งผลิต",
+      reply: buyerCopy(lang, "empty"),
       sources: [],
       refused: false,
     };
   }
 
-  if (detectPromptInjection(message) || looksFactoryLeak(message)) {
+  if (
+    detectPromptInjection(message) ||
+    looksFactoryLeak(message) ||
+    looksPublicScopeOverreach(message)
+  ) {
     return {
       reply: looksFactoryLeak(message)
-        ? FACTORY_LEAK_REFUSAL_TH
-        : INJECTION_REFUSAL_TH,
+        ? buyerCopy(lang, "factory")
+        : looksPublicScopeOverreach(message)
+          ? buyerCopy(lang, "scope")
+          : buyerCopy(lang, "inject"),
       sources: [],
       refused: true,
     };
@@ -99,13 +94,13 @@ export async function runBuyerAssistant(input: {
     .map((item) => `${item.title}: ${item.body}`)
     .join("\n");
 
-  let draft = fallbackFromSnippets(snippets);
+  let draft = fallbackFromSnippets(snippets, lang);
   const llm = await completeOpenRouterChat(
     [
-      { role: "system", content: SYSTEM_SKILL },
+      { role: "system", content: buyerLanguageInstruction(lang) },
       {
         role: "user",
-        content: `คลังความรู้:\n${grounded || "(ไม่มีรายการที่ตรง)"}\n\nคำถาม: ${message}`,
+        content: `Knowledge (canonical Thai facts; translate to the asker's language):\n${grounded || "(none)"}\n\nQuestion: ${message}`,
       },
     ],
     { maxTokens: 280, temperature: 0.15 },
@@ -114,7 +109,7 @@ export async function runBuyerAssistant(input: {
 
   const checked = postCheckPublicAnswer(draft);
   return {
-    reply: checked.text || FIRM_QUOTE_REFUSAL_TH,
+    reply: checked.text || buyerCopy(lang, "quote"),
     sources,
     refused: checked.refused,
   };

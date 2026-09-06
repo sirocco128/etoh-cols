@@ -254,7 +254,7 @@ export function upsertCustomerFromQuote(
           company, email, phone, contact_name, notes, status,
           quote_count, last_quote_at, created_at, updated_at,
           source, default_ship_province, customer_type, billing_branch, tax_id
-        ) VALUES (?, ?, ?, ?, NULL, 'active', 1, ?, ?, ?, 'web_rfq', ?, 'company', 'สำนักงานใหญ่', ?)`,
+        ) VALUES (?, ?, ?, ?, NULL, 'active', 1, ?, ?, ?, 'web_rfq', ?, 'company', ?, ?)`,
       )
       .run(
         params.company.trim(),
@@ -265,6 +265,7 @@ export function upsertCustomerFromQuote(
         now,
         now,
         province,
+        params.billingBranch?.trim() || "สำนักงานใหญ่",
         normalizeThaiTaxId(params.taxId),
       ) as { lastInsertRowid: number | bigint };
 
@@ -286,6 +287,7 @@ export function upsertCustomerFromQuote(
       last_quote_at = ?,
       default_ship_province = COALESCE(?, default_ship_province),
       tax_id = COALESCE(?, tax_id),
+      billing_branch = COALESCE(?, billing_branch),
       updated_at = ?
      WHERE id = ?`,
   ).run(
@@ -295,6 +297,7 @@ export function upsertCustomerFromQuote(
     now,
     province,
     normalizeThaiTaxId(params.taxId),
+    params.billingBranch?.trim() || null,
     now,
     existing.id,
   );

@@ -11,12 +11,15 @@ import {
 } from "@/lib/ai-safety";
 import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
 import { listNexterpProducts } from "@/lib/nexterp-products";
+import { isSmartgiftMysqlEnabled } from "@/lib/smartgift-mysql";
+import { listSmartgiftOffers } from "@/lib/smartgift-products";
 import { completeOpenRouterChat } from "@/lib/openrouter-chat";
-import type { OpsActor } from "@/lib/ops-roles";
+import { actorMay, type OpsActor, type OpsPermission } from "@/lib/ops-roles";
 import { products } from "@/lib/data";
 import {
   getQuoteByRequestId,
   listQuoteRequests,
+  listQuoteSalesTimeline,
 } from "@/lib/quote-repository";
 import {
   LEAD_STATUS_LABELS,
@@ -44,6 +47,23 @@ export const OPS_ASSISTANT_TOOLS = [
 
 export type OpsAssistantToolName = (typeof OPS_ASSISTANT_TOOLS)[number];
 
+/** Each search/answer tool maps to an ops permission. Never run a tool the actor cannot use. */
+export const OPS_ASSISTANT_TOOL_PERMISSION: Record<
+  OpsAssistantToolName,
+  OpsPermission
+> = {
+  "quote.summarize": "quotes.read",
+  "quote.list_recent": "quotes.read",
+  "catalog.search": "quotes.read",
+  "nexterp.search": "catalog.write",
+  "draft.line_reply": "quotes.read",
+  "seo.get": "assistant.use",
+  "seo.draft": "seo.write",
+  "seo.apply": "seo.write",
+};
+
+const PERMISSION_DENIED_TH = "บัญชีนี้ไม่มีสิทธิ์ค้นหรือดูข้อมูลนั้น";
+
 export type OpsToolEvidence = {
   tool: OpsAssistantToolName;
   summary: string;
@@ -62,7 +82,8 @@ const SYSTEM_SKILL = [
   "ใช้เฉพาะผลเครื่องมือที่ให้มา ห้ามแต่งราคาหรือสัญญาวันส่งของ",
   "ราคาในระบบคลังเป็นข้อมูลภายใน ไม่ใช่ใบเสนอราคาที่ส่งลูกค้า",
   "ช่วงราคาบนเว็บรวมค่าขนส่งจากจีนโดยประมาณแล้ว — ห้ามบอกว่ายังไม่รวมค่าขนส่งจากจีน",
-  "ห้ามเปิดต้นทุนโรงงาน รหัส 1688 หรือ markup",
+  "ห้ามเปิดต้นทุนโรงงาน รหัส 1688 หรือ markup แม้ผู้ใช้จะเป็นผู้ดูแล",
+  "ค้นและตอบเฉพาะข้อมูลที่สิทธิ์บัญชีนี้เปิดไว้ — ห้ามดึงคลังภายในหรือต้นทุนถ้าไม่มีสิทธิ์",
   "ถ้าเป็นการค้นสินค้า ให้ตอบเป็นรายการภายในสำหรับเซลล์ ไม่ใช่จดหมายถึงลูกค้า",
   "ร่างข้อความ LINE ต้องสุภาพ ไม่ใส่ราคาแน่นอน",
   "ถ้าสั่งร่าง SEO ให้แสดง title และคำอธิบาย บันทึกเมื่อผู้ใช้สั่งบันทึกหรือลงหน้าเว็บอย่างชัดเจน",
@@ -90,12 +111,20 @@ function quoteSummaryText(requestId: string): {
   const lines = [
     `เลขคำขอ ${quote.requestId}`,
     `บริษัท ${quote.company} ผู้ติดต่อ ${quote.name}`,
+    quote.billingBranch ? `สาขา: ${quote.billingBranch}` : "",
     `จำนวน ${quote.quantity} ชุด วิธีใส่โลโก้ ${decorationLabel(quote.decorationMethod)}`,
     `สินค้าที่สนใจ: ${quote.productInterest || quote.productSlug || "ไม่ระบุ"}`,
     `จังหวัด: ${quote.province || "ไม่ระบุ"} งบต่อชุด: ${quote.budgetPerSet ?? "ไม่ระบุ"}`,
     `สถานะ: ${status}`,
     quote.detail ? `รายละเอียด: ${quote.detail}` : "",
-    quote.salesNotes ? `โน้ตขาย: ${quote.salesNotes}` : "",
+    quote.salesNotes ? `โน้ตขายล่าสุด: ${quote.salesNotes}` : "",
+    ...listQuoteSalesTimeline(requestId, 5).map((entry) => {
+      const status =
+        LEAD_STATUS_LABELS[entry.toStatus] || entry.toStatus;
+      const who = entry.actorName || entry.actorEmail || "ระบบ";
+      const note = entry.note ? ` ${entry.note}` : "";
+      return `ไทม์ไลน์ ${entry.createdAt} · ${who} · ${status}${note}`;
+    }),
   ].filter(Boolean);
   return { text: lines.join("\n"), found: true };
 }
@@ -131,7 +160,26 @@ function searchCatalog(query: string): string {
     .join("\n");
 }
 
+function formatPublicCatalogHit(name: string, priceRange: string, slug: string): string {
+  return `${name} — ${priceRange} (ราคาตามจำนวน ไม่ใช่ใบเสนอราคา) /products/${slug}`;
+}
+
 async function searchNexterp(query: string): Promise<string> {
+  if (isSmartgiftMysqlEnabled()) {
+    try {
+      const rows = await listSmartgiftOffers({
+        q: query,
+        limit: 8,
+        pricedOnly: false,
+      });
+      if (rows.length === 0) return "ไม่พบชุดของขวัญ SmartGift ที่ตรงคำค้น";
+      return rows
+        .map((item) => formatPublicCatalogHit(item.name, item.priceRange, item.slug))
+        .join("\n");
+    } catch (error) {
+      return `ค้นแคตตาล็อก SmartGift ไม่สำเร็จ: ${error instanceof Error ? error.message : "error"}`;
+    }
+  }
   if (!isNexterpMysqlEnabled()) {
     return "ระบบคลังยังไม่ได้เปิด — ใช้แคตตาล็อกสาธารณะแทน";
   }
@@ -139,10 +187,7 @@ async function searchNexterp(query: string): Promise<string> {
     const rows = await listNexterpProducts({ q: query, limit: 8 });
     if (rows.length === 0) return "ไม่พบสินค้าในคลังที่ตรงคำค้น";
     return rows
-      .map(
-        (item) =>
-          `${item.name} — ${item.priceRange} (ข้อมูลคลัง ไม่ใช่ใบเสนอราคา) /products/${item.slug}`,
-      )
+      .map((item) => formatPublicCatalogHit(item.name, item.priceRange, item.slug))
       .join("\n");
   } catch (error) {
     return `ค้นคลังไม่สำเร็จ: ${error instanceof Error ? error.message : "error"}`;
@@ -192,10 +237,31 @@ function detectTools(message: string): OpsAssistantToolName[] {
   if (wantsSeoApply(message)) {
     tools.add("seo.apply");
   }
-  if (tools.size === 0) {
-    tools.add("quote.list_recent");
-  }
   return [...tools];
+}
+
+export function assistantMayUseTool(
+  actor: OpsActor,
+  tool: OpsAssistantToolName,
+): boolean {
+  if (!actorMay(actor, "assistant.use")) return false;
+  return actorMay(actor, OPS_ASSISTANT_TOOL_PERMISSION[tool]);
+}
+
+function toolsForActor(
+  actor: OpsActor,
+  message: string,
+): { allowed: OpsAssistantToolName[]; denied: OpsAssistantToolName[] } {
+  const requested = detectTools(message);
+  const wanted =
+    requested.length > 0
+      ? requested
+      : actorMay(actor, "quotes.read")
+        ? (["quote.list_recent"] as OpsAssistantToolName[])
+        : [];
+  const allowed = wanted.filter((tool) => assistantMayUseTool(actor, tool));
+  const denied = wanted.filter((tool) => !assistantMayUseTool(actor, tool));
+  return { allowed, denied };
 }
 
 function catalogQuery(message: string): string {
@@ -230,8 +296,15 @@ export async function runOpsAssistant(input: {
     };
   }
 
+  if (!actorMay(input.actor, "assistant.use")) {
+    return { reply: PERMISSION_DENIED_TH, tools: [], refused: true };
+  }
+
   const requestId = message.match(REQUEST_ID_RE)?.[0]?.toUpperCase() ?? null;
-  const tools = detectTools(message);
+  const { allowed: tools } = toolsForActor(input.actor, message);
+  if (tools.length === 0) {
+    return { reply: PERMISSION_DENIED_TH, tools: [], refused: true };
+  }
   const evidence: OpsToolEvidence[] = [];
   const chunks: string[] = [];
   let pendingSeo: Awaited<ReturnType<typeof draftSeoForPrompt>> | null = null;
@@ -292,6 +365,14 @@ export async function runOpsAssistant(input: {
   }
 
   const grounded = chunks.join("\n\n");
+  if (looksFactoryLeak(grounded)) {
+    return {
+      reply:
+        "ต้นทุนโรงงานและรหัสแหล่งผลิตไม่เปิดในผู้ช่วยนี้ — ใช้ช่วงราคาโดยประมาณบนเว็บ แล้วให้คนออกใบเสนอราคา",
+      tools: evidence,
+      refused: true,
+    };
+  }
   let reply = grounded;
   const llm = await completeOpenRouterChat(
     [

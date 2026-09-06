@@ -1,9 +1,10 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { teardownTempDir } from "./teardown-temp";
 
 function resolveProjectRoot(): string {
   if (
@@ -46,7 +47,7 @@ describe("factory PO + management accounts cycle", () => {
   });
 
   after(() => {
-    if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+    teardownTempDir(dataDir);
   });
 
   it("computes landed cost and gross profit per order", async () => {
@@ -156,7 +157,14 @@ describe("factory PO + management accounts cycle", () => {
     const journals = listJournals({ orderId: order.orderId, limit: 20 });
     assert.ok(journals.some((j) => j.sourceKey.startsWith("cash:")));
     assert.ok(journals.some((j) => j.sourceKey === `revenue:${order.orderId}`));
+    assert.ok(journals.some((j) => j.sourceKey === `git:${po.poId}`));
     assert.ok(journals.some((j) => j.sourceKey === `cogs:${po.poId}`));
+    assert.ok(journals.some((j) => j.bookType === "sales"));
+    assert.ok(journals.some((j) => j.bookType === "purchase"));
+    assert.ok(journals.some((j) => j.bookType === "cash_in"));
+    assert.ok(
+      journals.some((j) => j.lines.some((line) => line.accountCode === "1130")),
+    );
 
     for (const entry of journals) {
       const debit = entry.lines.reduce((sum, line) => sum + line.debit, 0);
@@ -168,6 +176,18 @@ describe("factory PO + management accounts cycle", () => {
     assert.match(csv, /รหัสบัญชี/);
     assert.match(csv, /4100/);
     assert.match(csv, /5100/);
+    assert.match(csv, /1130/);
+
+    const { buildIncomeStatement } = await import("../lib/ledger-statements");
+    const books = buildIncomeStatement({
+      fromDate: "2000-01-01",
+      toDate: "2099-12-31",
+    });
+    assert.equal(books.revenue, 30_000);
+    assert.equal(books.cogs, 11_750);
+    assert.equal(books.grossProfit, 18_250);
+    assert.equal(books.sellingExpense, 800);
+    assert.equal(books.netIncome, 17_450);
 
     const pnl = buildExecutivePnl({
       fromDate: "2000-01-01",
@@ -180,5 +200,98 @@ describe("factory PO + management accounts cycle", () => {
     assert.equal(row!.grossProfit, 18_250);
     assert.equal(row!.contribution, 17_450);
     assert.equal(row!.missingCost, false);
+  });
+
+  it("rejects sellable A/B/C codes and auto-assigns FAC0001", async () => {
+    const { closeDb } = await import("../lib/database");
+    closeDb();
+    const { saveFactory, normalizeFactoryCode } = await import(
+      "../lib/factory-registry-service"
+    );
+
+    assert.equal(normalizeFactoryCode(" fac-12 "), "FAC-12");
+    assert.throws(() => saveFactory({ name: "Bad", factoryCode: "A00001" }), {
+      message: "factory_code_is_sku",
+    });
+
+    const factory = saveFactory({
+      name: "Yiwu Gift Co",
+      platform: "1688",
+      origin: "yiwu",
+      wechat: "yiwu-gift",
+    });
+    assert.equal(factory.factoryCode, "FAC0001");
+    assert.equal(factory.origin, "yiwu");
+    assert.equal(factory.status, "active");
+  });
+
+  it("links a factory PO to the registry", async () => {
+    const { closeDb } = await import("../lib/database");
+    closeDb();
+    const { resetQuoteRepository, updateQuoteOps } = await import(
+      "../lib/quote-repository"
+    );
+    resetQuoteRepository();
+    const { resetOrderRepository } = await import("../lib/order-repository");
+    resetOrderRepository();
+
+    const { saveFactory } = await import("../lib/factory-registry-service");
+    const { submitQuotePayload } = await import("../lib/quote-service");
+    const { createOrderFromQuote } = await import("../lib/order-service");
+    const { saveFactoryPo } = await import("../lib/factory-po-service");
+    const { listPosForFactory } = await import("../lib/factory-po-queries");
+
+    const factory = saveFactory({
+      name: "Shenzhen Linked Factory",
+      platform: "factory_direct",
+    });
+
+    const headers = new Headers({ "x-forwarded-for": "203.0.113.88" });
+    const quoteResult = await submitQuotePayload(
+      {
+        name: "Factory Registry",
+        company: "บริษัท ทดสอบทะเบียน จำกัด",
+        email: "factory-registry@acme.example",
+        phone: "0811112233",
+        quantity: 40,
+        consent: true,
+        decorationMethod: "screen-print",
+        website: "",
+        startedAt: Date.now() - 5_000,
+      },
+      { headers },
+    );
+    assert.equal(quoteResult.ok, true);
+    if (!quoteResult.ok) return;
+    updateQuoteOps({ requestId: quoteResult.requestId, leadStatus: "won" });
+    const order = createOrderFromQuote({
+      quoteRequestId: quoteResult.requestId,
+      amount: 12_000,
+      vatMode: "exclusive",
+    });
+
+    const po = saveFactoryPo({
+      orderId: order.orderId,
+      factoryId: factory.id,
+      factoryName: "",
+      quantity: 40,
+      factoryUnitCny: 8,
+      fxCnyThb: 5,
+      status: "draft",
+    });
+    assert.equal(po.factoryId, factory.id);
+    assert.equal(po.factoryName, "Shenzhen Linked Factory");
+    assert.equal(listPosForFactory(factory.id).length, 1);
+
+    assert.throws(
+      () =>
+        saveFactoryPo({
+          orderId: order.orderId,
+          factoryId: 99999,
+          factoryName: "Missing",
+          quantity: 1,
+        }),
+      { message: "factory_not_found" },
+    );
   });
 });

@@ -2,15 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CreateOrderForm } from "@/components/CreateOrderForm";
 import { QuoteOpsForm } from "@/components/QuoteOpsForm";
+import { QuoteSalesTimeline } from "@/components/QuoteSalesTimeline";
 import { getCustomerById } from "@/lib/customer-repository";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { getOrderRepository } from "@/lib/order-repository";
-import { getQuoteByRequestId } from "@/lib/quote-repository";
+import {
+  getQuoteByRequestId,
+  listQuoteSalesTimeline,
+} from "@/lib/quote-repository";
 import {
   LEAD_STATUS_LABELS,
   type LeadStatus,
 } from "@/lib/quote-types";
 import { formatThb } from "@/lib/th-billing";
+import {
+  parseThaiMailingAddress,
+  quoteShipToParts,
+} from "@/lib/thai-address-format";
 import { buildOrderBillingDefaults } from "@/lib/customer-billing";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +37,7 @@ export default async function OpsQuoteDetailPage({
   const { requestId } = await params;
   const quote = getQuoteByRequestId(requestId);
   if (!quote) notFound();
+  const salesTimeline = listQuoteSalesTimeline(quote.requestId);
 
   const customer = quote.customerId
     ? getCustomerById(quote.customerId)
@@ -39,6 +48,7 @@ export default async function OpsQuoteDetailPage({
   const canWriteOrders = actorMay(actor, "orders.write");
   const quotedOrWon =
     quote.leadStatus === "quoted" || quote.leadStatus === "won";
+  const shipTo = quoteShipToParts(quote);
 
   return (
     <div>
@@ -50,6 +60,25 @@ export default async function OpsQuoteDetailPage({
       <h1 className="mt-3 font-mono text-xl font-bold text-forest sm:text-2xl">
         {quote.requestId}
       </h1>
+      {quote.productSlug ? (
+        <p className="mt-2 text-sm">
+          <Link
+            href={`/ops/pricing?slug=${encodeURIComponent(quote.productSlug)}`}
+            className="text-forest underline-offset-2 hover:underline"
+          >
+            คิดราคาชุดนี้ด้วยสูตรเว็บ
+          </Link>
+        </p>
+      ) : (
+        <p className="mt-2 text-sm">
+          <Link
+            href="/ops/pricing"
+            className="text-forest underline-offset-2 hover:underline"
+          >
+            เปิดเครื่องคิดราคา
+          </Link>
+        </p>
+      )}
       <p className="mt-1 text-sm text-ink/70">
         สถานะ: {LEAD_STATUS_LABELS[quote.leadStatus as LeadStatus] || quote.leadStatus}
         {" · "}Webhook: {quote.webhookStatus}
@@ -59,6 +88,10 @@ export default async function OpsQuoteDetailPage({
         <div>
           <dt className="text-xs text-ink/55">บริษัท</dt>
           <dd className="font-medium">{quote.company}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-ink/55">สาขา (ใบกำกับภาษี)</dt>
+          <dd>{quote.billingBranch || "สำนักงานใหญ่"}</dd>
         </div>
         <div>
           <dt className="text-xs text-ink/55">ผู้ติดต่อ</dt>
@@ -125,11 +158,13 @@ export default async function OpsQuoteDetailPage({
       ) : null}
 
       <QuoteOpsForm
+        key={quote.updatedAt}
         requestId={quote.requestId}
         leadStatus={quote.leadStatus as LeadStatus}
-        salesNotes={quote.salesNotes}
         readOnly={!canWrite}
       />
+
+      <QuoteSalesTimeline entries={salesTimeline} />
 
       {existingOrder ? (
         <p className="mt-6 rounded border border-forest/15 bg-paper p-4 text-sm">
@@ -154,9 +189,21 @@ export default async function OpsQuoteDetailPage({
           }
           defaultQuantity={quote.quantity}
           {...buildOrderBillingDefaults(customer, quote.company)}
+          billingBranch={
+            quote.billingBranch ||
+            customer?.billingBranch ||
+            "สำนักงานใหญ่"
+          }
           shipToName={quote.name}
           shipToPhone={quote.phone}
-          shipToProvince={quote.province || customer?.defaultShipProvince || ""}
+          shipToStreetAddress={shipTo.streetAddress}
+          shipToProvince={
+            shipTo.province ||
+            parseThaiMailingAddress(customer?.defaultShipProvince || "").province
+          }
+          shipToDistrict={shipTo.district}
+          shipToSubdistrict={shipTo.subdistrict}
+          shipToZip={shipTo.zip}
         />
       ) : quotedOrWon ? (
         <p className="mt-6 text-sm text-ink/60">

@@ -4,6 +4,7 @@ import {
   detectPromptInjection,
   looksFactoryLeak,
   looksFirmQuote,
+  looksPublicScopeOverreach,
   postCheckPublicAnswer,
   redactSecrets,
   sanitizeUserInstruction,
@@ -45,5 +46,11 @@ describe("ai-safety", () => {
     const checked = postCheckPublicAnswer("ราคาโรงงาน 12 CNY จาก 1688");
     assert.equal(checked.refused, true);
     assert.match(checked.text, /ภายใน|แบบฟอร์ม/);
+  });
+
+  it("keeps buyer answers inside SmartGift scope", () => {
+    assert.equal(looksPublicScopeOverreach("DO 202608200012 ถึงไหน"), true);
+    assert.equal(looksPublicScopeOverreach("HP-BAT-AA กี่บาท"), true);
+    assert.equal(looksPublicScopeOverreach("สกรีนโลโก้ได้อย่างไร"), false);
   });
 });

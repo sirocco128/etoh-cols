@@ -48,11 +48,40 @@ export const FREIGHT_MODE_LABELS: Record<FreightMode, string> = {
   other: "อื่น ๆ",
 };
 
+export const FACTORY_CURRENCIES = ["CNY", "USD"] as const;
+export type FactoryCurrency = (typeof FACTORY_CURRENCIES)[number];
+
+export const FACTORY_CURRENCY_LABELS: Record<FactoryCurrency, string> = {
+  CNY: "หยวน (CNY)",
+  USD: "ดอลลาร์ (USD)",
+};
+
+export function isFactoryCurrency(value: string): value is FactoryCurrency {
+  return (FACTORY_CURRENCIES as readonly string[]).includes(value);
+}
+
+export function factoryCurrencyCode(currency: FactoryCurrency): string {
+  return currency;
+}
+
+export function factoryCurrencyNoun(currency: FactoryCurrency): string {
+  return currency === "USD" ? "ดอลลาร์" : "หยวน";
+}
+
+export function factoryFxPairLabel(currency: FactoryCurrency): string {
+  return currency === "USD" ? "ดอลลาร์→บาท" : "หยวน→บาท";
+}
+
+export function factoryFxPairCode(currency: FactoryCurrency): string {
+  return currency === "USD" ? "USD→THB" : "CNY→THB";
+}
+
 export type FactoryPoRecord = {
   id: number;
   poId: string;
   orderId: string;
   status: FactoryPoStatus;
+  factoryId: number | null;
   factoryName: string;
   factoryContact: string | null;
   factoryPlatform: FactoryPlatform;
@@ -66,6 +95,7 @@ export type FactoryPoRecord = {
   logoNotes: string | null;
   packagingNotes: string | null;
   qcNotes: string | null;
+  factoryCurrency: FactoryCurrency;
   fxCnyThb: number;
   factoryUnitCny: number;
   factoryAmountCny: number;
@@ -89,6 +119,21 @@ export type FactoryPoRecord = {
   receivedQty: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type FactoryPoDraft = {
+  orderId: string;
+  factoryId?: number | null;
+  factoryName: string;
+  productName: string;
+  quantity: number;
+  factoryCurrency: FactoryCurrency;
+  fxCnyThb: number;
+  shipToName: string | null;
+  shipToPhone: string | null;
+  shipToAddress: string | null;
+  shipToProvince: string | null;
+  destinationMode: "warehouse" | "ship_to";
 };
 
 export type FactoryPoMoneyInput = {

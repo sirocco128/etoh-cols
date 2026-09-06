@@ -16,12 +16,10 @@ const initial: OpsActionResult | null = null;
 export function QuoteOpsForm({
   requestId,
   leadStatus,
-  salesNotes,
   readOnly = false,
 }: {
   requestId: string;
   leadStatus: LeadStatus;
-  salesNotes: string | null;
   readOnly?: boolean;
 }) {
   const [state, action, pending] = useActionState(
@@ -33,10 +31,8 @@ export function QuoteOpsForm({
     return (
       <div className="mt-6 space-y-3 rounded border border-forest/15 bg-paper p-4 text-sm">
         <h2 className="text-lg font-semibold text-forest">สถานะขาย (ดูอย่างเดียว)</h2>
-        <p>สถานะ: {LEAD_STATUS_LABELS[leadStatus]}</p>
-        <p className="whitespace-pre-wrap text-ink/80">
-          {salesNotes || "ยังไม่มีบันทึกฝ่ายขาย"}
-        </p>
+        <p>สถานะปัจจุบัน: {LEAD_STATUS_LABELS[leadStatus]}</p>
+        <p className="text-ink/70">บันทึกการติดต่อดูได้จากไทม์ไลน์ด้านล่าง</p>
       </div>
     );
   }
@@ -60,17 +56,20 @@ export function QuoteOpsForm({
         </select>
       </label>
       <label className="block text-sm">
-        <span className="font-medium">บันทึกฝ่ายขาย</span>
+        <span className="font-medium">บันทึกครั้งนี้</span>
         <textarea
           name="salesNotes"
           rows={4}
-          defaultValue={salesNotes || ""}
+          defaultValue=""
           className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-          placeholder="สรุปการติดต่อ / ราคาที่เสนอ / หมายเหตุภายใน"
+          placeholder="เช่น โทรแล้ว ลูกค้ายังไม่รับสาย / นัดส่งแบบวันพุธ"
         />
       </label>
+      <p className="text-xs text-ink/60">
+        แต่ละครั้งที่บันทึกจะเพิ่มเป็นรายการในไทม์ไลน์ ไม่ทับข้อความเดิม
+      </p>
       {state?.ok ? (
-        <p className="text-sm text-forest">บันทึกแล้ว</p>
+        <p className="text-sm text-forest">บันทึกลงไทม์ไลน์แล้ว</p>
       ) : null}
       {state && !state.ok ? (
         <p className="text-sm text-red-700" role="alert">
@@ -82,7 +81,7 @@ export function QuoteOpsForm({
         disabled={pending}
         className="rounded bg-forest px-4 py-2 text-sm font-medium text-paper disabled:opacity-60"
       >
-        {pending ? "กำลังบันทึก…" : "บันทึก"}
+        {pending ? "กำลังบันทึก…" : "บันทึกลงไทม์ไลน์"}
       </button>
     </form>
   );

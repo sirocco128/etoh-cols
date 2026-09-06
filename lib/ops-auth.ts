@@ -1,12 +1,13 @@
 /**
  * Ops console session auth (cookie HMAC).
- * Local staff UI only — not SSO.
+ * Local staff UI — password or Google Sign-In against existing staff emails.
  * Requires ADMIN_SESSION_SECRET plus ADMIN_PASSWORD and/or OPS_USERS.
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import {
   actorMay,
   findOpsUserByEmail,
@@ -20,6 +21,8 @@ import {
   countActiveOpsStaff,
   getOpsStaffByEmail,
   hydrateOpsActor,
+  markOpsStaffLastLogin,
+  staffToActor,
 } from "@/lib/ops-staff";
 import {
   isSecretConfigured,
@@ -162,12 +165,48 @@ export function authenticateOpsUser(
     if (user && timingSafeEqualString(user.password, password)) {
       return { email: user.email, name: user.name, role: user.role };
     }
+    if (trimmedEmail === "admin" && verifyOpsPassword(password)) {
+      return defaultAdminActor();
+    }
     return null;
   }
   if (verifyOpsPassword(password)) {
     return defaultAdminActor();
   }
   return null;
+}
+
+function googleAllowedDomains(): string[] {
+  return (process.env.GOOGLE_ALLOWED_DOMAINS || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isGoogleEmailDomainAllowed(email: string): boolean {
+  const domains = googleAllowedDomains();
+  if (domains.length === 0) return true;
+  const at = email.lastIndexOf("@");
+  if (at < 1) return false;
+  return domains.includes(email.slice(at + 1));
+}
+
+/** Match a verified Google email to an existing ops staff / env seed. Does not create accounts. */
+export function authenticateOpsGoogleEmail(email: string): OpsActor | null {
+  if (!isOpsAuthConfigured()) return null;
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed.includes("@") || trimmed.length > 120) return null;
+  if (!isGoogleEmailDomainAllowed(trimmed)) return null;
+
+  const dbUser = getOpsStaffByEmail(trimmed);
+  if (dbUser) {
+    if (!dbUser.active) return null;
+    markOpsStaffLastLogin(dbUser.id);
+    return staffToActor(dbUser);
+  }
+  const seed = findOpsUserByEmail(trimmed);
+  if (!seed) return null;
+  return { email: seed.email, name: seed.name, role: seed.role };
 }
 
 export async function setOpsSessionCookie(
@@ -194,12 +233,12 @@ export async function clearOpsSessionCookie(): Promise<void> {
   });
 }
 
-export async function getOpsActor(): Promise<OpsActor | null> {
+export const getOpsActor = cache(async function getOpsActor(): Promise<OpsActor | null> {
   const jar = await cookies();
   const parsed = parseOpsSessionToken(jar.get(OPS_COOKIE)?.value);
   if (!parsed) return null;
   return hydrateOpsActor(parsed);
-}
+});
 
 export async function requireOpsSession(): Promise<boolean> {
   return (await getOpsActor()) !== null;

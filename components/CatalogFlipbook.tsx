@@ -7,6 +7,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Download,
   Maximize2,
   Minimize2,
   Printer,
@@ -24,23 +25,42 @@ import {
 type CatalogFlipbookProps = {
   pages: CatalogBookPage[];
   flipHtml5Url?: string | null;
+  pdfUrl?: string | null;
+  /** 1-based page from `?p=` or product deep-link. */
+  initialPage?: number | null;
 };
 
 export function CatalogFlipbook({
   pages,
   flipHtml5Url,
+  pdfUrl,
+  initialPage,
 }: CatalogFlipbookProps) {
   const reduceMotion = useReducedMotion();
   const [motionReady, setMotionReady] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const swipeX = useRef<number | null>(null);
-  const [index, setIndex] = useState(0);
+  const startIndex = Math.max(
+    0,
+    Math.min(pages.length - 1, (initialPage || 1) - 1),
+  );
+  const [index, setIndex] = useState(startIndex);
   const [direction, setDirection] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
-  const [mode, setMode] = useState<"flip" | "external">("flip");
+  const [mode, setMode] = useState<"flip" | "external">(
+    flipHtml5Url ? "external" : "flip",
+  );
   const total = pages.length;
   const page = pages[index];
   const skipMotion = !motionReady || reduceMotion;
+  const embedSrc =
+    flipHtml5Url && initialPage && initialPage > 0
+      ? `${flipHtml5Url.replace(/#.*$/, "")}#p=${initialPage}`
+      : flipHtml5Url || null;
+
+  useEffect(() => {
+    setIndex(startIndex);
+  }, [startIndex]);
 
   useEffect(() => {
     setMotionReady(true);
@@ -97,35 +117,52 @@ export function CatalogFlipbook({
   if (!page) return null;
 
   return (
-    <div className="mt-3">
-      {flipHtml5Url ? (
-        <div className="mb-4 flex flex-wrap gap-2 print:hidden">
-          <Button
-            type="button"
-            size="sm"
-            variant={mode === "flip" ? "forest" : "outline"}
-            onClick={() => setMode("flip")}
-          >
-            พลิกบนเว็บ
+    <div className="mt-3" id="flipbook">
+      {(flipHtml5Url || pdfUrl) ? (
+      <div className="mb-4 flex flex-wrap gap-2 print:hidden">
+        {flipHtml5Url ? (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "external" ? "forest" : "outline"}
+              onClick={() => setMode("external")}
+            >
+              {FLIP_CATALOG_EXTERNAL}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "flip" ? "forest" : "outline"}
+              onClick={() => setMode("flip")}
+            >
+              พลิกบนเว็บ
+            </Button>
+          </>
+        ) : null}
+        {pdfUrl ? (
+          <Button asChild size="sm" variant="outline">
+            <a href={pdfUrl} download>
+              <Download aria-hidden />
+              ดาวน์โหลดแคตตาล็อก PDF
+            </a>
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={mode === "external" ? "forest" : "outline"}
-            onClick={() => setMode("external")}
-          >
-            {FLIP_CATALOG_EXTERNAL}
-          </Button>
-        </div>
+        ) : null}
+      </div>
       ) : null}
 
-      {mode === "external" && flipHtml5Url ? (
-        <iframe
-          title={FLIP_CATALOG_EXTERNAL}
-          src={flipHtml5Url}
-          className="min-h-[70vh] w-full rounded-2xl border border-forest/10 bg-paper print:hidden"
-          allow="fullscreen"
-        />
+      {mode === "external" && embedSrc ? (
+        <div className="flipbook-frame">
+          <div className="flipbook-frame__ratio">
+            <iframe
+              title={FLIP_CATALOG_EXTERNAL}
+              src={embedSrc}
+              className="absolute inset-0 h-full w-full bg-paper"
+              allow="fullscreen"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
       ) : (
         <>
           <div
@@ -183,7 +220,7 @@ export function CatalogFlipbook({
                       : { rotateY: direction * -70, opacity: 0 }
                   }
                   transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                  className="catalog-flip-page relative min-h-[28rem] origin-center overflow-hidden rounded-2xl bg-paper shadow-[0_20px_50px_rgba(20,53,42,0.18)] sm:min-h-[34rem] dark:bg-forest-light/80"
+                  className="catalog-flip-page relative min-h-[20rem] origin-center overflow-hidden rounded-2xl bg-paper shadow-[0_20px_50px_rgba(20,53,42,0.18)] xs:min-h-[24rem] sm:min-h-[34rem] dark:bg-forest-light/80"
                   style={{ transformStyle: "preserve-3d" }}
                   aria-live="polite"
                   onTouchStart={(event) => {
@@ -267,7 +304,7 @@ export function CatalogFlipbook({
 function FlipPageBody({ page }: { page: CatalogBookPage }) {
   if (page.kind === "cover") {
     return (
-      <div className="grid min-h-[28rem] sm:min-h-[34rem] lg:grid-cols-2">
+      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
         <div className="relative h-full min-h-[16rem]">
           <CatalogImage
             src={page.image}
@@ -298,7 +335,7 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
 
   if (page.kind === "section") {
     return (
-      <div className="grid min-h-[28rem] sm:min-h-[34rem] lg:grid-cols-2">
+      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
         <div className="relative h-full min-h-[16rem]">
           <CatalogImage
             src={page.image}
@@ -325,9 +362,55 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
     );
   }
 
+  if (page.kind === "file") {
+    if (page.fileKind === "pdf") {
+      return (
+        <div className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[24rem] sm:min-h-[34rem] sm:px-16">
+          <p className="text-xs font-medium uppercase tracking-wide text-brass">
+            {page.groupName}
+          </p>
+          <h2 className="mt-3 text-2xl font-bold text-forest dark:text-paper">
+            {page.title}
+          </h2>
+          <p className="mt-3 text-sm text-ink/55 dark:text-paper/60">
+            ไฟล์ PDF ต้นฉบับ — เปิดในแท็บใหม่เพื่ออ่านเต็มหน้า
+          </p>
+          {page.href ? (
+            <div className="mt-8">
+              <Button asChild>
+                <a href={page.href} target="_blank" rel="noopener noreferrer">
+                  เปิด {page.originalName}
+                </a>
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+    return (
+      <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
+        <div className="relative h-full min-h-[16rem]">
+          <CatalogImage
+            src={page.image || ""}
+            alt={page.title}
+            sizes="(max-width:1024px) 100vw, 50vw"
+            className="group-hover:scale-100"
+          />
+        </div>
+        <div className="flex flex-col justify-center px-6 py-10 sm:px-10">
+          <p className="text-xs font-medium text-brass">{page.groupName}</p>
+          <h2 className="mt-2 text-2xl font-bold text-forest dark:text-paper">
+            {page.title}
+          </h2>
+          <p className="mt-4 text-sm text-ink/55">{page.originalName}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (page.kind === "closing") {
     return (
-      <div className="flex min-h-[28rem] flex-col items-center justify-center px-6 py-16 text-center sm:min-h-[34rem] sm:px-16">
+      <div className="flex min-h-[20rem] flex-col items-center justify-center px-6 py-16 text-center xs:min-h-[24rem] sm:min-h-[34rem] sm:px-16">
         <h2 className="text-3xl font-bold text-forest dark:text-paper">
           {page.title}
         </h2>
@@ -350,7 +433,7 @@ function FlipPageBody({ page }: { page: CatalogBookPage }) {
   const quoteHref = `/contact?productSlug=${encodeURIComponent(product.slug)}&productInterest=${encodeURIComponent(product.name)}`;
 
   return (
-    <div className="grid min-h-[28rem] sm:min-h-[34rem] lg:grid-cols-2">
+    <div className="grid min-h-[20rem] xs:min-h-[24rem] sm:min-h-[34rem] lg:grid-cols-2">
       <div className="relative h-full min-h-[16rem]">
         <CatalogImage
           src={product.image}

@@ -10,7 +10,7 @@ export function P2ComingSoon({
   description = "ตะกร้าใบเสนอราคาและการปรับแต่งเซ็ตแบบละเอียดยังอยู่ระหว่างพัฒนา คุณยังขอใบเสนอราคาผ่านแบบฟอร์มหลักได้ตามปกติ",
 }: P2ComingSoonProps) {
   return (
-    <div className="mx-auto max-w-content px-4 py-16 sm:px-6 sm:py-20">
+    <div className="mx-auto max-w-content px-page py-16 sm:py-20">
       <section className="mx-auto max-w-xl rounded-3xl border border-forest/10 bg-forest-mist/40 px-6 py-12 text-center sm:px-10">
         <p className="text-sm font-semibold uppercase tracking-wide text-brass">
           เร็ว ๆ นี้

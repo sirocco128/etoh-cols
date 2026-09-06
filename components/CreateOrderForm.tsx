@@ -5,6 +5,8 @@ import {
   createOrderFromQuoteAction,
 } from "@/app/actions/ops-orders";
 import type { OpsActionResult } from "@/app/actions/ops";
+import { ThaiAddressFields } from "@/components/ThaiAddressFields";
+import type { ThaiMailingParts } from "@/lib/thai-address-format";
 import {
   calculateDepositPlan,
   formatThb,
@@ -24,7 +26,11 @@ export function CreateOrderForm({
   billingBranch = "สำนักงานใหญ่",
   shipToName = "",
   shipToPhone = "",
+  shipToStreetAddress = "",
   shipToProvince = "",
+  shipToDistrict = "",
+  shipToSubdistrict = "",
+  shipToZip = "",
 }: {
   quoteRequestId: string;
   company: string;
@@ -36,7 +42,11 @@ export function CreateOrderForm({
   billingBranch?: string;
   shipToName?: string;
   shipToPhone?: string;
+  shipToStreetAddress?: string;
   shipToProvince?: string;
+  shipToDistrict?: string;
+  shipToSubdistrict?: string;
+  shipToZip?: string;
 }) {
   const [state, action, pending] = useActionState(
     createOrderFromQuoteAction,
@@ -48,6 +58,13 @@ export function CreateOrderForm({
     "auto",
   );
   const [percent, setPercent] = useState("50");
+  const [shipTo, setShipTo] = useState<ThaiMailingParts>({
+    streetAddress: shipToStreetAddress,
+    province: shipToProvince,
+    district: shipToDistrict,
+    subdistrict: shipToSubdistrict,
+    zip: shipToZip,
+  });
 
   const preview = useMemo(() => {
     const n = Number(amount);
@@ -196,22 +213,14 @@ export function CreateOrderForm({
             className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">ที่อยู่จัดส่ง</span>
-          <textarea
-            name="shipToAddress"
-            rows={2}
-            className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium">จังหวัดจัดส่ง</span>
-          <input
-            name="shipToProvince"
-            defaultValue={shipToProvince}
-            className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-          />
-        </label>
+        <ThaiAddressFields
+          streetAddress={shipTo.streetAddress}
+          province={shipTo.province}
+          district={shipTo.district}
+          subdistrict={shipTo.subdistrict}
+          zip={shipTo.zip}
+          onChange={setShipTo}
+        />
       </fieldset>
 
       <label className="flex items-center gap-2 text-sm">

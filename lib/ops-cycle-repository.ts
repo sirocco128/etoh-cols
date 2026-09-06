@@ -14,8 +14,10 @@ import type {
   IssueCategory,
   IssueStatus,
   IssueTicketRecord,
+  PayableKind,
   SupplierPaymentRecord,
 } from "@/lib/ops-cycle-types";
+import { isPayableKind } from "@/lib/ops-cycle-types";
 
 type GrRow = {
   id: number;
@@ -342,12 +344,46 @@ export function setCashReceiptTags(voucherId: string, tags: string[]): string[] 
   return unique;
 }
 
+function mapSupplierPayment(row: {
+  id: number;
+  pay_id: string;
+  po_id: string;
+  receipt_id: string | null;
+  amount: number;
+  method: string;
+  status: string;
+  paid_at: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  payable_kind?: string;
+}): SupplierPaymentRecord {
+  const payableKind: PayableKind = isPayableKind(row.payable_kind)
+    ? row.payable_kind
+    : "factory";
+  return {
+    id: row.id,
+    payId: row.pay_id,
+    poId: row.po_id,
+    receiptId: row.receipt_id,
+    amount: row.amount,
+    method: row.method,
+    status: row.status,
+    paidAt: row.paid_at,
+    notes: row.notes,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    payableKind,
+  };
+}
+
 export function insertSupplierPayment(row: Omit<SupplierPaymentRecord, "id">): SupplierPaymentRecord {
   getDb()
     .prepare(
       `INSERT INTO supplier_payments (
-        pay_id, po_id, receipt_id, amount, method, status, paid_at, notes, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pay_id, po_id, receipt_id, amount, method, status, paid_at, notes, created_by, created_at,
+        payable_kind
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       row.payId,
@@ -360,6 +396,7 @@ export function insertSupplierPayment(row: Omit<SupplierPaymentRecord, "id">): S
       row.notes,
       row.createdBy,
       row.createdAt,
+      row.payableKind,
     );
   return getSupplierPayment(row.payId)!;
 }
@@ -381,19 +418,7 @@ export function getSupplierPayment(payId: string): SupplierPaymentRecord | null 
     created_at: string;
   } | undefined;
   if (!row) return null;
-  return {
-    id: row.id,
-    payId: row.pay_id,
-    poId: row.po_id,
-    receiptId: row.receipt_id,
-    amount: row.amount,
-    method: row.method,
-    status: row.status,
-    paidAt: row.paid_at,
-    notes: row.notes,
-    createdBy: row.created_by,
-    createdAt: row.created_at,
-  };
+  return mapSupplierPayment(row);
 }
 
 export function listSupplierPayments(poId?: string): SupplierPaymentRecord[] {
@@ -420,22 +445,19 @@ export function listSupplierPayments(poId?: string): SupplierPaymentRecord[] {
     created_by: string | null;
     created_at: string;
   }>;
-  return rows.map((row) => ({
-    id: row.id,
-    payId: row.pay_id,
-    poId: row.po_id,
-    receiptId: row.receipt_id,
-    amount: row.amount,
-    method: row.method,
-    status: row.status,
-    paidAt: row.paid_at,
-    notes: row.notes,
-    createdBy: row.created_by,
-    createdAt: row.created_at,
-  }));
+  return rows.map(mapSupplierPayment);
 }
 
-export function sumSupplierPaid(poId: string): number {
+export function sumSupplierPaid(poId: string, payableKind?: PayableKind): number {
+  if (payableKind) {
+    const row = getDb()
+      .prepare(
+        `SELECT COALESCE(SUM(amount), 0) AS amt FROM supplier_payments
+         WHERE po_id = ? AND status = 'posted' AND payable_kind = ?`,
+      )
+      .get(poId, payableKind) as { amt: number };
+    return row.amt;
+  }
   const row = getDb()
     .prepare(
       `SELECT COALESCE(SUM(amount), 0) AS amt FROM supplier_payments WHERE po_id = ? AND status = 'posted'`,

@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div
-      className="mx-auto max-w-content px-4 py-16 sm:px-6"
+      className="mx-auto max-w-content px-page py-16"
       role="status"
       aria-live="polite"
       aria-label="กำลังโหลด"

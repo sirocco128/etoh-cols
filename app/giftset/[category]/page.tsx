@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
 import { JsonLd } from "@/components/JsonLd";
@@ -13,8 +13,9 @@ import { resolveSeoFields } from "@/lib/page-seo";
 import {
   getCategories,
   getCategoryBySlug,
-  getProducts,
+  getProductsByCategory,
 } from "@/lib/strapi";
+import { canonicalCategorySlug } from "@/lib/smartgift-products";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -42,12 +43,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function GiftsetCategoryPage({ params }: PageProps) {
   const { category: slug } = await params;
+  const canonical = canonicalCategorySlug(slug);
+  if (canonical !== slug) redirect(`/giftset/${canonical}`);
+
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = (await getProducts()).filter(
-    (product) => product.categorySlug === category.slug,
-  );
+  const products = await getProductsByCategory(category.slug);
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: "หน้าแรก", path: "/" },
@@ -58,7 +60,7 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
   return (
     <>
       <JsonLd data={breadcrumbs} />
-      <div className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-content px-page py-10 sm:py-14">
         <Breadcrumbs
           items={[
             { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },

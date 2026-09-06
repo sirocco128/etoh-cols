@@ -1,9 +1,10 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { teardownTempDir } from "./teardown-temp";
 
 function resolveProjectRoot(): string {
   if (
@@ -46,7 +47,7 @@ describe("customer CRM depth + merge + LINE link", () => {
   });
 
   after(() => {
-    if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+    teardownTempDir(dataDir);
   });
 
   it("creates a walk-in customer and groups by type/source", async () => {
@@ -102,6 +103,7 @@ describe("customer CRM depth + merge + LINE link", () => {
     const { createOrderFromQuote } = await import("../lib/order-service");
     const { getCustomerByEmail } = await import("../lib/customer-repository");
     const { buildOrderBillingDefaults } = await import("../lib/customer-billing");
+    const { getQuoteByRequestId } = await import("../lib/quote-repository");
 
     const headers = new Headers({ "x-forwarded-for": "203.0.113.44" });
     const quoteResult = await submitQuotePayload(
@@ -114,6 +116,7 @@ describe("customer CRM depth + merge + LINE link", () => {
         consent: true,
         decorationMethod: "uv-print",
         province: "เชียงใหม่",
+        billingBranch: "สาขาที่ 1 (00001)",
         website: "",
         startedAt: Date.now() - 5_000,
       },
@@ -121,6 +124,11 @@ describe("customer CRM depth + merge + LINE link", () => {
     );
     assert.equal(quoteResult.ok, true);
     if (!quoteResult.ok) return;
+
+    assert.equal(
+      getQuoteByRequestId(quoteResult.requestId)?.billingBranch,
+      "สาขาที่ 1 (00001)",
+    );
 
     updateQuoteOps({ requestId: quoteResult.requestId, leadStatus: "quoted" });
     const customer = getCustomerByEmail("ship@chiangmai.example");
@@ -142,6 +150,7 @@ describe("customer CRM depth + merge + LINE link", () => {
 
     const refreshed = getCustomerByEmail("ship@chiangmai.example");
     assert.equal(refreshed?.taxId, "0105556003873");
+    assert.equal(refreshed?.billingBranch, "สาขาที่ 1 (00001)");
     assert.equal(refreshed?.orderCount, 1);
   });
 

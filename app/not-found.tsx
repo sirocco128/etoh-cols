@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex max-w-content flex-col items-start gap-6 px-4 py-20 sm:px-6">
+    <div className="mx-auto flex max-w-content flex-col items-start gap-6 px-page py-16 sm:py-20">
       <p className="text-sm font-semibold uppercase tracking-wide text-brass">
         ไม่พบหน้า
       </p>

@@ -24,6 +24,7 @@ export function CatalogImage({
 }: CatalogImageProps) {
   const [failed, setFailed] = useState(false);
   const resolved = failed || !src ? fallbackSrc : src;
+  const localApi = resolved.startsWith("/api/");
 
   return (
     <Image
@@ -32,6 +33,7 @@ export function CatalogImage({
       alt={alt}
       fill
       priority={priority}
+      unoptimized={localApi}
       sizes={sizes}
       className={cn(
         "bg-forest-mist object-cover transition-transform duration-500 group-hover:scale-105",

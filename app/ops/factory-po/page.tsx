@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { requireOpsPage } from "@/lib/ops-auth";
-import { listPos } from "@/lib/factory-po-service";
+import { listPos } from "@/lib/factory-po-queries";
 import {
   FACTORY_PO_STATUS_LABELS,
   FACTORY_PO_STATUSES,
   type FactoryPoStatus,
 } from "@/lib/factory-po-types";
+import { FactoryOpsSubnav } from "@/components/FactoryOpsSubnav";
 import { formatThb, formatThaiDateTime } from "@/lib/th-billing";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,14 @@ export default async function FactoryPoListPage({
             ส่งสเปคโลโก้และต้นทุนลงเรือกลับโรงงาน — ไม่แสดงบนเว็บลูกค้า
           </p>
         </div>
+        <Link
+          href="/ops/factories/new"
+          className="rounded border border-forest/30 px-3 py-1.5 text-sm text-forest"
+        >
+          เพิ่มทะเบียนโรงงาน
+        </Link>
       </div>
+      <FactoryOpsSubnav current="po" />
 
       <form className="mt-6 flex flex-wrap gap-3" method="get">
         <input
@@ -105,7 +113,18 @@ export default async function FactoryPoListPage({
                     </Link>
                     <p className="text-xs text-ink/70">{po.productName}</p>
                   </td>
-                  <td className="px-2 py-2.5">{po.factoryName}</td>
+                  <td className="px-2 py-2.5">
+                    {po.factoryId ? (
+                      <Link
+                        href={`/ops/factories/${po.factoryId}`}
+                        className="text-forest underline-offset-2 hover:underline"
+                      >
+                        {po.factoryName}
+                      </Link>
+                    ) : (
+                      po.factoryName
+                    )}
+                  </td>
                   <td className="px-2 py-2.5">{FACTORY_PO_STATUS_LABELS[po.status]}</td>
                   <td className="px-2 py-2.5 text-right font-medium">
                     {formatThb(po.landedTotalThb)}

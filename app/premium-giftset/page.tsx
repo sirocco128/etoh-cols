@@ -46,11 +46,11 @@ export default async function PremiumGiftSetPage() {
       <JsonLd data={breadcrumbs} />
       <JsonLd data={faqLd} />
 
-      <div className="mx-auto max-w-content px-4 pt-8 sm:px-6">
+      <div className="mx-auto max-w-content px-page pt-8">
         <Breadcrumbs items={[{ label: "ชุดของขวัญองค์กร" }]} />
       </div>
 
-      <section className="mx-auto max-w-content px-4 pb-12 pt-2 sm:px-6 sm:pb-16">
+      <section className="mx-auto max-w-content px-page pb-12 pt-2 sm:pb-16">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-brass">
@@ -110,7 +110,7 @@ export default async function PremiumGiftSetPage() {
       </section>
 
       <section className="bg-forest-mist/40 py-14">
-        <div className="mx-auto max-w-content px-4 sm:px-6">
+        <div className="mx-auto max-w-content px-page">
           <h2 className="text-2xl font-bold text-forest">หมวด Gift Set</h2>
           <p className="mt-2 text-sm text-ink/70">เลือกแนวเซ็ต แล้วกลับมาขอราคาด้านล่างได้</p>
           <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -139,7 +139,7 @@ export default async function PremiumGiftSetPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-content px-4 py-14 sm:px-6">
+      <section className="mx-auto max-w-content px-page py-14">
         <h2 className="text-2xl font-bold text-forest">ตัวเลือกบรรจุภัณฑ์</h2>
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           {MATERIALS.map((item) => (
@@ -152,12 +152,12 @@ export default async function PremiumGiftSetPage() {
       </section>
 
       <section className="bg-forest py-14 text-paper">
-        <div className="mx-auto max-w-content px-4 sm:px-6">
+        <div className="mx-auto max-w-content px-page">
           <ChinaOrderSteps variant="dark" />
         </div>
       </section>
 
-      <section className="mx-auto max-w-content px-4 py-14 sm:px-6">
+      <section className="mx-auto max-w-content px-page py-14">
         <h2 className="text-2xl font-bold text-forest">กลุ่มองค์กรที่เราดูแล</h2>
         <ul className="mt-6 flex flex-wrap gap-3">
           {clientSegments.map((segment) => (
@@ -172,7 +172,7 @@ export default async function PremiumGiftSetPage() {
       </section>
 
       <section className="bg-forest-mist/40 py-14">
-        <div className="mx-auto max-w-content px-4 sm:px-6">
+        <div className="mx-auto max-w-content px-page">
           <h2 className="text-2xl font-bold text-forest">คำถามที่พบบ่อย</h2>
           <div className="mt-8">
             <FaqAccordion faqs={faqs} />
@@ -180,7 +180,7 @@ export default async function PremiumGiftSetPage() {
         </div>
       </section>
 
-      <section id="quote" className="mx-auto max-w-content scroll-mt-28 px-4 py-14 sm:px-6">
+      <section id="quote" className="mx-auto max-w-content scroll-mt-28 px-page py-14">
         <QuoteForm heading="ขอใบเสนอราคาชุดของขวัญองค์กร" />
       </section>
     </>

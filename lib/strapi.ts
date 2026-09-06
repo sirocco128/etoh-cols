@@ -30,14 +30,28 @@ import { loadOffersFromFile } from "@/lib/alibaba/offers";
 import type { AlibabaOffer } from "@/lib/alibaba/types";
 import { cache } from "react";
 import { isNexterpMysqlEnabled } from "@/lib/nexterp-mysql";
+import { isSmartgiftMysqlEnabled } from "@/lib/smartgift-mysql";
 import { getStrapiApiUrl } from "@/lib/strapi-url";
+import {
+  getCmsMode,
+  shouldFetchStrapiEditorial,
+} from "@/lib/strapi-mode";
 import {
   getNexterpProductBySlug,
   listNexterpCategories,
   listNexterpProducts,
 } from "@/lib/nexterp-products";
-
-type CmsMode = "mock" | "strapi" | "mysql";
+import {
+  canonicalCategorySlug,
+  getSmartgiftOfferBySlug,
+  listSmartgiftCategories,
+  listSmartgiftOffers,
+} from "@/lib/smartgift-products";
+import { overlaySkuOnProducts, getCatalogProductFromSkuSlug } from "@/lib/sku-catalog-overlay";
+import {
+  getLivePublicArticleBySlug,
+  listLivePublicArticles,
+} from "@/lib/article-repository";
 
 const REVALIDATE = {
   categories: 3600,
@@ -46,17 +60,6 @@ const REVALIDATE = {
   faqs: 86_400,
   portfolios: 3600,
 } as const;
-
-function getCmsMode(): CmsMode {
-  const mode = (process.env.CMS_MODE || "mock").trim().toLowerCase();
-  if (mode === "strapi") return "strapi";
-  if (mode === "mysql" || mode === "nexterp") return "mysql";
-  // Auto-use MySQL when explicitly enabled even if CMS_MODE left as mock
-  if (isNexterpMysqlEnabled() && (process.env.CMS_MODE || "").trim() === "") {
-    return "mysql";
-  }
-  return "mock";
-}
 
 function fallbackEnabled(): boolean {
   return (process.env.STRAPI_FALLBACK_TO_MOCK || "").toLowerCase() === "true";
@@ -95,6 +98,10 @@ function withAlibabaEstimates(products: Product[]): Product[] {
   return overlayOffersOnProducts(products, offersForOverlay(), {
     remoteImageUrls: process.env.NEXT_IMAGE_REMOTE_URLS ?? "",
   });
+}
+
+async function withCatalog(products: Product[]): Promise<Product[]> {
+  return overlaySkuOnProducts(withAlibabaEstimates(products));
 }
 
 function authHeaders(): HeadersInit {
@@ -209,7 +216,7 @@ async function withFallback<T>(
   loader: () => Promise<T>,
   mockValue: T,
 ): Promise<T> {
-  if (getCmsMode() === "mock") {
+  if (!shouldFetchStrapiEditorial()) {
     return mockValue;
   }
 
@@ -241,9 +248,10 @@ async function withFallback<T>(
 async function loadCategories(): Promise<Category[]> {
   if (getCmsMode() === "mysql") {
     try {
+      if (isSmartgiftMysqlEnabled()) return await listSmartgiftCategories();
       return await listNexterpCategories();
     } catch (error) {
-      console.error("[nexterp] categories failed", error);
+      console.error("[mysql] categories failed", error);
       if (fallbackEnabled()) return mockCategories;
       throw error;
     }
@@ -269,18 +277,25 @@ export const getCategories = cache(loadCategories);
 export async function getCategoryBySlug(
   slug: string,
 ): Promise<Category | null> {
+  const wanted = canonicalCategorySlug(slug);
   const all = await getCategories();
-  return all.find((item) => item.slug === slug) ?? null;
+  return (
+    all.find((item) => item.slug === wanted) ??
+    all.find((item) => item.slug === slug) ??
+    null
+  );
 }
 
 async function loadProducts(): Promise<Product[]> {
   if (getCmsMode() === "mysql") {
     try {
-      const products = await listNexterpProducts({ limit: 240 });
-      return withAlibabaEstimates(products);
+      const products = isSmartgiftMysqlEnabled()
+        ? await listSmartgiftOffers({ pricedOnly: true, limit: 240 })
+        : await listNexterpProducts({ limit: 240 });
+      return withCatalog(products);
     } catch (error) {
-      console.error("[nexterp] products failed", error);
-      if (fallbackEnabled()) return withAlibabaEstimates(mockProducts);
+      console.error("[mysql] products failed", error);
+      if (fallbackEnabled()) return withCatalog(mockProducts);
       throw error;
     }
   }
@@ -298,26 +313,60 @@ async function loadProducts(): Promise<Product[]> {
     },
     mockProducts,
   );
-  return withAlibabaEstimates(products);
+  return withCatalog(products);
 }
 
 export const getProducts = cache(loadProducts);
+
+async function loadProductsByCategory(slug: string): Promise<Product[]> {
+  const wanted = canonicalCategorySlug(slug);
+  if (getCmsMode() === "mysql" && isSmartgiftMysqlEnabled()) {
+    try {
+      const products = await listSmartgiftOffers({
+        categorySlug: wanted,
+        pricedOnly: false,
+        limit: 400,
+      });
+      return withCatalog(products);
+    } catch (error) {
+      console.error("[mysql] products by category failed", error);
+      if (fallbackEnabled()) {
+        return withCatalog(
+          mockProducts.filter(
+            (item) => item.categorySlug === wanted || item.categorySlug === slug,
+          ),
+        );
+      }
+      throw error;
+    }
+  }
+
+  const products = await getProducts();
+  return products.filter(
+    (product) => product.categorySlug === wanted || product.categorySlug === slug,
+  );
+}
+
+export const getProductsByCategory = cache(loadProductsByCategory);
 
 async function loadProductBySlug(
   slug: string,
 ): Promise<Product | null> {
   if (getCmsMode() === "mysql") {
     try {
-      const product = await getNexterpProductBySlug(slug);
-      if (product) return withAlibabaEstimates([product])[0] ?? null;
-      // Keep demo SKUs available while browsing MySQL catalog
+      const product = isSmartgiftMysqlEnabled()
+        ? await getSmartgiftOfferBySlug(slug)
+        : await getNexterpProductBySlug(slug);
+      if (product) return (await withCatalog([product]))[0] ?? null;
+      const fromSku = await getCatalogProductFromSkuSlug(slug);
+      if (fromSku) return fromSku;
       const demo = mockProducts.find((item) => item.slug === slug) ?? null;
-      return demo ? withAlibabaEstimates([demo])[0] ?? null : null;
+      return demo ? (await withCatalog([demo]))[0] ?? null : null;
     } catch (error) {
-      console.error("[nexterp] product failed", error);
+      console.error("[mysql] product failed", error);
       if (fallbackEnabled()) {
         const demo = mockProducts.find((item) => item.slug === slug) ?? null;
-        return demo ? withAlibabaEstimates([demo])[0] ?? null : null;
+        return demo ? (await withCatalog([demo]))[0] ?? null : null;
       }
       throw error;
     }
@@ -325,7 +374,7 @@ async function loadProductBySlug(
 
   if (getCmsMode() === "mock") {
     const product = mockProducts.find((item) => item.slug === slug) ?? null;
-    return product ? withAlibabaEstimates([product])[0] ?? null : null;
+    return product ? (await withCatalog([product]))[0] ?? null : null;
   }
 
   const product = await withFallback(
@@ -347,54 +396,81 @@ async function loadProductBySlug(
     },
     mockProducts.find((item) => item.slug === slug) ?? null,
   );
-  return product ? withAlibabaEstimates([product])[0] ?? null : null;
+  return product ? (await withCatalog([product]))[0] ?? null : null;
 }
 
 export const getProductBySlug = cache(loadProductBySlug);
 
-async function loadArticles(): Promise<Article[]> {
-  return withFallback(
-    "articles",
-    async () => {
-      const records = await fetchAllPages(
-        "/api/articles",
-        "*",
-        ["articles"],
-        REVALIDATE.articles,
-      );
-      return adaptArticles(records, mediaOptions());
-    },
-    mockArticles,
+async function fetchStrapiArticles(): Promise<Article[]> {
+  const records = await fetchAllPages(
+    "/api/articles",
+    "*",
+    ["articles"],
+    REVALIDATE.articles,
   );
+  return adaptArticles(records, mediaOptions());
+}
+
+async function loadArticles(): Promise<Article[]> {
+  if (getCmsMode() === "mysql") {
+    try {
+      return await listLivePublicArticles();
+    } catch (error) {
+      console.error("[mysql] articles failed", error);
+      if (shouldFetchStrapiEditorial()) {
+        return withFallback("articles", fetchStrapiArticles, mockArticles);
+      }
+      return [];
+    }
+  }
+
+  return withFallback("articles", fetchStrapiArticles, mockArticles);
 }
 
 export const getArticles = cache(loadArticles);
 
+async function fetchStrapiArticleBySlug(slug: string): Promise<Article | null> {
+  const query = new URLSearchParams({
+    "filters[slug][$eq]": slug,
+    "pagination[pageSize]": "1",
+    populate: "*",
+    publicationState: "live",
+  });
+  const payload = await strapiFetchJson(
+    `/api/articles?${query.toString()}`,
+    ["articles", `article:${slug}`],
+    REVALIDATE.articles,
+  );
+  const adapted = adaptArticles(payload, mediaOptions());
+  return adapted[0] ?? null;
+}
+
 async function loadArticleBySlug(
   slug: string,
 ): Promise<Article | null> {
-  if (getCmsMode() === "mock") {
-    return mockArticles.find((item) => item.slug === slug) ?? null;
+  const mockHit = () => mockArticles.find((item) => item.slug === slug) ?? null;
+
+  if (getCmsMode() === "mysql") {
+    try {
+      const live = await getLivePublicArticleBySlug(slug);
+      if (live) return live;
+    } catch (error) {
+      console.error("[mysql] article failed", error);
+    }
+    if (shouldFetchStrapiEditorial()) {
+      return withFallback(`article:${slug}`, () => fetchStrapiArticleBySlug(slug), mockHit());
+    }
+    return mockHit();
+  }
+
+  if (!shouldFetchStrapiEditorial()) {
+    return mockHit();
   }
 
   return withFallback(
     `article:${slug}`,
-    async () => {
-      const query = new URLSearchParams({
-        "filters[slug][$eq]": slug,
-        "pagination[pageSize]": "1",
-        populate: "*",
-        publicationState: "live",
-      });
-      const payload = await strapiFetchJson(
-        `/api/articles?${query.toString()}`,
-        ["articles", `article:${slug}`],
-        REVALIDATE.articles,
-      );
-      const adapted = adaptArticles(payload, mediaOptions());
-      return adapted[0] ?? null;
-    },
-    mockArticles.find((item) => item.slug === slug) ?? null,
+    () => fetchStrapiArticleBySlug(slug),
+    mockHit(),
   );
 }
 

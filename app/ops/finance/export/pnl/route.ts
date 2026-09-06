@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { recordOpsReportPull } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
+import { opsAuditContextFromHeaders } from "@/lib/ops-request-context";
 import { buildExecutivePnl, defaultFinanceRange, pnlToCsv } from "@/lib/finance-report";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +17,13 @@ export async function GET(request: Request) {
   const fromDate = url.searchParams.get("from") || fallback.fromDate;
   const toDate = url.searchParams.get("to") || fallback.toDate;
   const csv = pnlToCsv(buildExecutivePnl({ fromDate, toDate }));
+  recordOpsReportPull({
+    actor,
+    kind: "export",
+    reportName: "pnl.csv",
+    filters: { from: fromDate, to: toDate },
+    context: opsAuditContextFromHeaders(request.headers),
+  });
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",

@@ -15,6 +15,8 @@ export type QuoteBasket = {
   updatedAt: string;
   expiresAt: string;
   sourceSession: string;
+  /** Target delivery date YYYY-MM-DD for the bulk RFQ. */
+  neededDate?: string;
   items: QuoteBasketItem[];
 };
 
@@ -31,6 +33,7 @@ export type QuoteBasketItem = {
   estimatedUnitMin?: number;
   estimatedUnitMax?: number;
   pricingSnapshotVersion?: string;
+  logoColorCount?: string;
 };
 
 export type AddQuoteBasketItemInput = {
@@ -43,6 +46,7 @@ export type AddQuoteBasketItemInput = {
   packagingOption?: string;
   note?: string;
   variantId?: string;
+  logoColorCount?: string;
 };
 
 export type ApproximatePriceSum = {

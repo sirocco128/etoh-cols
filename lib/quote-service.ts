@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { parseQuoteFormData } from "@/lib/quote-schema";
 import { upsertCustomerFromQuote } from "@/lib/customer-repository";
 import {
@@ -15,6 +16,8 @@ import type {
   RetryBatchResult,
   WebhookStatus,
 } from "@/lib/quote-types";
+import { assertMeetsForcedMinQty } from "@/lib/alibaba/forced-min-qty";
+import { getForcedMinQtyForCatalogSlug } from "@/lib/sku-master-repository";
 
 const MIN_FORM_MS = 1_200;
 const MAX_FORM_MS = 24 * 60 * 60 * 1000;
@@ -82,16 +85,7 @@ export function hashIp(ip: string, secret = getIpHashSecret()): string {
   return createHmac("sha256", secret).update(ip).digest("hex");
 }
 
-export function bangkokDateYmd(date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-    .format(date)
-    .replaceAll("-", "");
-}
+export { bangkokDateYmd };
 
 export function createRequestId(now = new Date()): string {
   const datePart = bangkokDateYmd(now);
@@ -123,6 +117,7 @@ function toLeadPayload(input: QuoteRequestInput) {
     subdistrict: input.subdistrict ?? null,
     zip: input.zip ?? null,
     taxId: input.taxId ?? null,
+    billingBranch: input.billingBranch ?? null,
     productInterest: input.productInterest ?? null,
     productSlug: input.productSlug ?? null,
     decorationMethod: input.decorationMethod,
@@ -298,6 +293,21 @@ export async function submitQuotePayload(
     };
   }
 
+  const forcedMinQty = await getForcedMinQtyForCatalogSlug(input.productSlug);
+  if (forcedMinQty) {
+    try {
+      assertMeetsForcedMinQty(input.quantity, forcedMinQty);
+    } catch {
+      return {
+        ok: false,
+        formError: `สั่งขั้นต่ำ ${forcedMinQty} ชุด ตามสูตรต้นทุนลงเรือ`,
+        fieldErrors: toFieldErrors({
+          quantity: `Minimum order is ${forcedMinQty}`,
+        }),
+      };
+    }
+  }
+
   const ip = resolveClientIp(headers);
   const ipHash = hashIp(ip);
   const windowMinutes = readIntEnv("QUOTE_RATE_LIMIT_WINDOW_MINUTES", 15);
@@ -352,6 +362,7 @@ export async function submitQuotePayload(
       quoteSubmittedAt: submittedAt,
       province: input.province,
       taxId: input.taxId,
+      billingBranch: input.billingBranch,
     });
     linkQuoteCustomer(requestId, customer.id);
   } catch {

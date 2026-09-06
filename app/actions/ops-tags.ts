@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import type { OpsActionResult } from "@/app/actions/ops";
 import { getCustomerById, updateCustomer } from "@/lib/customer-repository";
@@ -9,18 +8,7 @@ import { requireOpsActor } from "@/lib/ops-auth";
 import { getCashReceipt, setCashReceiptTags } from "@/lib/ops-cycle-service";
 import { getOrderRepository } from "@/lib/order-repository";
 import { isOpsTagEntityType, parseOpsTags } from "@/lib/ops-tags";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 
 export async function updateEntityTagsAction(
   _prev: OpsActionResult | null,
@@ -69,8 +57,7 @@ export async function updateEntityTagsAction(
     resourceType: entityTypeRaw,
     resourceId: entityId,
     detail: { tags },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
 
   return { ok: true };

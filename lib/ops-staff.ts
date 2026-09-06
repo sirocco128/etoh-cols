@@ -366,10 +366,15 @@ export function authenticateOpsStaff(
     return null;
   }
   const staff = mapStaff(row);
+  markOpsStaffLastLogin(staff.id);
+  return staffToActor(staff);
+}
+
+export function markOpsStaffLastLogin(staffId: number): void {
+  if (!tableReady() || !Number.isInteger(staffId) || staffId < 1) return;
   getDb()
     .prepare("UPDATE ops_staff SET last_login_at = ? WHERE id = ?")
-    .run(new Date().toISOString(), staff.id);
-  return staffToActor(staff);
+    .run(new Date().toISOString(), staffId);
 }
 
 export function hydrateOpsActor(actor: OpsActor): OpsActor | null {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { countQuoteRequests } from "@/lib/quote-repository";
 import { countApprovalQueue } from "@/lib/payment-approval";
-import { countInboundPos } from "@/lib/factory-po-service";
+import { countInboundPos } from "@/lib/factory-po-queries";
 import { getStrapiAdminUrl } from "@/lib/strapi-url";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,14 @@ export default async function OpsIndexPage() {
           body: "ใบเสนอราคาที่ยังไม่ได้ติดต่อ",
         }
       : null,
+    actorMay(actor, "quotes.read")
+      ? {
+          href: "/ops/pricing",
+          title: "คิดราคา",
+          count: "—",
+          body: "บันไดจำนวนตามสูตรราคาบนเว็บ",
+        }
+      : null,
     actorMay(actor, "orders.read")
       ? {
           href: "/ops/approvals",
@@ -39,6 +47,14 @@ export default async function OpsIndexPage() {
           title: "ค้างรับของ",
           count: inbound,
           body: "ใบสั่งโรงงานที่ยังรับไม่ครบ",
+        }
+      : null,
+    actorMay(actor, "reports.read")
+      ? {
+          href: "/ops/reports",
+          title: "รายงานวงจร",
+          count: "—",
+          body: "คำขอถึงรับเงิน — ทุกขั้น ทุกมิติ ตามสิทธิ์บัญชีนี้",
         }
       : null,
   ].filter((card) => card !== null);
@@ -86,12 +102,30 @@ export default async function OpsIndexPage() {
               </p>
             </a>
             <Link
+              href="/ops/catalog-books"
+              className="block rounded-xl border border-forest/15 bg-paper p-5 hover:border-brass/50"
+            >
+              <p className="font-semibold text-forest">สร้างสมุดแคตตาล็อก</p>
+              <p className="mt-2 text-sm text-ink/70">
+                จัดไฟล์ตามกลุ่มที่ fix ไว้ แล้วออกเป็นอัลบั้มพลิกพร้อมลิงก์ส่งลูกค้า
+              </p>
+            </Link>
+            <Link
               href="/ops/catalog-images"
               className="block rounded-xl border border-forest/15 bg-paper p-5 hover:border-brass/50"
             >
               <p className="font-semibold text-forest">รูปโรงงาน</p>
               <p className="mt-2 text-sm text-ink/70">
                 ค้นรูปจากเว็บโรงงาน แล้วนำไปใส่ใน Strapi ทีหลัง
+              </p>
+            </Link>
+            <Link
+              href="/ops/pricing/import"
+              className="block rounded-xl border border-forest/15 bg-paper p-5 hover:border-brass/50"
+            >
+              <p className="font-semibold text-forest">อัปเดตราคาจาก Excel</p>
+              <p className="mt-2 text-sm text-ink/70">
+                นำเข้าไฟล์โรงงาน พรีวิวทั้งตาราง ส่งออกเช็ค แล้วค่อยอัปเดตราคาขาย
               </p>
             </Link>
           </div>

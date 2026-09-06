@@ -81,8 +81,14 @@ if (!strict) {
 const errors = [];
 
 const cmsMode = String(process.env.CMS_MODE ?? "").trim().toLowerCase();
-if (cmsMode !== "mock" && cmsMode !== "strapi") {
-  errors.push("CMS_MODE must be mock or strapi.");
+if (
+  cmsMode !== "mock" &&
+  cmsMode !== "strapi" &&
+  cmsMode !== "mysql" &&
+  cmsMode !== "nexterp" &&
+  cmsMode !== "smartgift"
+) {
+  errors.push("CMS_MODE must be mock, strapi, or mysql.");
 }
 
 const leadMode = String(process.env.LEAD_STORAGE_MODE ?? "sqlite")

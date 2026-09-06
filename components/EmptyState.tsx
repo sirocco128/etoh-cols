@@ -15,7 +15,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className="mt-12 rounded-3xl border border-dashed border-forest/20 bg-forest-mist/50 px-6 py-14 text-center"
+      className="mt-12 rounded-3xl border border-dashed border-forest/20 bg-forest-mist/50 px-5 py-12 text-center backdrop-blur-md sm:px-6 sm:py-14"
       role="status"
     >
       <h2 className="text-xl font-bold text-forest">{title}</h2>

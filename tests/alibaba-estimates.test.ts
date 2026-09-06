@@ -4,9 +4,13 @@ import { sign1688Request, parse1688ProductPayload } from "../lib/alibaba/client"
 import { extractOfferImages } from "../lib/alibaba/images";
 import {
   computePublicPriceRange,
+  computeQuoteLadder,
   computeUnitLanded,
   defaultLandedCostConfig,
+  factoryCnyForQty,
   markupForLandedCost,
+  quoteQtyBreaks,
+  quoteSellWithOptions,
   smallOrderFactor,
 } from "../lib/alibaba/landed-cost";
 import { parseOffer, parseOffersDocument } from "../lib/alibaba/offers";
@@ -114,10 +118,53 @@ describe("1688 landed cost", () => {
     assert.ok(range!.priceExFreightMax <= range!.priceMax);
     assert.equal(range!.packagingMin, 45);
     assert.equal(range!.packagingMax, 85);
+    const ladder = computeQuoteLadder(SAMPLE_OFFER, [30, 300], juneConfig);
+    assert.ok(ladder);
+    assert.equal(ladder![0]!.landed.sellThb, range!.priceMax);
+    assert.equal(ladder![1]!.landed.sellThb, range!.priceMin);
     assert.equal(
       "factoryCny" in range! || "dutyThb" in range!,
       false,
     );
+  });
+
+  it("computes a quantity ladder with the same engine as the public band", () => {
+    const unit = computeUnitLanded(SAMPLE_OFFER, 30, 20, juneConfig);
+    const ladder = computeQuoteLadder(SAMPLE_OFFER, [30, 300], juneConfig);
+    assert.ok(unit);
+    assert.ok(ladder);
+    assert.equal(ladder!.length, 2);
+    assert.equal(ladder![0]!.landed.sellThb, unit!.sellThb);
+    assert.equal(ladder![0]!.factoryCny, 20);
+    assert.equal(ladder![1]!.qty, 300);
+    assert.ok(ladder![1]!.landed.sellThb <= ladder![0]!.landed.sellThb);
+  });
+
+  it("picks factory min at bulk qty and max below bulk", () => {
+    const offer = {
+      ...SAMPLE_OFFER,
+      factoryMinCny: 18,
+      factoryMaxCny: 24,
+      bulkQty: 300,
+    };
+    assert.equal(factoryCnyForQty(offer, 30), 24);
+    assert.equal(factoryCnyForQty(offer, 300), 18);
+    assert.deepEqual(quoteQtyBreaks(30), [30, 50, 100, 300, 500, 1000]);
+  });
+
+  it("adds packaging the same way as the public product toggle", () => {
+    const unit = computeUnitLanded(SAMPLE_OFFER, 30, 20, juneConfig);
+    assert.ok(unit);
+    const withPack = quoteSellWithOptions(unit, {
+      includeFreight: true,
+      includePackaging: true,
+    });
+    assert.equal(withPack.sellThb, unit.sellThb + 45);
+    const exFreight = quoteSellWithOptions(unit, {
+      includeFreight: false,
+      includePackaging: false,
+    });
+    assert.equal(exFreight.sellThb, unit.sellExFreightThb);
   });
 
   it("freight raises unit cost versus factory-only", () => {

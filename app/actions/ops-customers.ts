@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { OpsActionResult } from "@/app/actions/ops";
@@ -23,18 +22,7 @@ import {
 import { createLineLinkToken, isLineOaEnabled } from "@/lib/line-oa";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 
 function readCustomerFields(formData: FormData) {
   const status = String(formData.get("status") || "active").trim() as CustomerStatus;
@@ -95,8 +83,7 @@ export async function createCustomerOpsAction(
       status: "ok",
       resourceType: "customer",
       resourceId: String(created.id),
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
@@ -147,8 +134,7 @@ export async function upsertCustomerContactAction(
     status: "ok",
     resourceType: "customer",
     resourceId: String(customerId),
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath(`/ops/customers/${customerId}`);
   return { ok: true };
@@ -181,8 +167,7 @@ export async function mergeCustomersAction(
       resourceType: "customer",
       resourceId: String(merged.id),
       detail: { sourceId, targetId },
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
@@ -224,8 +209,7 @@ export async function importCustomersAction(
       updated: result.updated,
       skipped: result.skipped,
     },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/customers");
   if (dryRun) {

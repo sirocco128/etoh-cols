@@ -1,9 +1,10 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { teardownTempDir } from "./teardown-temp";
 
 function resolveProjectRoot(): string {
   if (
@@ -44,7 +45,7 @@ describe("ops customers + quote workflow", () => {
   });
 
   after(() => {
-    if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+    teardownTempDir(dataDir);
   });
 
   it("upserts customer and lists quotes by status", async () => {
@@ -95,6 +96,25 @@ describe("ops customers + quote workflow", () => {
     });
     assert.equal(updated?.leadStatus, "contacted");
     assert.equal(updated?.salesNotes, "โทรแล้ว นัดส่งแบบ");
+
+    const { listQuoteSalesTimeline } = await import("../lib/quote-repository");
+    const firstLog = listQuoteSalesTimeline(result.requestId);
+    assert.equal(firstLog.length, 1);
+    assert.equal(firstLog[0]?.toStatus, "contacted");
+    assert.equal(firstLog[0]?.note, "โทรแล้ว นัดส่งแบบ");
+
+    const second = updateQuoteOps({
+      requestId: result.requestId,
+      leadStatus: "contacted",
+      salesNotes: "โทรอีกครั้ง ยังไม่รับสาย",
+      actor: { email: "sales@local", name: "เซลล์", role: "sales" },
+    });
+    assert.equal(second?.salesNotes, "โทรอีกครั้ง ยังไม่รับสาย");
+    const timeline = listQuoteSalesTimeline(result.requestId);
+    assert.equal(timeline.length, 2);
+    assert.equal(timeline[0]?.note, "โทรอีกครั้ง ยังไม่รับสาย");
+    assert.equal(timeline[0]?.actorName, "เซลล์");
+    assert.equal(timeline[1]?.note, "โทรแล้ว นัดส่งแบบ");
 
     const contacted = listQuoteRequests({ leadStatus: "contacted" });
     assert.equal(contacted.length, 1);

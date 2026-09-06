@@ -23,7 +23,7 @@ export function FaqAccordion({ faqs }: FaqAccordionProps) {
         const isOpen = openIndex === index;
 
         return (
-          <div key={`${faq.question}-${index}`} className="px-4 sm:px-6">
+          <div key={`${faq.question}-${index}`} className="px-4 sm:px-5">
             <h3 className="m-0">
               <button
                 id={buttonId}

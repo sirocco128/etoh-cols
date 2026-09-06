@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { RecentOrderHint } from "@/components/RecentOrderHint";
 import { formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
+import { ACCOUNT_HUB_TITLE } from "@/lib/ux-copy";
 
 const SERVICE_LINKS = [
   { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
@@ -20,11 +22,6 @@ const INFO_LINKS = [
   { href: "/terms", label: "ข้อกำหนดการใช้งาน" },
 ] as const;
 
-const RETURNING_CUSTOMER_LINKS = [
-  { href: "/orders", label: "ออเดอร์ของฉัน" },
-  { href: "/issues", label: "แจ้งปัญหาสินค้า" },
-] as const;
-
 export function Footer() {
   const year = new Date().getFullYear();
   const contact = getPublicContact(site);
@@ -37,8 +34,8 @@ export function Footer() {
   const hours = formatOpeningHoursDisplay(site.localBusiness.openingHours);
 
   return (
-    <footer className="mt-auto border-t border-forest/10 bg-forest text-paper">
-      <div className="mx-auto grid max-w-content gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
+    <footer className="mt-auto border-t border-white/10 bg-forest text-paper">
+      <div className="mx-auto grid max-w-content gap-8 px-page py-10 sm:gap-10 sm:py-12 md:grid-cols-2 lg:grid-cols-3">
         <div>
           <p className="text-xl font-bold text-brass-soft">{site.name}</p>
           <p className="mt-3 text-sm leading-relaxed text-paper/80">
@@ -101,7 +98,7 @@ export function Footer() {
               </li>
             ) : (
               <li>
-                <Link href="/contact" className="hover:text-brass-soft">
+                <Link href="/contact?intent=message" className="hover:text-brass-soft">
                   ส่งคำขอผ่านแบบฟอร์ม
                 </Link>
               </li>
@@ -122,23 +119,17 @@ export function Footer() {
               </li>
             ))}
           </ul>
-          <details className="mt-4">
-            <summary className="cursor-pointer list-none text-sm text-paper/85 hover:text-brass-soft [&::-webkit-details-marker]:hidden">
-              ลูกค้าที่สั่งแล้ว
-            </summary>
-            <ul className="mt-2 space-y-2 text-sm">
-              {RETURNING_CUSTOMER_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-paper/85 hover:text-brass-soft">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </details>
+          <ul className="mt-4 space-y-2 text-sm">
+            <li>
+              <Link href="/account" className="text-paper/85 hover:text-brass-soft">
+                {ACCOUNT_HUB_TITLE}
+              </Link>
+            </li>
+            <RecentOrderHint variant="footer" />
+          </ul>
         </div>
       </div>
-      <div className="border-t border-paper/10 py-4 text-center text-xs text-paper/55">
+      <div className="border-t border-paper/10 px-page py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-paper/55">
         © {year} {site.legalName || site.name}. สงวนลิขสิทธิ์.
       </div>
     </footer>

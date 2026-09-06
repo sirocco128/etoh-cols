@@ -16,7 +16,7 @@ export default async function BlogPage() {
   const articles = await getArticles();
 
   return (
-    <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-content px-page py-12 sm:py-16">
       <Breadcrumbs items={[{ label: "บทความ" }]} />
       <div className="max-w-2xl">
         <h1 className="text-3xl font-bold text-forest sm:text-4xl">บทความ</h1>

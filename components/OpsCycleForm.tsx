@@ -9,6 +9,7 @@ export function OpsCycleForm({
   action,
   submitLabel,
   children,
+  encType,
 }: {
   action: (
     prev: OpsActionResult | null,
@@ -16,10 +17,11 @@ export function OpsCycleForm({
   ) => Promise<OpsActionResult>;
   submitLabel: string;
   children: React.ReactNode;
+  encType?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initial);
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-4" encType={encType}>
       {state?.error ? (
         <p
           role="alert"

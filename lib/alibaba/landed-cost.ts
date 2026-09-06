@@ -150,6 +150,79 @@ export function computePublicPriceRange(
   };
 }
 
+/** Same steps as ops SKU forced-min (`MOQ_LADDER`). */
+export const DEFAULT_QUOTE_QTYS = [10, 20, 50, 100, 300, 500, 1000] as const;
+
+export function factoryCnyForQty(offer: AlibabaOffer, qty: number): number {
+  const n = Math.max(1, Math.floor(qty));
+  if (offer.ladders && offer.ladders.length > 0) {
+    const sorted = [...offer.ladders].sort((a, b) => a.minQty - b.minQty);
+    let price = sorted[0]!.priceCny;
+    for (const row of sorted) {
+      if (n >= row.minQty) price = row.priceCny;
+    }
+    return price;
+  }
+  const bulk = Math.max(offer.minOrder, Math.floor(offer.bulkQty ?? 300));
+  return n >= bulk ? offer.factoryMinCny : offer.factoryMaxCny;
+}
+
+export function quoteQtyBreaks(
+  minOrder: number,
+  extra: number[] = [],
+  ladder: readonly number[] = DEFAULT_QUOTE_QTYS,
+): number[] {
+  const moq = Math.max(1, Math.floor(minOrder || 1));
+  const values = new Set<number>([moq]);
+  for (const qty of ladder) {
+    if (qty >= moq) values.add(qty);
+  }
+  for (const qty of extra) {
+    const n = Math.floor(qty);
+    if (Number.isInteger(n) && n >= moq) values.add(n);
+  }
+  return [...values].sort((a, b) => a - b);
+}
+
+export type QuoteLadderRow = {
+  qty: number;
+  factoryCny: number;
+  landed: UnitLandedBreakdown;
+};
+
+export function computeQuoteLadder(
+  offer: AlibabaOffer,
+  qtys: number[],
+  config: LandedCostConfig = defaultLandedCostConfig(),
+): QuoteLadderRow[] | null {
+  const rows: QuoteLadderRow[] = [];
+  for (const qty of qtys) {
+    const factoryCny = factoryCnyForQty(offer, qty);
+    const landed = computeUnitLanded(offer, qty, factoryCny, config);
+    if (!landed) return null;
+    rows.push({ qty: landed.qty, factoryCny, landed });
+  }
+  return rows;
+}
+
+export function quoteSellWithOptions(
+  landed: Pick<UnitLandedBreakdown, "sellThb" | "sellExFreightThb">,
+  flags: { includeFreight: boolean; includePackaging: boolean },
+  packaging = {
+    min: DEFAULT_PACKAGING_MIN_THB,
+    max: DEFAULT_PACKAGING_MAX_THB,
+  },
+): { sellThb: number; sellMin: number; sellMax: number } {
+  const base = flags.includeFreight ? landed.sellThb : landed.sellExFreightThb;
+  const addMin = flags.includePackaging ? packaging.min : 0;
+  const addMax = flags.includePackaging ? packaging.max : 0;
+  return {
+    sellThb: Math.round(base + addMin),
+    sellMin: Math.round(base + addMin),
+    sellMax: Math.round(base + addMax),
+  };
+}
+
 function envNumber(key: string, fallback: number): number {
   const raw = Number(process.env[key]);
   return Number.isFinite(raw) && raw > 0 ? raw : fallback;

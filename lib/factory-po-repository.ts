@@ -1,9 +1,10 @@
 import { getDb } from "@/lib/database";
-import type {
-  FactoryPlatform,
-  FactoryPoRecord,
-  FactoryPoStatus,
-  FreightMode,
+import {
+  isFactoryCurrency,
+  type FactoryPlatform,
+  type FactoryPoRecord,
+  type FactoryPoStatus,
+  type FreightMode,
 } from "@/lib/factory-po-types";
 
 type FactoryPoRow = {
@@ -11,6 +12,7 @@ type FactoryPoRow = {
   po_id: string;
   order_id: string;
   status: string;
+  factory_id?: number | null;
   factory_name: string;
   factory_contact: string | null;
   factory_platform: string;
@@ -24,6 +26,7 @@ type FactoryPoRow = {
   logo_notes: string | null;
   packaging_notes: string | null;
   qc_notes: string | null;
+  factory_currency?: string | null;
   fx_cny_thb: number;
   factory_unit_cny: number;
   factory_amount_cny: number;
@@ -60,6 +63,7 @@ function mapPo(row: FactoryPoRow): FactoryPoRecord {
     poId: row.po_id,
     orderId: row.order_id,
     status: row.status as FactoryPoStatus,
+    factoryId: row.factory_id == null ? null : Number(row.factory_id),
     factoryName: row.factory_name,
     factoryContact: row.factory_contact,
     factoryPlatform: row.factory_platform as FactoryPlatform,
@@ -73,6 +77,9 @@ function mapPo(row: FactoryPoRow): FactoryPoRecord {
     logoNotes: row.logo_notes,
     packagingNotes: row.packaging_notes,
     qcNotes: row.qc_notes,
+    factoryCurrency: isFactoryCurrency(String(row.factory_currency || "CNY"))
+      ? (String(row.factory_currency || "CNY") as "CNY" | "USD")
+      : "CNY",
     fxCnyThb: row.fx_cny_thb,
     factoryUnitCny: row.factory_unit_cny,
     factoryAmountCny: row.factory_amount_cny,
@@ -103,22 +110,23 @@ export function insertFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
   getDb()
     .prepare(
       `INSERT INTO factory_pos (
-        po_id, order_id, status, factory_name, factory_contact, factory_platform,
+        po_id, order_id, status, factory_id, factory_name, factory_contact, factory_platform,
         source_offer_id, product_name, quantity, color, material, decoration_method,
-        logo_position, logo_notes, packaging_notes, qc_notes, fx_cny_thb,
+        logo_position, logo_notes, packaging_notes, qc_notes, factory_currency, fx_cny_thb,
         factory_unit_cny, factory_amount_cny, factory_thb, inland_thb, freight_thb,
         import_duty_thb, customs_fee_thb, packing_thb, last_mile_thb, landed_total_thb,
         freight_mode, ship_to_name, ship_to_phone, ship_to_address, ship_to_province,
         tracking_cn, tracking_th, notes, created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       )`,
     )
     .run(
       params.poId,
       params.orderId,
       params.status,
+      params.factoryId,
       params.factoryName,
       params.factoryContact,
       params.factoryPlatform,
@@ -132,6 +140,7 @@ export function insertFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
       params.logoNotes,
       params.packagingNotes,
       params.qcNotes,
+      params.factoryCurrency,
       params.fxCnyThb,
       params.factoryUnitCny,
       params.factoryAmountCny,
@@ -163,10 +172,10 @@ export function updateFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
   getDb()
     .prepare(
       `UPDATE factory_pos SET
-        order_id = ?, status = ?, factory_name = ?, factory_contact = ?,
+        order_id = ?, status = ?, factory_id = ?, factory_name = ?, factory_contact = ?,
         factory_platform = ?, source_offer_id = ?, product_name = ?, quantity = ?,
         color = ?, material = ?, decoration_method = ?, logo_position = ?,
-        logo_notes = ?, packaging_notes = ?, qc_notes = ?, fx_cny_thb = ?,
+        logo_notes = ?, packaging_notes = ?, qc_notes = ?, factory_currency = ?, fx_cny_thb = ?,
         factory_unit_cny = ?, factory_amount_cny = ?, factory_thb = ?, inland_thb = ?,
         freight_thb = ?, import_duty_thb = ?, customs_fee_thb = ?, packing_thb = ?,
         last_mile_thb = ?, landed_total_thb = ?, freight_mode = ?, ship_to_name = ?,
@@ -177,6 +186,7 @@ export function updateFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
     .run(
       params.orderId,
       params.status,
+      params.factoryId,
       params.factoryName,
       params.factoryContact,
       params.factoryPlatform,
@@ -190,6 +200,7 @@ export function updateFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
       params.logoNotes,
       params.packagingNotes,
       params.qcNotes,
+      params.factoryCurrency,
       params.fxCnyThb,
       params.factoryUnitCny,
       params.factoryAmountCny,
@@ -249,10 +260,13 @@ export function listFactoryPos(params?: {
   }
   if (q) {
     clauses.push(
-      `(po_id LIKE ? OR order_id LIKE ? OR factory_name LIKE ? OR product_name LIKE ? OR source_offer_id LIKE ?)`,
+      `(po_id LIKE ? OR order_id LIKE ? OR factory_name LIKE ? OR product_name LIKE ? OR source_offer_id LIKE ? OR EXISTS (
+         SELECT 1 FROM factories f WHERE f.id = factory_pos.factory_id
+           AND (f.factory_code LIKE ? OR f.name LIKE ?)
+       ))`,
     );
     const like = `%${q}%`;
-    binds.push(like, like, like, like, like);
+    binds.push(like, like, like, like, like, like, like);
   }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   const rows = getDb()
@@ -260,6 +274,16 @@ export function listFactoryPos(params?: {
       `SELECT * FROM factory_pos ${where} ORDER BY created_at DESC, id DESC LIMIT ?`,
     )
     .all(...binds, limit) as FactoryPoRow[];
+  return rows.map(mapPo);
+}
+
+export function listFactoryPosByFactoryId(factoryId: number): FactoryPoRecord[] {
+  if (!Number.isInteger(factoryId) || factoryId < 1) return [];
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM factory_pos WHERE factory_id = ? ORDER BY created_at DESC, id DESC LIMIT 80`,
+    )
+    .all(factoryId) as FactoryPoRow[];
   return rows.map(mapPo);
 }
 

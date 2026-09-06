@@ -13,7 +13,8 @@ import {
   type SourceImageCandidate,
   type SourcePlatform,
 } from "@/lib/alibaba/listing-urls";
-import { deleteObject, getObject, objectKey, putObject } from "@/lib/object-storage";
+import { deleteStoredObject } from "@/lib/object-legal-hold";
+import { getObject, objectKey, putObject } from "@/lib/object-storage";
 
 const MAX_IMAGE_BYTES = 4_000_000;
 const FETCH_MS = 15_000;
@@ -258,7 +259,7 @@ export async function deleteCatalogSourceImage(imageId: string): Promise<boolean
     // keep going — row still removed
   }
   try {
-    await deleteObject(objectKey("images", record.localPath));
+    await deleteStoredObject(objectKey("images", record.localPath));
   } catch {
     // keep going — row still removed
   }

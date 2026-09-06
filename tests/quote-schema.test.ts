@@ -144,4 +144,32 @@ describe("quote-schema (§31.1)", () => {
       );
     }
   });
+
+  it("accepts a selected VAT billing branch", () => {
+    const parsed = quoteSchema.safeParse({
+      ...basePayload,
+      taxId: "0105556003873",
+      billingBranch: "สาขาที่ 1 (00001)",
+    });
+    assert.equal(parsed.success, true);
+    if (parsed.success) {
+      assert.equal(parsed.data.billingBranch, "สาขาที่ 1 (00001)");
+    }
+
+    const fd = new FormData();
+    fd.set("name", basePayload.name);
+    fd.set("company", basePayload.company);
+    fd.set("email", basePayload.email);
+    fd.set("phone", basePayload.phone);
+    fd.set("quantity", String(basePayload.quantity));
+    fd.set("consent", "on");
+    fd.set("decorationMethod", basePayload.decorationMethod);
+    fd.set("taxId", "0105556003873");
+    fd.set("billingBranch", "สาขาที่ 1 (00001)");
+    const result = parseQuoteFormData(fd);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.billingBranch, "สาขาที่ 1 (00001)");
+    }
+  });
 });

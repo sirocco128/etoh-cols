@@ -18,10 +18,17 @@ const FACTORY_LEAK_PATTERNS = [
   /\b1688\b/i,
   /\boffer[_-]?id\b/i,
   /factory\s*cny/i,
+  /factory\s*(cost|price)/i,
+  /ex-?factory/i,
   /alibaba/i,
   /ต้นทุนโรงงาน/,
   /ราคาโรงงาน/,
   /ราคาทุน/,
+  /出厂价/,
+  /工厂成本/,
+  /ຕົ້ນທຶນໂຮງງານ/,
+  /ລາຄາໂຮງງານ/,
+  /စက်ရုံစျေး/,
   /\bmarkup\b/i,
   /\bSOF\b/,
   /alicdn/i,
@@ -35,6 +42,15 @@ const FIRM_QUOTE_PATTERNS = [
   /คิดเป็น\s*\d+/,
   /ชำระ(มัดจำ|เงิน)ได้เลย/,
   /พร้อมส่งวันนี้/,
+  /final\s*price/i,
+  /exact\s*price/i,
+  /firm\s*(quote|price)/i,
+  /pay\s+now/i,
+  /ready\s+(stock|to\s*ship)\s+today/i,
+  /最终价/,
+  /现货今天/,
+  /ລາຄາສຸດທ້າຍ/,
+  /နောက်ဆုံးစျေး/,
 ];
 
 export const INJECTION_REFUSAL_TH =
@@ -45,6 +61,31 @@ export const FACTORY_LEAK_REFUSAL_TH =
 
 export const FIRM_QUOTE_REFUSAL_TH =
   "ราคาบนเว็บเป็นช่วงโดยประมาณ ไม่ใช่ใบเสนอราคา กรุณาใช้แบบฟอร์มขอใบเสนอราคา หรือแชท LINE เพื่อให้ทีมขายยืนยัน";
+
+export const PUBLIC_SCOPE_REFUSAL_TH =
+  "ผู้ช่วยนี้ตอบเรื่องสั่งผลิตของขวัญองค์กรของเทราบิสเท่านั้น ไม่ติดตามพัสดุขนส่ง และไม่ตอบราคาสินค้าของบริษัทอื่น";
+
+const PUBLIC_SCOPE_PATTERNS = [
+  /\bhp-bat\b/i,
+  /\bhp-plug\b/i,
+  /homepower/i,
+  /บ้านเพาเวอร์/,
+  /ถ่านไฟฉาย/,
+  /alkaline/i,
+  /\bDO\s*\d{8,}/i,
+  /where\s+is\s+(my\s+)?(parcel|shipment|package)/i,
+  /\bSLA\b/,
+  /\btisi\b/i,
+  /มอก\.?\s*(2217|5)/,
+  /ปลั๊ก\s*philips/i,
+  /nexterp/i,
+  /物流/,
+  /运单/,
+];
+
+export function looksPublicScopeOverreach(text: string): boolean {
+  return PUBLIC_SCOPE_PATTERNS.some((re) => re.test(String(text || "")));
+}
 
 export function detectPromptInjection(text: string): boolean {
   return INJECTION_PATTERNS.some((re) => re.test(String(text || "")));

@@ -1,10 +1,11 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import type { OpsActionResult } from "@/app/actions/ops";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 import {
   confirmPayment,
   createOrderFromQuote,
@@ -16,19 +17,10 @@ import {
   type FulfillmentStatus,
 } from "@/lib/order-types";
 import { DEPOSIT_MODES, VAT_MODES } from "@/lib/th-billing";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
-import type { OpsActionResult } from "@/app/actions/ops";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
+import { composeOrderShipTo } from "@/lib/thai-address-format";
+import { getQuoteByRequestId } from "@/lib/quote-repository";
+import { assertMeetsForcedMinQty } from "@/lib/alibaba/forced-min-qty";
+import { getForcedMinQtyForCatalogSlug } from "@/lib/sku-master-repository";
 
 function safeOpsNext(formData: FormData, fallback: string): string {
   const next = String(formData.get("next") || "").trim();
@@ -63,8 +55,28 @@ export async function createOrderFromQuoteAction(
     return { ok: false, error: "รูปแบบมัดจำไม่ถูกต้อง" };
   }
 
+  const quantity = Number(formData.get("quantity")) || undefined;
+  const quote = getQuoteByRequestId(quoteRequestId);
+  if (quote) {
+    const forcedMinQty = await getForcedMinQtyForCatalogSlug(quote.productSlug);
+    if (forcedMinQty) {
+      try {
+        assertMeetsForcedMinQty(quantity ?? quote.quantity, forcedMinQty);
+      } catch {
+        return { ok: false, error: `จำนวนขั้นต่ำ ${forcedMinQty} ชุด ตามสูตรต้นทุนลงเรือ` };
+      }
+    }
+  }
+
   let order;
   try {
+    const composedShip = composeOrderShipTo({
+      streetAddress: String(formData.get("streetAddress") || formData.get("shipToAddress") || ""),
+      province: String(formData.get("province") || formData.get("shipToProvince") || ""),
+      district: String(formData.get("district") || ""),
+      subdistrict: String(formData.get("subdistrict") || ""),
+      zip: String(formData.get("zip") || ""),
+    });
     order = createOrderFromQuote({
       quoteRequestId,
       amount,
@@ -77,12 +89,12 @@ export async function createOrderFromQuoteAction(
       billingBranch: String(formData.get("billingBranch") || "") || undefined,
       shipToName: String(formData.get("shipToName") || "") || undefined,
       shipToPhone: String(formData.get("shipToPhone") || "") || undefined,
-      shipToAddress: String(formData.get("shipToAddress") || "") || undefined,
-      shipToProvince: String(formData.get("shipToProvince") || "") || undefined,
+      shipToAddress: composedShip.shipToAddress || undefined,
+      shipToProvince: composedShip.shipToProvince || undefined,
       saveBillingDefaults: String(formData.get("saveBillingDefaults") || "") === "1",
       productSummary: String(formData.get("productSummary") || "") || undefined,
       notes: String(formData.get("notes") || "") || undefined,
-      quantity: Number(formData.get("quantity")) || undefined,
+      quantity,
       actor: actor.email,
     });
   } catch (error) {
@@ -103,8 +115,7 @@ export async function createOrderFromQuoteAction(
     resourceType: "order",
     resourceId: order.orderId,
     detail: { quoteRequestId, total: order.totalAmount },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/orders");
   revalidatePath(`/ops/quotes/${quoteRequestId}`);
@@ -132,8 +143,7 @@ export async function confirmOrderPaymentAction(
       resourceType: "payment",
       resourceId: paymentId,
       detail: { orderId: order.orderId, paymentStatus: order.paymentStatus },
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
     });
     revalidatePath(`/ops/orders/${order.orderId}`);
     revalidatePath("/ops/orders");
@@ -174,8 +184,7 @@ export async function rejectOrderPaymentAction(
       resourceType: "payment",
       resourceId: paymentId,
       detail: { orderId: payment.orderId, reason: payment.rejectReason },
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
     });
     revalidatePath(`/ops/orders/${payment.orderId}`);
     revalidatePath("/ops/orders");
@@ -225,8 +234,7 @@ export async function updateOrderFulfillmentAction(
       resourceType: "order",
       resourceId: orderId,
       detail: { status: order.fulfillmentStatus },
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
     });
     revalidatePath(`/ops/orders/${orderId}`);
     revalidatePath("/ops/orders");

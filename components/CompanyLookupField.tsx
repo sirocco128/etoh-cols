@@ -4,9 +4,21 @@ import { COMPANY_TAX_LOOKUP_HINT } from "@/lib/ux-copy";
 import { isValidThaiTaxId } from "@/lib/th-billing";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export type CompanyLookupBranch = {
+  code: string;
+  label: string;
+  streetAddress?: string | null;
+  province?: string | null;
+  district?: string | null;
+  subdistrict?: string | null;
+  zip?: string | null;
+  address?: string | null;
+};
+
 export type CompanyLookupFill = {
   taxId: string;
   company: string;
+  billingBranch?: string;
   streetAddress?: string;
   province?: string;
   district?: string;
@@ -17,6 +29,7 @@ export type CompanyLookupFill = {
 type CompanyLookupFieldProps = {
   taxId: string;
   company: string;
+  billingBranch?: string;
   taxError?: string;
   companyError?: string;
   onTaxIdChange: (value: string) => void;
@@ -24,9 +37,20 @@ type CompanyLookupFieldProps = {
   onFill: (fill: CompanyLookupFill) => void;
 };
 
+function addressFromBranch(branch: CompanyLookupBranch): Partial<CompanyLookupFill> {
+  return {
+    ...(branch.streetAddress ? { streetAddress: branch.streetAddress } : {}),
+    ...(branch.province ? { province: branch.province } : {}),
+    ...(branch.district ? { district: branch.district } : {}),
+    ...(branch.subdistrict ? { subdistrict: branch.subdistrict } : {}),
+    ...(branch.zip ? { zip: branch.zip } : {}),
+  };
+}
+
 export function CompanyLookupField({
   taxId,
   company,
+  billingBranch = "",
   taxError,
   companyError,
   onTaxIdChange,
@@ -35,9 +59,12 @@ export function CompanyLookupField({
 }: CompanyLookupFieldProps) {
   const [status, setStatus] = useState("");
   const [pending, setPending] = useState(false);
+  const [branches, setBranches] = useState<CompanyLookupBranch[]>([]);
   const lastLookup = useRef("");
   const onFillRef = useRef(onFill);
+  const billingBranchRef = useRef(billingBranch);
   onFillRef.current = onFill;
+  billingBranchRef.current = billingBranch;
 
   const lookup = useCallback(async (raw: string) => {
     const digits = raw.replace(/\D/g, "");
@@ -62,19 +89,28 @@ export function CompanyLookupField({
         status?: string;
         error?: string;
         source?: string;
+        branches?: CompanyLookupBranch[];
       };
       if (!json.ok || !json.name) {
+        setBranches([]);
         setStatus(json.error || "ไม่พบบริษัทจากเลขนี้ กรอกชื่อเองได้");
         return;
       }
+      const nextBranches = Array.isArray(json.branches) ? json.branches : [];
+      setBranches(nextBranches);
+      const hq = nextBranches[0];
+      const previous = billingBranchRef.current;
+      const preserved = nextBranches.find((branch) => branch.label === previous);
+      const chosen = preserved || hq;
       onFillRef.current({
         taxId: json.taxId || digits,
         company: json.name,
-        streetAddress: json.streetAddress,
-        province: json.province,
-        district: json.district,
-        subdistrict: json.subdistrict,
-        zip: json.zip,
+        billingBranch: chosen?.label || "สำนักงานใหญ่",
+        streetAddress: chosen?.streetAddress || json.streetAddress,
+        province: chosen?.province || json.province,
+        district: chosen?.district || json.district,
+        subdistrict: chosen?.subdistrict || json.subdistrict,
+        zip: chosen?.zip || json.zip,
       });
       const sourceLabel =
         json.source === "crm"
@@ -83,8 +119,13 @@ export function CompanyLookupField({
             ? "จากกรมสรรพากร"
             : "จากกรมพัฒนาธุรกิจการค้า";
       const running = json.status ? ` · สถานะ ${json.status}` : "";
-      setStatus(`พบ ${json.name} (${sourceLabel}${running})`);
+      const branchNote =
+        nextBranches.length > 1
+          ? ` · พบ ${nextBranches.length} สาขา ให้เลือกสาขาที่ออกใบกำกับภาษี`
+          : "";
+      setStatus(`พบ ${json.name} (${sourceLabel}${running}${branchNote})`);
     } catch {
+      setBranches([]);
       setStatus("ค้นหาไม่สำเร็จในตอนนี้ กรอกชื่อบริษัทเองได้");
     } finally {
       setPending(false);
@@ -95,6 +136,7 @@ export function CompanyLookupField({
     const digits = taxId.replace(/\D/g, "");
     if (digits.length !== 13) {
       lastLookup.current = "";
+      setBranches([]);
       return;
     }
     const timer = window.setTimeout(() => {
@@ -103,7 +145,11 @@ export function CompanyLookupField({
     return () => window.clearTimeout(timer);
   }, [taxId, lookup]);
 
+  const selectedLabel = billingBranch || "สำนักงานใหญ่";
+  const showBranchSelect = branches.length > 1;
+
   return (
+    <div className="space-y-4">
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
         <label htmlFor="taxId" className="mb-1.5 block text-sm font-medium text-ink">
@@ -165,6 +211,52 @@ export function CompanyLookupField({
           </p>
         ) : null}
       </div>
+    </div>
+    {showBranchSelect ? (
+      <div>
+        <label htmlFor="billingBranch" className="mb-1.5 block text-sm font-medium text-ink">
+          สาขาที่ออกใบกำกับภาษี *
+        </label>
+        <select
+          id="billingBranch"
+          name="billingBranch"
+          value={
+            branches.some((branch) => branch.label === selectedLabel)
+              ? selectedLabel
+              : branches[0]?.label || "สำนักงานใหญ่"
+          }
+          onChange={(event) => {
+            const picked =
+              branches.find((branch) => branch.label === event.target.value) ||
+              branches[0];
+            if (!picked) return;
+            onFill({
+              taxId,
+              company,
+              billingBranch: picked.label,
+              ...addressFromBranch(picked),
+            });
+          }}
+          className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+        >
+          {branches.map((branch) => (
+            <option key={`${branch.code}-${branch.label}`} value={branch.label}>
+              {branch.label}
+              {branch.streetAddress ? ` — ${branch.streetAddress}` : ""}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-ink/55">
+          เลือกสำนักงานใหญ่หรือสาขาที่ต้องการให้เขียนในใบเสนอราคาและใบกำกับภาษี ที่อยู่ด้านล่างจะตามสาขาที่เลือก
+        </p>
+      </div>
+    ) : (
+      <input
+        type="hidden"
+        name="billingBranch"
+        value={selectedLabel || "สำนักงานใหญ่"}
+      />
+    )}
     </div>
   );
 }

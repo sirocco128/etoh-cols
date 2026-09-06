@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
@@ -24,7 +23,7 @@ import {
   requireOpsActor,
   setOpsSessionCookie,
 } from "@/lib/ops-auth";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 import { updateQuoteOps } from "@/lib/quote-repository";
 import type { LeadStatus } from "@/lib/quote-types";
 import { LEAD_STATUSES } from "@/lib/quote-types";
@@ -33,17 +32,6 @@ export type OpsActionResult = {
   ok: boolean;
   error?: string;
 };
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
 
 export async function opsLoginAction(
   _prev: OpsActionResult | null,
@@ -61,8 +49,7 @@ export async function opsLoginAction(
       action: "login",
       status: "denied",
       detail: { email: email.trim().toLowerCase() || null },
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+      ...meta,
       errorMessage: "invalid credentials",
     });
     return { ok: false, error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
@@ -72,8 +59,7 @@ export async function opsLoginAction(
     actor,
     action: "login",
     status: "ok",
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   redirect("/ops/quotes");
 }
@@ -86,8 +72,7 @@ export async function opsLogoutAction(): Promise<void> {
       actor,
       action: "logout",
       status: "ok",
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+      ...meta,
     });
   }
   await clearOpsSessionCookie();
@@ -106,7 +91,7 @@ export async function updateQuoteOpsAction(
 
   const requestId = String(formData.get("requestId") || "").trim();
   const leadStatus = String(formData.get("leadStatus") || "").trim() as LeadStatus;
-  const salesNotes = String(formData.get("salesNotes") || "");
+  const note = String(formData.get("salesNotes") || "").trim();
 
   if (!requestId) return { ok: false, error: "ไม่มีเลขคำขอ" };
   if (!(LEAD_STATUSES as readonly string[]).includes(leadStatus)) {
@@ -116,7 +101,13 @@ export async function updateQuoteOpsAction(
   const updated = updateQuoteOps({
     requestId,
     leadStatus,
-    salesNotes: salesNotes.trim() || null,
+    salesNotes: note || undefined,
+    timelineNote: note || null,
+    actor: {
+      email: actor.email,
+      name: actor.name,
+      role: actor.role,
+    },
   });
   if (!updated) return { ok: false, error: "ไม่พบคำขอ" };
 
@@ -126,9 +117,11 @@ export async function updateQuoteOpsAction(
     status: "ok",
     resourceType: "quote",
     resourceId: requestId,
-    detail: { leadStatus },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    detail: {
+      leadStatus,
+      note: note || null,
+    },
+    ...meta,
   });
 
   revalidatePath("/ops/quotes");
@@ -196,8 +189,7 @@ export async function updateCustomerOpsAction(
     resourceType: "customer",
     resourceId: String(id),
     detail: { status },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
 
   revalidatePath("/ops/customers");

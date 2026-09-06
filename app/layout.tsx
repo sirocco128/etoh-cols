@@ -1,16 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Noto_Sans_Thai, Sarabun } from "next/font/google";
 import { BuyerAssistantWidget } from "@/components/BuyerAssistantWidget";
+import { TerabisAiWidget } from "@/components/TerabisAiWidget";
 import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 import { FloatingQuoteDock } from "@/components/FloatingQuoteDock";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { Navbar } from "@/components/Navbar";
+import { ProductCompareTray } from "@/components/ProductCompareTray";
+import { QuoteLaunchModal } from "@/components/QuoteLaunchModal";
 import { SiteChrome } from "@/components/SiteChrome";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme-presets";
+import { isTaipWidgetEnabled } from "@/lib/feature-flags";
 import { buildMetadata } from "@/lib/metadata";
 import {
   buildLocalBusinessJsonLd,
@@ -40,6 +45,17 @@ const notoSansThai = Noto_Sans_Thai({
 
 export const metadata: Metadata = buildMetadata();
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#14352a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c1915" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,7 +70,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sarabun.variable} ${geist.variable} ${notoSansThai.variable}`}
     >
-      <body className={`${sarabun.className} flex min-h-screen flex-col`}>
+      <head>
+        <script
+          id="theme-boot"
+          dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
+        />
+      </head>
+      <body className={`${sarabun.className} flex min-h-dvh flex-col overflow-x-clip`}>
         <ThemeProvider>
           <SmoothScroll />
           <a
@@ -71,14 +93,20 @@ export default function RootLayout({
               </>
             }
           >
-            <main id="main-content" className="flex-1 pb-mobile-cta">
+            <main id="main-content" className="min-w-0 flex-1 overflow-x-clip pb-mobile-cta">
               {children}
             </main>
           </SiteChrome>
           <SiteChrome chrome={<Footer />}>{null}</SiteChrome>
           <SiteChrome chrome={<MobileStickyCta />}>{null}</SiteChrome>
           <SiteChrome chrome={<FloatingQuoteDock />}>{null}</SiteChrome>
-          <SiteChrome chrome={<BuyerAssistantWidget />}>{null}</SiteChrome>
+          <SiteChrome
+            chrome={isTaipWidgetEnabled() ? <TerabisAiWidget /> : <BuyerAssistantWidget />}
+          >
+            {null}
+          </SiteChrome>
+          <SiteChrome chrome={<ProductCompareTray />}>{null}</SiteChrome>
+          <SiteChrome chrome={<QuoteLaunchModal />}>{null}</SiteChrome>
           <SiteChrome chrome={<Toaster />}>{null}</SiteChrome>
           <JsonLd data={organization} />
           {localBusiness ? <JsonLd data={localBusiness} /> : null}

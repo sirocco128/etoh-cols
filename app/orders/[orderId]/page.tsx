@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { OrderStatusTimeline } from "@/components/OrderStatusTimeline";
 import { PromptPayPanel } from "@/components/PromptPayPanel";
+import { RememberRecentOrder } from "@/components/RememberRecentOrder";
+import { issueHrefForOrder } from "@/lib/customer-session";
 import {
   BILLING_DOCUMENT_LABELS,
   PAYMENT_KIND_LABELS,
@@ -18,6 +20,10 @@ import {
 import { promptPayQrDataUrl } from "@/lib/qr-svg";
 import { getLatestSlipForPayment } from "@/lib/payment-slips";
 import { formatThb, formatThaiDateTime } from "@/lib/th-billing";
+import {
+  ACCOUNT_HUB_TITLE,
+  REPORT_ISSUE_FOR_ORDER,
+} from "@/lib/ux-copy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,17 +69,29 @@ export default async function PublicOrderPage({
   }
 
   return (
-    <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-content px-page py-12 sm:py-16">
+      <RememberRecentOrder orderId={order.orderId} token={token} />
       <Breadcrumbs
         items={[
+          { href: "/account", label: ACCOUNT_HUB_TITLE },
           { href: "/orders", label: "ออเดอร์ของฉัน" },
           { label: order.orderId },
         ]}
       />
-      <h1 className="font-mono text-2xl font-bold text-forest">{order.orderId}</h1>
-      <p className="mt-2 text-sm text-ink/70">
-        {order.company} · {paymentStatusLabelForOrder(order)}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-mono text-2xl font-bold text-forest">{order.orderId}</h1>
+          <p className="mt-2 text-sm text-ink/70">
+            {order.company} · {paymentStatusLabelForOrder(order)}
+          </p>
+        </div>
+        <Link
+          href={issueHrefForOrder(order.orderId, token)}
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/25 bg-paper px-5 text-sm font-semibold text-forest transition hover:border-brass/50 hover:bg-forest-mist/50"
+        >
+          {REPORT_ISSUE_FOR_ORDER}
+        </Link>
+      </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <section className="rounded-2xl border border-forest/15 bg-paper p-6">

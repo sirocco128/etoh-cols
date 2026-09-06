@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ContactInquiryForm } from "@/components/ContactInquiryForm";
 import { QuoteForm } from "@/components/QuoteForm";
 import { COMPANY, formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
 import { metadataForPath } from "@/lib/page-seo";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
+import { CONTACT_INQUIRY_INTRO } from "@/lib/ux-copy";
 
 export async function generateMetadata(): Promise<Metadata> {
   return metadataForPath("/contact");
@@ -28,6 +31,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const productSlug = firstParam(params.productSlug) || firstParam(params.slug);
   const quantity = firstParam(params.quantity);
   const basketId = firstParam(params.basketId);
+  const hasQuotePrefill = Boolean(note || productInterest || productSlug || quantity || basketId);
+  const intent = firstParam(params.intent);
+  const isMessage = intent === "message" && !hasQuotePrefill;
   const contact = getPublicContact(site);
   const address = formatRegisteredAddress({
     streetAddress: site.localBusiness.streetAddress,
@@ -35,17 +41,25 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
     region: site.localBusiness.region,
     postalCode: site.localBusiness.postalCode,
   });
+  const tabClass = (active: boolean) =>
+    `inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold ${
+      active
+        ? "bg-forest text-paper"
+        : "border border-forest/20 text-forest hover:border-forest/40"
+    }`;
 
   return (
-    <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
-      <Breadcrumbs items={[{ label: "ติดต่อ / ขอใบเสนอราคา" }]} />
+    <div className="mx-auto max-w-content px-page py-12 sm:py-16">
+      <Breadcrumbs items={[{ label: isMessage ? "ติดต่อเรา" : "ติดต่อ / ขอใบเสนอราคา" }]} />
       <div className="grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <section>
-          <h1 className="text-3xl font-bold text-forest sm:text-4xl">ติดต่อ / ขอใบเสนอราคา</h1>
+          <h1 className="text-3xl font-bold text-forest sm:text-4xl">
+            {isMessage ? "ติดต่อ สอบถาม หรือร้องเรียน" : "ติดต่อ / ขอใบเสนอราคา"}
+          </h1>
           <p className="mt-4 text-ink/80 leading-relaxed">
-            {COMPANY.legalName} — แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้งาน
-            ทีมขายติดต่อกลับในเวลาทำการ แบบฟอร์มนี้ไม่มีการชำระเงิน
-            และยังไม่ใช่การยืนยันสั่งซื้อ หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์
+            {isMessage
+              ? `${COMPANY.legalName} — ${CONTACT_INQUIRY_INTRO}`
+              : `${COMPANY.legalName} — แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้งาน ทีมขายติดต่อกลับในเวลาทำการ แบบฟอร์มนี้ไม่มีการชำระเงิน และยังไม่ใช่การยืนยันสั่งซื้อ หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์`}
           </p>
           {basketId ? (
             <p
@@ -56,6 +70,15 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               รายละเอียดถูกเติมในฟอร์มแล้ว กรุณาตรวจสอบก่อนส่ง
             </p>
           ) : null}
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link href="/contact" className={tabClass(!isMessage)}>
+              ขอใบเสนอราคา
+            </Link>
+            <Link href="/contact?intent=message" className={tabClass(isMessage)}>
+              ติดต่อ / สอบถาม / ร้องเรียน
+            </Link>
+          </div>
 
           <dl className="mt-8 space-y-5 text-sm">
             <div>
@@ -123,14 +146,18 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           </dl>
         </section>
 
-        <QuoteForm
-          heading="แบบฟอร์มขอใบเสนอราคา"
-          productInterest={productInterest}
-          productSlug={productSlug}
-          initialDetail={note}
-          initialQuantity={quantity}
-          basketId={basketId}
-        />
+        {isMessage ? (
+          <ContactInquiryForm />
+        ) : (
+          <QuoteForm
+            heading="แบบฟอร์มขอใบเสนอราคา"
+            productInterest={productInterest}
+            productSlug={productSlug}
+            initialDetail={note}
+            initialQuantity={quantity}
+            basketId={basketId}
+          />
+        )}
       </div>
     </div>
   );

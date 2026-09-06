@@ -84,11 +84,11 @@ export function ThaiAddressFields({
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <SuggestInput
           id="province"
           name="province"
-          label="จังหวัดจัดส่ง"
+          label="จังหวัด"
           value={province}
           error={provinceError}
           placeholder="พิมพ์หรือเลือกจังหวัด"
@@ -148,8 +148,31 @@ export function ThaiAddressFields({
             })
           }
         />
+        <div>
+          <label htmlFor="zip" className="mb-1.5 block text-sm font-medium text-ink">
+            รหัสไปรษณีย์
+          </label>
+          <input
+            id="zip"
+            name="zip"
+            value={zip}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={5}
+            placeholder="11120"
+            onChange={(event) =>
+              onChange({
+                streetAddress,
+                province,
+                district,
+                subdistrict,
+                zip: event.target.value.replace(/\D/g, "").slice(0, 5),
+              })
+            }
+            className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+          />
+        </div>
       </div>
-      <input type="hidden" name="zip" value={zip} />
     </div>
   );
 }

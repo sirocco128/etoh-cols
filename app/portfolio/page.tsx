@@ -17,7 +17,7 @@ export default async function PortfolioPage() {
   const isMock = (process.env.CMS_MODE || "mock") !== "strapi";
 
   return (
-    <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-content px-page py-12 sm:py-16">
       <Breadcrumbs items={[{ label: "ผลงาน" }]} />
       <div className="max-w-2xl">
         <h1 className="text-3xl font-bold text-forest sm:text-4xl">ผลงาน</h1>

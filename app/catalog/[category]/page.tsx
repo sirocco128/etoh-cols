@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CatalogFilterTabs } from "@/components/CatalogFilterTabs";
 import { CatalogFlipbook } from "@/components/CatalogFlipbook";
 import { EmptyState } from "@/components/EmptyState";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
-import { buildCatalogBook } from "@/lib/catalog-book";
-import { flipHtml5EmbedUrl } from "@/lib/fliphtml5";
+import { buildCatalogBook, catalogPageNumberForSlug } from "@/lib/catalog-book";
+import { catalogPdfUrl, flipHtml5EmbedUrl, parseFlipPageParam } from "@/lib/fliphtml5";
 import { metadataFromSeo } from "@/lib/metadata";
 import { clampSeoTitle, fitSeoDescription } from "@/lib/seo-limits";
-import { getCategories, getCategoryBySlug, getProducts } from "@/lib/strapi";
+import { getCategories, getCategoryBySlug, getProductsByCategory } from "@/lib/strapi";
+import { canonicalCategorySlug } from "@/lib/smartgift-products";
 import { categoryTabLabel } from "@/lib/product-media";
 import {
   FLIP_CATALOG_CLOSING_BODY,
@@ -25,6 +26,7 @@ export const dynamicParams = true;
 
 type PageProps = {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ p?: string | string[]; product?: string | string[] }>;
 };
 
 export async function generateStaticParams() {
@@ -50,11 +52,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   );
 }
 
-export default async function CatalogGroupPage({ params }: PageProps) {
+export default async function CatalogGroupPage({ params, searchParams }: PageProps) {
   const { category: slug } = await params;
+  const query = await searchParams;
+  const canonical = canonicalCategorySlug(slug);
+  if (canonical !== slug) redirect(`/catalog/${canonical}`);
+
   const [category, products, categories] = await Promise.all([
     getCategoryBySlug(slug),
-    getProducts(),
+    getProductsByCategory(slug),
     getCategories(),
   ]);
   if (!category) notFound();
@@ -69,11 +75,15 @@ export default async function CatalogGroupPage({ params }: PageProps) {
     closingBody: FLIP_CATALOG_CLOSING_BODY,
   });
   const flipHtml5Url = flipHtml5EmbedUrl(process.env.NEXT_PUBLIC_FLIPHTML5_URL);
+  const pdfUrl = catalogPdfUrl(process.env.NEXT_PUBLIC_FLIPHTML5_PDF_URL);
+  const productSlug = Array.isArray(query.product) ? query.product[0] : query.product;
+  const initialPage =
+    parseFlipPageParam(query.p) || catalogPageNumberForSlug(book.pages, productSlug);
   const inGroup = products.filter((product) => product.categorySlug === category.slug);
 
   return (
     <div className="bg-premium-mesh">
-      <div className="mx-auto max-w-content px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-content px-page py-6 sm:py-8">
         <Breadcrumbs
           items={[
             { href: "/catalog", label: FLIP_CATALOG_NAV },
@@ -109,7 +119,12 @@ export default async function CatalogGroupPage({ params }: PageProps) {
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />
         ) : (
-          <CatalogFlipbook pages={book.pages} flipHtml5Url={flipHtml5Url} />
+          <CatalogFlipbook
+            pages={book.pages}
+            flipHtml5Url={flipHtml5Url}
+            pdfUrl={pdfUrl}
+            initialPage={initialPage}
+          />
         )}
         {inGroup.length > 0 ? <PriceDisclaimer className="mt-8" /> : null}
         <p className="mt-6 text-sm text-ink/55">

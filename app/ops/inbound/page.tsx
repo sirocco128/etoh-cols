@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { receiveGoodsAction } from "@/app/actions/ops-cycle";
-import { listPos } from "@/lib/factory-po-service";
+import { listPos } from "@/lib/factory-po-queries";
 import { requireOpsPage } from "@/lib/ops-auth";
 import {
   factoryPayableSnapshot,

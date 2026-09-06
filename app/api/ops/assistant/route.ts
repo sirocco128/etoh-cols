@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { runOpsAssistant } from "@/lib/assistant-ops";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
+import { opsAuditContextFromHeaders } from "@/lib/ops-request-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const ip = resolveClientIp(request.headers);
   const result = await runOpsAssistant({
     actor,
     message: String(body.message || ""),
@@ -33,8 +32,7 @@ export async function POST(request: Request) {
     toolName: result.tools.map((item) => item.tool).join(",") || null,
     prompt: String(body.message || ""),
     detail: { tools: result.tools },
-    ipHash: hashIp(ip),
-    userAgent: request.headers.get("user-agent"),
+    ...opsAuditContextFromHeaders(request.headers),
     errorMessage: result.refused ? "refused" : null,
   });
 

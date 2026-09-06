@@ -14,7 +14,7 @@ export default function Error({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="mx-auto flex min-h-[50vh] max-w-content flex-col items-center justify-center px-4 py-16 text-center sm:px-6">
+    <div className="mx-auto flex min-h-[50vh] max-w-content flex-col items-center justify-center px-page py-16 text-center">
       <p className="text-sm font-semibold uppercase tracking-wide text-brass">
         เกิดข้อผิดพลาด
       </p>

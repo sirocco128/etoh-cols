@@ -52,10 +52,21 @@ export type CatalogClosingPage = {
   body: string;
 };
 
+export type CatalogFilePage = {
+  kind: "file";
+  title: string;
+  groupName: string;
+  originalName: string;
+  fileKind: "photo" | "pdf";
+  image?: string;
+  href?: string;
+};
+
 export type CatalogBookPage =
   | CatalogCoverPage
   | CatalogSectionPage
   | CatalogProductPage
+  | CatalogFilePage
   | CatalogClosingPage;
 
 export type CatalogBook = {
@@ -186,4 +197,26 @@ export function buildCatalogBook(options: {
   });
 
   return { groups, pages, filterSlug };
+}
+
+/** 1-based page number matching FlipHTML5 `#p=` and in-app flip index. */
+export function catalogPageNumberForSlug(
+  pages: CatalogBookPage[],
+  slug: string | null | undefined,
+): number | null {
+  const wanted = String(slug || "").trim();
+  if (!wanted) return null;
+  const index = pages.findIndex(
+    (page) => page.kind === "product" && page.product.slug === wanted,
+  );
+  return index >= 0 ? index + 1 : null;
+}
+
+export function clampCatalogPage(
+  pages: CatalogBookPage[],
+  pageNumber: number | null | undefined,
+): number | null {
+  if (!pageNumber || pageNumber < 1) return null;
+  if (pageNumber > pages.length) return pages.length;
+  return pageNumber;
 }

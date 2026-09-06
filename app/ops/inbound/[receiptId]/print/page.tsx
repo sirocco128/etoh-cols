@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { DocumentPreviewShell } from "@/components/DocumentPreviewShell";
 import { COMPANY, formatRegisteredAddress } from "@/lib/company";
-import { getFactoryPo } from "@/lib/factory-po-service";
+import { getFactoryPo } from "@/lib/factory-po-queries";
 import { requireOpsPage } from "@/lib/ops-auth";
 import { getClaimByReceiptId, getGoodsReceipt } from "@/lib/ops-cycle-service";
 import { DESTINATION_LABELS } from "@/lib/ops-cycle-types";

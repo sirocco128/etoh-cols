@@ -5,8 +5,8 @@ import { CatalogFilterTabs } from "@/components/CatalogFilterTabs";
 import { CatalogFlipbook } from "@/components/CatalogFlipbook";
 import { EmptyState } from "@/components/EmptyState";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
-import { buildCatalogBook } from "@/lib/catalog-book";
-import { flipHtml5EmbedUrl } from "@/lib/fliphtml5";
+import { buildCatalogBook, catalogPageNumberForSlug } from "@/lib/catalog-book";
+import { catalogPdfUrl, flipHtml5EmbedUrl, parseFlipPageParam } from "@/lib/fliphtml5";
 import { metadataForPath } from "@/lib/page-seo";
 import { getCategories, getProducts } from "@/lib/strapi";
 import {
@@ -19,11 +19,16 @@ import {
 
 export const revalidate = 300;
 
+type CatalogPageProps = {
+  searchParams: Promise<{ p?: string | string[]; product?: string | string[] }>;
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   return metadataForPath("/catalog");
 }
 
-export default async function CatalogPage() {
+export default async function CatalogPage({ searchParams }: CatalogPageProps) {
+  const params = await searchParams;
   const [products, categories] = await Promise.all([
     getProducts(),
     getCategories(),
@@ -37,10 +42,15 @@ export default async function CatalogPage() {
     closingBody: FLIP_CATALOG_CLOSING_BODY,
   });
   const flipHtml5Url = flipHtml5EmbedUrl(process.env.NEXT_PUBLIC_FLIPHTML5_URL);
+  const pdfUrl = catalogPdfUrl(process.env.NEXT_PUBLIC_FLIPHTML5_PDF_URL);
+  const productSlug = Array.isArray(params.product) ? params.product[0] : params.product;
+  const requestedPage = parseFlipPageParam(params.p);
+  const initialPage =
+    requestedPage || catalogPageNumberForSlug(book.pages, productSlug);
 
   return (
     <div className="bg-premium-mesh">
-      <div className="mx-auto max-w-content px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-content px-page py-6 sm:py-8">
         <Breadcrumbs items={[{ label: FLIP_CATALOG_NAV }]} />
         <div className="max-w-2xl">
           <h1 className="text-2xl font-bold tracking-tight text-forest sm:text-3xl dark:text-paper">
@@ -70,7 +80,12 @@ export default async function CatalogPage() {
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />
         ) : (
-          <CatalogFlipbook pages={book.pages} flipHtml5Url={flipHtml5Url} />
+          <CatalogFlipbook
+            pages={book.pages}
+            flipHtml5Url={flipHtml5Url}
+            pdfUrl={pdfUrl}
+            initialPage={initialPage}
+          />
         )}
         {products.length > 0 ? <PriceDisclaimer className="mt-8" /> : null}
       </div>

@@ -15,13 +15,17 @@ export type ThaiAddressRow = {
 };
 
 export {
+  composeOrderShipTo,
   formatShipToLabel,
   formatThaiMailingAddress,
   isBangkokProvince,
   normalizeThaiPlaceName,
+  parseThaiMailingAddress,
+  quoteShipToParts,
   thaiDistrictLabel,
   thaiSubdistrictLabel,
 } from "@/lib/thai-address-format";
+export type { ThaiMailingParts } from "@/lib/thai-address-format";
 
 type TambonNode = { n: string; z: string };
 type DistrictNode = { n: string; tambons: TambonNode[] };

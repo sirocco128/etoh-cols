@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FactoryPoForm } from "@/components/FactoryPoForm";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
-import { draftFromOrder } from "@/lib/factory-po-service";
+import { draftFromOrder } from "@/lib/factory-po-queries";
+import { listFactoriesForPoForm } from "@/lib/factory-registry-service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,7 +48,11 @@ export default async function NewFactoryPoPage({
       </p>
       <h1 className="mt-3 text-2xl font-bold text-forest">สร้างใบสั่งโรงงาน</h1>
       <div className="mt-6">
-        <FactoryPoForm orderId={orderId} defaults={draft} />
+        <FactoryPoForm
+          orderId={orderId}
+          defaults={draft}
+          factories={listFactoriesForPoForm()}
+        />
       </div>
     </div>
   );

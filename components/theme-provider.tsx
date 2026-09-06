@@ -1,8 +1,31 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import {
+  applyThemeToDocument,
+  parseThemeId,
+  THEME_STORAGE_KEY,
+} from "@/lib/theme-presets";
 
-/** Light-only site — skip next-themes so `<html>` class does not mismatch on hydrate. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  return children;
+  useEffect(() => {
+    try {
+      applyThemeToDocument(parseThemeId(localStorage.getItem(THEME_STORAGE_KEY)));
+    } catch {
+      applyThemeToDocument("forest");
+    }
+  }, []);
+
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </NextThemesProvider>
+  );
 }

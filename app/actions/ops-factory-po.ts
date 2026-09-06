@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { OpsActionResult } from "@/app/actions/ops";
@@ -11,18 +11,6 @@ import {
   FACTORY_PO_STATUSES,
   type FactoryPoStatus,
 } from "@/lib/factory-po-types";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
 
 function money(form: FormData, key: string): number {
   const raw = String(form.get(key) || "").replace(/,/g, "").trim();
@@ -37,7 +25,9 @@ function text(form: FormData, key: string): string {
 
 const ERRORS: Record<string, string> = {
   order_not_found: "ไม่พบออเดอร์ลูกค้า",
-  factory_name_required: "กรุณาระบุชื่อโรงงาน",
+  factory_name_required: "กรุณาระบุชื่อโรงงาน หรือเลือกจากทะเบียน",
+  factory_not_found: "ไม่พบโรงงานในทะเบียน",
+  factory_blocked: "โรงงานนี้ถูกระงับ — สั่งไม่ได้",
   po_status_locked: "ใบสั่งนี้ยกเลิกแล้ว แก้สถานะไม่ได้",
   invalid_po_transition: "เลื่อนสถานะใบสั่งโรงงานย้อนหลังไม่ได้",
 };
@@ -64,6 +54,7 @@ export async function saveFactoryPoAction(
       poId: poId || undefined,
       orderId,
       status: statusRaw as FactoryPoStatus,
+      factoryId: Number(text(formData, "factoryId")) || null,
       factoryName: text(formData, "factoryName"),
       factoryContact: text(formData, "factoryContact"),
       factoryPlatform: text(formData, "factoryPlatform") || "other",
@@ -77,6 +68,7 @@ export async function saveFactoryPoAction(
       logoNotes: text(formData, "logoNotes"),
       packagingNotes: text(formData, "packagingNotes"),
       qcNotes: text(formData, "qcNotes"),
+      factoryCurrency: text(formData, "factoryCurrency") || "CNY",
       fxCnyThb: money(formData, "fxCnyThb") || undefined,
       factoryUnitCny: money(formData, "factoryUnitCny"),
       factoryAmountCny: money(formData, "factoryAmountCny") || undefined,
@@ -109,8 +101,7 @@ export async function saveFactoryPoAction(
     resourceType: "factory_po",
     resourceId: saved.poId,
     detail: { orderId: saved.orderId, landed: saved.landedTotalThb, status: saved.status },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath("/ops/factory-po");
   revalidatePath(`/ops/factory-po/${saved.poId}`);

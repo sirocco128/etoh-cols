@@ -12,8 +12,11 @@ export const PRICE_DISCLAIMER_FULL =
 export const RFQ_NO_PAYMENT =
   "แบบฟอร์มนี้ใช้ขอใบเสนอราคาเท่านั้น ไม่มีการชำระเงิน และยังไม่ใช่การยืนยันสั่งซื้อ";
 
+export const CONTACT_INQUIRY_INTRO =
+  "ใช้ฟอร์มนี้เมื่อต้องการติดต่อ สอบถาม ร้องเรียน หรือเรื่องอื่นที่ไม่ใช่ใบเสนอราคา กรอกอีเมลและเบอร์โทรเพื่อให้ทีมงานติดต่อกลับ — ไม่มีการชำระเงินในหน้านี้";
+
 export const COMPANY_TAX_LOOKUP_HINT =
-  "ใส่เลข 13 หลักจากหนังสือรับรองบริษัท ระบบจะค้นชื่อจากกรมสรรพากรและกรมพัฒนาธุรกิจการค้าให้ กรอกชื่อเองได้ถ้าค้นไม่เจอ";
+  "ใส่เลข 13 หลักจากหนังสือรับรองบริษัท ระบบจะค้นชื่อจากกรมสรรพากรและกรมพัฒนาธุรกิจการค้าให้ ถ้ามีหลายสาขา ให้เลือกสาขาที่ใช้ออกใบกำกับภาษี";
 
 export const EMAIL_FORMAT_HINT = "เช่น name@company.co.th";
 export const PHONE_FORMAT_HINT = "เช่น 081-234-5678 หรือ 02-123-4567";
@@ -29,6 +32,29 @@ export const ORDER_TRACKING_INTRO =
 
 export const ISSUE_REPORT_INTRO =
   "แจ้งปัญหาคุณภาพ สกรีนโลโก้ ของไม่ครบ หรือจัดส่ง ทีมจะรับเรื่องและติดต่อกลับ ไม่มีการชำระเงินในหน้านี้";
+
+/** Hub for returning buyers — not a primary marketing nav item. */
+export const ACCOUNT_HUB_TITLE = "ลูกค้าที่สั่งแล้ว";
+
+export const ACCOUNT_HUB_INTRO =
+  "โซนนี้สำหรับลูกค้าที่มีออเดอร์จากทีมขายแล้ว ใช้ติดตามสถานะ แจ้งโอน หรือแจ้งปัญหาสินค้า หากยังไม่ได้สั่ง ให้ขอใบเสนอราคาก่อน";
+
+export const ACCOUNT_HUB_ORDERS_TITLE = "ออเดอร์ของฉัน";
+
+export const ACCOUNT_HUB_ORDERS_BODY =
+  "ค้นหาด้วยอีเมลและเบอร์โทรที่ใช้ตอนขอราคา หรือเปิดจากลิงก์ที่ทีมขายส่งให้";
+
+export const ACCOUNT_HUB_ISSUES_TITLE = "แจ้งปัญหาสินค้า";
+
+export const ACCOUNT_HUB_ISSUES_BODY =
+  "แจ้งคุณภาพ โลโก้ ของไม่ครบ หรือจัดส่ง — ทีมรับเรื่องและติดต่อกลับ ไม่มีการชำระเงินในหน้านี้";
+
+export const ACCOUNT_HUB_NEED_ORDER =
+  "ยังไม่มีออเดอร์? ส่งคำขอใบเสนอราคา ทีมขายจะเปิดออเดอร์และส่งลิงก์ให้คุณ";
+
+export const RECENT_ORDER_HINT = "กลับไปออเดอร์ที่เพิ่งดู";
+
+export const REPORT_ISSUE_FOR_ORDER = "แจ้งปัญหาออเดอร์นี้";
 
 export const HOW_IT_WORKS = [
   {
@@ -49,6 +75,17 @@ export const HOW_IT_WORKS = [
 ] as const;
 
 export const LOGO_SCREENING_BADGE = "สกรีนโลโก้ได้";
+
+export const CUSTOM_QUOTE_NOTICE_SHORT =
+  "ราคาประมาณ — ราคาสุดท้ายตามจำนวนและงานโลโก้ ไม่ใช่ราคาชำระบนเว็บ";
+
+export const CUSTOM_QUOTE_NOTICE =
+  "ราคาบนเว็บเป็นราคาฐานโดยประมาณสำหรับขอใบเสนอราคา (Custom Quote) ราคาสุดท้ายขึ้นกับจำนวนสั่ง วิธีสกรีนโลโก้ จำนวนสี บรรจุภัณฑ์ และจุดส่งในไทย";
+
+export const MOQ_NOTICE_SHORT = "สั่งขั้นต่ำ";
+
+export const MOQ_NOTICE =
+  "สินค้านี้เป็นงานสั่งผลิตจำนวนมากสำหรับองค์กร ไม่ใช่สินค้าขายปลีกทีละชิ้น — ต้องถึงจำนวนขั้นต่ำตามที่ระบุ";
 
 export const CATALOG_PILL = "สินค้าพรีเมียม นำเข้าสั่งผลิตตามออเดอร์";
 

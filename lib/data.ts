@@ -33,6 +33,21 @@ export type Product = {
   currency: "THB";
   images: string[];
   categorySlug: string;
+  /** Human category label from SmartGift / CMS. */
+  categoryName?: string;
+  /** Commercial SKU such as A00001 or SmartGift offer code. */
+  productId?: string;
+  stockClass?: "A" | "B" | "C" | "D";
+  isBundle?: boolean;
+  isClearance?: boolean;
+  clearanceReason?: string;
+  colors?: Array<{ name: string; hex?: string | null }>;
+  /** Production lead time in days when the catalog provides it. */
+  leadDays?: number | null;
+  /** Itemized gift-set bill of materials. */
+  components?: Array<{ name: string; qty: number; sku?: string }>;
+  capacity?: string;
+  dimensions?: string;
   seo: SeoFields;
   /**
    * When true, product page shows the customer mockup studio

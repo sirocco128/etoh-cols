@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { COMPANY } from "@/lib/company";
 import { requireOpsPage } from "@/lib/ops-auth";
+import { recordOpsReportPull } from "@/lib/ops-audit";
+import { opsAuditRequestMeta } from "@/lib/ops-request-context";
 import {
   buildExecutivePnl,
   defaultFinanceRange,
 } from "@/lib/finance-report";
+import {
+  buildBalanceSheet,
+  buildCashFlow,
+  buildIncomeStatement,
+} from "@/lib/ledger-statements";
 import { listJournals, trialBalance } from "@/lib/ledger-repository";
+import { JOURNAL_BOOK_LABELS } from "@/lib/ledger-types";
+import { FinanceSubnav } from "@/components/FinanceSubnav";
 import { FACTORY_PO_STATUS_LABELS, type FactoryPoStatus } from "@/lib/factory-po-types";
 import { formatThb } from "@/lib/th-billing";
 
@@ -30,13 +39,25 @@ export default async function OpsFinancePage({
 }: {
   searchParams: SearchParams;
 }) {
-  await requireOpsPage("finance.read");
+  const actor = await requireOpsPage("finance.read");
 
   const sp = await searchParams;
   const fallback = defaultFinanceRange();
   const fromDate = /^\d{4}-\d{2}-\d{2}$/.test(sp.from || "") ? sp.from! : fallback.fromDate;
   const toDate = /^\d{4}-\d{2}-\d{2}$/.test(sp.to || "") ? sp.to! : fallback.toDate;
+  if (sp.from || sp.to) {
+    recordOpsReportPull({
+      actor,
+      kind: "view",
+      reportName: "executive-pnl",
+      filters: { from: fromDate, to: toDate },
+      context: await opsAuditRequestMeta(),
+    });
+  }
   const pnl = buildExecutivePnl({ fromDate, toDate });
+  const booksPnl = buildIncomeStatement({ fromDate, toDate });
+  const sheet = buildBalanceSheet({ asOf: toDate });
+  const cash = buildCashFlow({ fromDate, toDate });
   const journals = listJournals({ fromDate, toDate, limit: 40 });
   const balances = trialBalance({ fromDate, toDate }).filter(
     (row) => row.debit > 0 || row.credit > 0,
@@ -45,6 +66,7 @@ export default async function OpsFinancePage({
 
   return (
     <div className="space-y-8">
+      <FinanceSubnav current="/ops/finance" />
       <div className="overflow-hidden rounded-2xl bg-forest text-paper shadow-sm">
         <div className="bg-[radial-gradient(circle_at_top_right,_rgba(212,175,55,0.28),_transparent_42%)] px-6 py-7">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brass-soft">
@@ -53,7 +75,7 @@ export default async function OpsFinancePage({
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">กำไรขั้นต้นและวงจรรายได้</h1>
           <p className="mt-2 max-w-2xl text-sm text-paper/80">
             {COMPANY.legalName} · จากใบเสนอราคา มัดจำ ใบสั่งโรงงานจีน จนถึงส่งลูกค้า
-            และลงบัญชีคู่พร้อมส่งออกไฟล์ให้โปรแกรมบัญชี
+            และลงบัญชีคู่ครบสมุด ผังบัญชี และงบจากสมุดให้ผู้ทำบัญชี
           </p>
           <p className="mt-3 text-sm text-brass-soft">
             งวด {fromDate} — {toDate} · {pnl.orderCount} ออเดอร์ · มีใบสั่งโรงงาน {pnl.withPoCount} ใบ
@@ -98,6 +120,12 @@ export default async function OpsFinancePage({
         <Link href="/ops/finance/journals" className="text-sm text-forest underline-offset-2 hover:underline">
           สมุดรายวันทั้งหมด
         </Link>
+        <Link href="/ops/finance/coa" className="text-sm text-forest underline-offset-2 hover:underline">
+          ผังบัญชี
+        </Link>
+        <Link href="/ops/finance/manual" className="text-sm text-forest underline-offset-2 hover:underline">
+          ใบสำคัญทั่วไป
+        </Link>
       </form>
 
       {pnl.missingCostCount > 0 ? (
@@ -106,6 +134,32 @@ export default async function OpsFinancePage({
         </p>
       ) : null}
 
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article className="rounded-2xl border border-forest/10 bg-paper p-5 shadow-sm">
+          <p className="text-xs text-ink/55">รายได้จากสมุด</p>
+          <p className="mt-2 text-2xl font-semibold text-forest">{formatThb(booksPnl.revenue)}</p>
+          <p className="mt-1 text-xs text-ink/50">เมื่อออกใบกำกับแล้ว</p>
+        </article>
+        <article className="rounded-2xl border border-forest/10 bg-paper p-5 shadow-sm">
+          <p className="text-xs text-ink/55">กำไรสุทธิจากสมุด</p>
+          <p className="mt-2 text-2xl font-semibold">{formatThb(booksPnl.netIncome)}</p>
+          <p className="mt-1 text-xs text-ink/50">หลังต้นทุนและค่าใช้จ่าย</p>
+        </article>
+        <article className="rounded-2xl border border-brass/40 bg-brass/10 p-5 shadow-sm">
+          <p className="text-xs text-ink/55">สินทรัพย์</p>
+          <p className="mt-2 text-2xl font-semibold">{formatThb(sheet.assetTotal)}</p>
+          <p className="mt-1 text-xs text-ink/50">
+            {sheet.balanced ? "งบดุลสมดุล" : "ยังไม่สมดุล — ลงทุนที่ 3100"}
+          </p>
+        </article>
+        <article className="rounded-2xl bg-forest p-5 text-paper shadow-sm">
+          <p className="text-xs text-paper/70">เงินสดคงเหลือ</p>
+          <p className="mt-2 text-2xl font-semibold">{formatThb(cash.closingCash)}</p>
+          <p className="mt-1 text-sm text-brass-soft">รับ {formatThb(cash.receipts)} · จ่าย {formatThb(cash.payments)}</p>
+        </article>
+      </section>
+
+      <h2 className="text-lg font-semibold text-forest">งบปฏิบัติการต่อออเดอร์</h2>
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article className="rounded-2xl border border-forest/10 bg-paper p-5 shadow-sm">
           <p className="text-xs text-ink/55">รายได้ไม่รวม VAT</p>
@@ -277,7 +331,8 @@ export default async function OpsFinancePage({
       <section className="grid gap-6 lg:grid-cols-2">
         <div>
           <h2 className="text-lg font-semibold text-forest">งบทดลองย่อ</h2>
-          <table className="mt-3 w-full text-sm">
+          <div className="table-scroll">
+          <table className="mt-3 w-full min-w-[22rem] text-sm">
             <thead>
               <tr className="border-b border-forest/15 text-left text-forest">
                 <th className="py-2">บัญชี</th>
@@ -305,6 +360,7 @@ export default async function OpsFinancePage({
               )}
             </tbody>
           </table>
+          </div>
         </div>
         <div>
           <h2 className="text-lg font-semibold text-forest">สมุดรายวันล่าสุด</h2>
@@ -315,7 +371,7 @@ export default async function OpsFinancePage({
               journals.slice(0, 8).map((entry) => (
                 <li key={entry.entryId} className="py-3">
                   <p className="font-mono text-xs text-ink/55">
-                    {entry.entryDate} · {entry.entryId}
+                    {JOURNAL_BOOK_LABELS[entry.bookType]} · {entry.entryDate} · {entry.entryId}
                   </p>
                   <p>{entry.memo}</p>
                 </li>

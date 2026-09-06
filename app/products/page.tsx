@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
 import { ProductCard } from "@/components/ProductCard";
 import { getCategories, getProducts } from "@/lib/strapi";
+import { canonicalCategorySlug } from "@/lib/smartgift-products";
 import { metadataForPath } from "@/lib/page-seo";
 import { CATALOG_PILL, CATALOG_SUBTITLE, FLIP_CATALOG_OPEN } from "@/lib/ux-copy";
 
@@ -32,20 +33,34 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     getProducts(),
     getCategories(),
   ]);
-  const activeCategory =
-    categorySlug && categories.some((item) => item.slug === categorySlug)
-      ? categorySlug
+  const hasClearance = products.some((item) => item.isClearance);
+  const requestedCategory = categorySlug
+    ? canonicalCategorySlug(categorySlug)
+    : "";
+  const clearanceActive = requestedCategory === "clearance" && hasClearance;
+  const activeCategory = clearanceActive
+    ? "clearance"
+    : requestedCategory &&
+        categories.some((item) => item.slug === requestedCategory)
+      ? requestedCategory
       : null;
   const visible = products.filter((product) => {
-    if (activeCategory && product.categorySlug !== activeCategory) return false;
+    if (clearanceActive) {
+      if (!product.isClearance) return false;
+    } else if (activeCategory && product.categorySlug !== activeCategory) {
+      return false;
+    }
     if (!query) return true;
     const haystack = `${product.name} ${product.description || ""}`.toLowerCase();
     return haystack.includes(query);
   });
+  const tabs = hasClearance
+    ? [...categories, { slug: "clearance", name: "เคลียร์" }]
+    : categories;
 
   return (
     <div className="bg-premium-mesh">
-      <div className="mx-auto max-w-content px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-content px-page py-12 sm:py-16">
         <Breadcrumbs items={[{ label: "สินค้าพรีเมียม" }]} />
         <FadeIn className="max-w-2xl">
           <p className="inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-paper/80 px-3 py-1 text-xs font-medium text-forest shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-forest/60 dark:text-brass-soft">
@@ -83,7 +98,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             name="q"
             defaultValue={queryRaw || ""}
             placeholder="ค้นหาชื่อสินค้า"
-            className="min-h-11 min-w-[16rem] flex-1 rounded-full border border-forest/15 bg-paper px-4 text-sm"
+            className="min-h-11 w-full min-w-0 flex-1 rounded-full border border-forest/15 bg-paper px-4 text-sm sm:min-w-[16rem]"
           />
           <button
             type="submit"
@@ -93,9 +108,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </button>
         </form>
 
-        {categories.length > 0 ? (
+        {tabs.length > 0 ? (
           <CatalogFilterTabs
-            categories={categories}
+            categories={tabs}
             activeSlug={activeCategory}
             hrefFor={(slug) => {
               const next = new URLSearchParams();

@@ -20,7 +20,7 @@ export function NavMore() {
       >
         ดูเพิ่ม
       </summary>
-      <div className="absolute left-0 z-20 mt-2 min-w-[14rem] rounded-lg border border-forest/15 bg-paper py-1 shadow-lg">
+      <div className="absolute left-0 z-20 mt-2 min-w-[min(14rem,calc(100vw-2rem))] rounded-xl border border-white/20 bg-paper/95 py-1 shadow-lift backdrop-blur-md dark:border-white/10 dark:bg-forest/90">
         {MORE_NAV_LINKS.map((link) => (
           <NavLink
             key={link.href}

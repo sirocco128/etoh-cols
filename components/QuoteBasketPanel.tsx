@@ -142,8 +142,29 @@ export function QuoteBasketPanel() {
                       </option>
                     ))}
                   </select>
-                </label>
-              </div>
+              </label>
+            </div>
+
+              <label className="mt-4 block text-sm">
+                <span className="font-semibold text-forest">จำนวนสีโลโก้</span>
+                <select
+                  value={item.logoColorCount ?? ""}
+                  onChange={(event) =>
+                    persist(
+                      updateItemFields(basket, item.id, {
+                        logoColorCount: event.target.value || undefined,
+                      }),
+                    )
+                  }
+                  className="mt-1 min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+                >
+                  <option value="">ยังไม่ระบุ</option>
+                  <option value="1">1 สี</option>
+                  <option value="2">2 สี</option>
+                  <option value="3">3 สี</option>
+                  <option value="full">สีเต็ม / เต็มสี</option>
+                </select>
+              </label>
 
               <label className="mt-4 block text-sm">
                 <span className="font-semibold text-forest">โน้ตต่อรายการ</span>
@@ -186,6 +207,21 @@ export function QuoteBasketPanel() {
         <p className="mt-3 text-xs leading-relaxed text-ink/65">
           {PRICE_ESTIMATE_DISCLAIMER}
         </p>
+        <label className="mt-4 block text-sm">
+          <span className="font-semibold text-forest">วันส่งมอบที่ต้องการ</span>
+          <input
+            type="date"
+            value={basket.neededDate ?? ""}
+            onChange={(event) =>
+              persist({
+                ...basket,
+                neededDate: event.target.value || undefined,
+                updatedAt: new Date().toISOString(),
+              })
+            }
+            className="mt-1 min-h-11 w-full max-w-xs rounded-xl border border-forest/20 bg-paper px-3 text-ink"
+          />
+        </label>
         <Link
           href={basket.items.length ? contactHref : "/contact"}
           className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper transition hover:bg-forest-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"

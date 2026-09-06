@@ -27,6 +27,14 @@ export async function GET(request: Request) {
         address: customer.billingAddress,
         province: customer.defaultShipProvince,
         source: "crm" as const,
+        branches: [
+          {
+            code: "0",
+            label: customer.billingBranch || "สำนักงานใหญ่",
+            address: customer.billingAddress,
+            province: customer.defaultShipProvince,
+          },
+        ],
       };
     }
   } catch {

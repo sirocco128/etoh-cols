@@ -1,10 +1,13 @@
 "use client";
 
+import { Menu, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "@/lib/site";
 import { getPublicContact } from "@/lib/public-contact";
 import { NavLink } from "@/components/NavLink";
 import { moreNavLinks, withOptionalBasketLink } from "@/lib/nav";
+import { RecentOrderHint } from "@/components/RecentOrderHint";
+import { ACCOUNT_HUB_TITLE } from "@/lib/ux-copy";
 
 type MobileMenuProps = {
   enableP2QuoteTools?: boolean;
@@ -77,24 +80,13 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
       <button
         ref={triggerRef}
         type="button"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-forest/20 text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-forest/20 text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass dark:border-white/15 dark:text-brass-soft"
         aria-expanded={open}
         aria-controls={dialogId}
         aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="sr-only">{open ? "ปิดเมนู" : "เปิดเมนู"}</span>
-        <span aria-hidden className="flex flex-col gap-1.5">
-          <span
-            className={`block h-0.5 w-5 bg-current transition ${open ? "translate-y-2 rotate-45" : ""}`}
-          />
-          <span
-            className={`block h-0.5 w-5 bg-current transition ${open ? "opacity-0" : ""}`}
-          />
-          <span
-            className={`block h-0.5 w-5 bg-current transition ${open ? "-translate-y-2 -rotate-45" : ""}`}
-          />
-        </span>
+        {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
       </button>
 
       {open ? (
@@ -111,17 +103,17 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
             role="dialog"
             aria-modal="true"
             aria-label="เมนูนำทาง"
-            className="absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col bg-paper shadow-xl"
+            className="absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col border-l border-white/20 bg-paper/95 shadow-lift backdrop-blur-md pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:border-white/10 dark:bg-forest/90"
           >
             <div className="flex items-center justify-between border-b border-forest/10 px-4 py-4">
               <p className="font-semibold text-forest">{site.name}</p>
               <button
                 type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-forest/20 text-forest"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-forest/20 text-forest dark:border-white/15 dark:text-paper"
                 aria-label="ปิดเมนู"
                 onClick={close}
               >
-                ✕
+                <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
             <nav
@@ -165,27 +157,20 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   ) : null}
                 </NavLink>
               ))}
-              <details className="mt-2 rounded-lg px-3 py-2">
-                <summary className="cursor-pointer list-none text-sm font-medium text-ink/70 [&::-webkit-details-marker]:hidden">
-                  ลูกค้าที่สั่งแล้ว
-                </summary>
-                <NavLink
-                  href="/orders"
-                  onClick={close}
-                  className="mt-1 block rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
-                  activeClassName="bg-forest-mist text-forest"
-                >
-                  ออเดอร์ของฉัน
-                </NavLink>
-                <NavLink
-                  href="/issues"
-                  onClick={close}
-                  className="block rounded-lg px-3 py-3 text-base font-medium text-ink hover:bg-forest-mist"
-                  activeClassName="bg-forest-mist text-forest"
-                >
-                  แจ้งปัญหาสินค้า
-                </NavLink>
-              </details>
+              <NavLink
+                href="/account"
+                onClick={close}
+                className="mt-2 rounded-lg px-3 py-3 text-base font-medium text-ink/80 hover:bg-forest-mist"
+                activeClassName="bg-forest-mist text-forest"
+              >
+                <span className="block">{ACCOUNT_HUB_TITLE}</span>
+                <span className="mt-0.5 block text-xs font-normal text-ink/55">
+                  ติดตามออเดอร์ · แจ้งปัญหา
+                </span>
+              </NavLink>
+              <div onClick={close}>
+                <RecentOrderHint variant="menu" />
+              </div>
             </nav>
             <div className="space-y-2 border-t border-forest/10 p-4">
               <NavLink

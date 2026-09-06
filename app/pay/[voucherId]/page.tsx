@@ -38,7 +38,7 @@ export default async function PublicVoucherPayPage({
   const qr = voucher.qrPayload ? await promptPayQrDataUrl(voucher.qrPayload) : null;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12">
+    <div className="mx-auto max-w-xl px-page py-12">
       <h1 className="text-2xl font-bold text-forest">แจ้งโอนเงิน</h1>
       <p className="mt-1 font-mono text-sm">{voucher.voucherId}</p>
       <p className="mt-1 text-sm text-ink/70">

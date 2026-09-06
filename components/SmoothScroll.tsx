@@ -16,6 +16,7 @@ export function SmoothScroll() {
     if (isOps || isCatalog) return;
     if (typeof window.matchMedia !== "function") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
     if (window.matchMedia("print").matches) return;
 
     const lenis = new Lenis({

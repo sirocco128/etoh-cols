@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { getFactoryPo } from "@/lib/factory-po-service";
-import { postCashReceived, postSupplierPayment } from "@/lib/ledger-service";
+import { getFactoryPo } from "@/lib/factory-po-queries";
+import { postCashReceived, postInventoryReceipt, postSupplierPayment } from "@/lib/ledger-service";
 import {
   confirmCashReceiptRow,
   getCashReceipt,
@@ -51,13 +51,15 @@ import {
   type IssueCategory,
   type IssueStatus,
   type IssueTicketRecord,
+  type PayableKind,
   type SupplierPaymentRecord,
 } from "@/lib/ops-cycle-types";
+import { isPayableKind } from "@/lib/ops-cycle-types";
 import { getOrderRepository } from "@/lib/order-repository";
 import { confirmPayment, normalizeRejectReason, rejectPayment, updateOrderFulfillment } from "@/lib/order-service";
 import { costFromPo } from "@/lib/po-cost";
 import { buildPromptPayPayload, getPromptPayConfig } from "@/lib/promptpay";
-import { bangkokDateYmd } from "@/lib/quote-service";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { roundSatang } from "@/lib/th-billing";
 
 function createPrefixedId(prefix: string, now = new Date()): string {
@@ -78,6 +80,9 @@ export type FactoryPayableSnapshot = {
   receivedAmount: number;
   paidAmount: number;
   unpaidAmount: number;
+  freightAccrued: number;
+  freightPaid: number;
+  unpaidFreight: number;
   unitThb: number;
   destination: DestinationMode;
 };
@@ -89,7 +94,11 @@ export function factoryPayableSnapshot(poId: string): FactoryPayableSnapshot | n
   const unitThb = po.quantity > 0 ? roundSatang(cost.productCostThb / po.quantity) : 0;
   const receivedQty = sumReceivedQty(poId);
   const receivedAmount = roundSatang(sumReceivedAmount(poId));
-  const paidAmount = roundSatang(sumSupplierPaid(poId));
+  const paidAmount = roundSatang(sumSupplierPaid(poId, "factory"));
+  const freightAccrued = roundSatang(
+    cost.freightThb + cost.importDutyThb + cost.customsFeeThb + cost.packingThb + cost.lastMileThb,
+  );
+  const freightPaid = roundSatang(sumSupplierPaid(poId, "freight"));
   return {
     poId,
     orderedQty: po.quantity,
@@ -98,6 +107,9 @@ export function factoryPayableSnapshot(poId: string): FactoryPayableSnapshot | n
     receivedAmount,
     paidAmount,
     unpaidAmount: roundSatang(Math.max(0, receivedAmount - paidAmount)),
+    freightAccrued,
+    freightPaid,
+    unpaidFreight: roundSatang(Math.max(0, freightAccrued - freightPaid)),
     unitThb,
     destination: po.destinationMode,
   };
@@ -231,6 +243,15 @@ export function receiveGoods(input: {
     }
   }
 
+  postInventoryReceipt({
+    po,
+    receiptId: receipt.receiptId,
+    qtyReceived,
+    destination,
+    actor: input.actor,
+    at: now,
+  });
+
   getOrderRepository().insertEvent({
     orderId: po.orderId,
     eventType: "goods_receipt",
@@ -266,6 +287,7 @@ export function payFactoryForReceived(input: {
   method?: string;
   notes?: string | null;
   actor?: string | null;
+  payableKind?: PayableKind | string | null;
 }): SupplierPaymentRecord {
   const po = getFactoryPo(input.poId);
   if (!po) throw new Error("po_not_found");
@@ -273,8 +295,14 @@ export function payFactoryForReceived(input: {
   if (!snapshot) throw new Error("po_not_found");
   const amount = roundSatang(input.amount);
   if (amount <= 0) throw new Error("amount_required");
-  if (amount - snapshot.unpaidAmount > 0.009) {
+  const payableKind: PayableKind = isPayableKind(input.payableKind)
+    ? input.payableKind
+    : "factory";
+  if (payableKind === "factory" && amount - snapshot.unpaidAmount > 0.009) {
     throw new Error("pay_exceeds_received");
+  }
+  if (payableKind === "freight" && amount - snapshot.unpaidFreight > 0.009) {
+    throw new Error("pay_exceeds_freight");
   }
   if (input.receiptId) {
     const gr = getGoodsReceipt(input.receiptId);
@@ -292,6 +320,7 @@ export function payFactoryForReceived(input: {
     notes: blankToNull(input.notes),
     createdBy: input.actor ?? null,
     createdAt: now,
+    payableKind,
   });
   postSupplierPayment({
     payId: pay.payId,
@@ -300,11 +329,12 @@ export function payFactoryForReceived(input: {
     amount,
     at: now,
     actor: input.actor,
+    payableKind,
   });
   getOrderRepository().insertEvent({
     orderId: po.orderId,
     eventType: "supplier_pay",
-    message: `จ่ายโรงงานตามของที่รับ ${amount.toFixed(2)} บาท · ${pay.payId}`,
+    message: `จ่าย${payableKind === "freight" ? "ขนส่ง/นำเข้า" : "โรงงาน"} ${amount.toFixed(2)} บาท · ${pay.payId}`,
     actor: input.actor ?? null,
     createdAt: now,
   });

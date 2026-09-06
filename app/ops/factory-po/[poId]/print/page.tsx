@@ -2,11 +2,14 @@ import { notFound } from "next/navigation";
 import { DocumentPreviewShell } from "@/components/DocumentPreviewShell";
 import { COMPANY, formatRegisteredAddress } from "@/lib/company";
 import { requireOpsPage } from "@/lib/ops-auth";
-import { getFactoryPo } from "@/lib/factory-po-service";
+import { getFactoryPo } from "@/lib/factory-po-queries";
 import {
+  FACTORY_CURRENCY_LABELS,
   FACTORY_PLATFORM_LABELS,
   FACTORY_PO_STATUS_LABELS,
   FREIGHT_MODE_LABELS,
+  factoryCurrencyNoun,
+  factoryFxPairLabel,
 } from "@/lib/factory-po-types";
 import { LOGO_DECORATION_OPTIONS } from "@/lib/product-decoration";
 import { formatThaiDate } from "@/lib/th-billing";
@@ -105,9 +108,13 @@ export default async function FactoryPoPrintPage({
               <td className="whitespace-pre-wrap py-1.5">{po.qcNotes || "—"}</td>
             </tr>
             <tr className="border-b border-forest/10">
-              <td className="py-1.5 text-ink/55">ราคาโรงงาน</td>
+              <td className="py-1.5 text-ink/55">
+                ราคาโรงงาน ({factoryCurrencyNoun(po.factoryCurrency)})
+              </td>
               <td className="py-1.5">
-                {po.factoryUnitCny.toFixed(2)} CNY / ชิ้น · รวม {po.factoryAmountCny.toFixed(2)} CNY
+                {po.factoryUnitCny.toFixed(2)} {FACTORY_CURRENCY_LABELS[po.factoryCurrency]} / ชิ้น · รวม{" "}
+                {po.factoryAmountCny.toFixed(2)} {factoryCurrencyNoun(po.factoryCurrency)}
+                {" · "}เรท {po.fxCnyThb} {factoryFxPairLabel(po.factoryCurrency)}
               </td>
             </tr>
             <tr>

@@ -800,12 +800,15 @@ REQUIRED FUTURE UX:
 12. Design System
 ======================================================================
 
+แหล่งความจริงของสี ธีม ฟอนต์ dark mode และวิธี retheme:
+ดู docs/DESIGN-LLMS.txt
+
 Brand Direction:
 - Premium Corporate Packaging
 - Dark Green + Brass/Gold
 - เรียบ สุภาพ เชื่อถือได้ ไม่ใช้ Visual ที่ดูเป็น Marketplace ราคาถูก
 
-Color Tokens:
+Color Tokens (ต้องแก้คู่กันใน app/globals.css และ tailwind.config.ts):
 - forest: #14352A
 - forest.light: #1E4A3A
 - forest.mist: #E9F0EA
@@ -814,18 +817,22 @@ Color Tokens:
 - ink: #22282C
 - paper: #FFFFFF
 
-Typography:
-- Noto Sans Thai
-- Leelawadee UI
-- Tahoma
-- system-ui
-- sans-serif
+Typography (ของจริงใน app/layout.tsx):
+- Sarabun = ฟอนต์หลักของ body
+- Geist, Noto Sans Thai = อยู่ใน font-sans stack
+- Leelawadee UI, Tahoma, system-ui = fallback
+
+Theme status:
+- Light only ใน UI ที่ผู้ใช้เห็น
+- .dark และ ThemeToggle มีในโค้ดแต่ยังไม่เปิด
+- ThemeProvider เป็น no-op
+- คอมโพเนนต์ใช้ bg-forest / bg-brass ไม่ใช้ bg-primary
 
 Layout:
 - maxWidth.content = 72rem
 - Mobile-first
-- Standard spacing ผ่าน Tailwind
-- Rounded cards และ CTA
+- Storefront CTA = rounded-full brass
+- Ops ปุ่มหลัก = bg-forest มุมเหลี่ยมกว่า
 - ใช้ Contrast ที่ผ่าน Accessibility
 
 Image:

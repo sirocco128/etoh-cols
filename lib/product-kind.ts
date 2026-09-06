@@ -27,6 +27,18 @@ const CATEGORY_SLUG_TO_KIND: Record<string, ProductKind> = {
   "eco-giftset": "eco",
   "it-set": "it",
   "team-building-set": "team",
+  "eco-friendly": "eco",
+  "classic-oriental": "stationery",
+  "novelty-self-care": "tumbler",
+  "executive-smart-tech": "it",
+  "gift-set": "tumbler",
+  drinkware: "tumbler",
+  technology: "it",
+  wellness: "tumbler",
+  office: "stationery",
+  bag: "packaging",
+  eco: "eco",
+  custom: "other",
 };
 
 const KIND_PATTERNS: Array<{ kind: ProductKind; pattern: RegExp }> = [

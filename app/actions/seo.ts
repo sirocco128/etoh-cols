@@ -1,31 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
+import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 import {
   isAllowedSeoPath,
   normalizeSeoPath,
 } from "@/lib/page-seo";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
 import {
   isValidSeoDescription,
   isValidSeoTitle,
 } from "@/lib/seo-limits";
 import { upsertSeoOverride, deleteSeoOverride } from "@/lib/seo-repository";
 import type { OpsActionResult } from "@/app/actions/ops";
-
-async function requestMeta(): Promise<{
-  ipHash: string;
-  userAgent: string | null;
-}> {
-  const h = await headers();
-  return {
-    ipHash: hashIp(resolveClientIp(h)),
-    userAgent: h.get("user-agent"),
-  };
-}
 
 function parseNoIndex(value: FormDataEntryValue | null): boolean {
   return value === "1" || value === "true" || value === "on";
@@ -76,8 +64,7 @@ export async function savePageSeoAction(
       status: "denied",
       resourceType: "page",
       resourceId: path,
-      ipHash: meta.ipHash,
-      userAgent: meta.userAgent,
+    ...meta,
       errorMessage: error instanceof Error ? error.message : "save failed",
     });
     return { ok: false, error: "บันทึกไม่สำเร็จ ตรวจว่า migrate ฐานข้อมูลแล้ว" };
@@ -90,8 +77,7 @@ export async function savePageSeoAction(
     resourceType: "page",
     resourceId: path,
     detail: { seoTitle },
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath(path);
   revalidatePath("/sitemap.xml");
@@ -118,8 +104,7 @@ export async function resetPageSeoAction(
     status: "ok",
     resourceType: "page",
     resourceId: path,
-    ipHash: meta.ipHash,
-    userAgent: meta.userAgent,
+    ...meta,
   });
   revalidatePath(path);
   revalidatePath("/sitemap.xml");

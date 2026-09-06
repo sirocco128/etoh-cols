@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { isOpsAuthConfigured, requireOpsActor } from "@/lib/ops-auth";
+import { opsAuditRequestMeta } from "@/lib/ops-request-context";
 import {
   isOpsPermission,
   isOpsRole,
@@ -40,6 +41,7 @@ export async function createOpsStaffAction(
   }
   const actor = await requireOpsActor("users.write");
   if (!actor) return { ok: false, error: "ไม่มีสิทธิ์จัดการพนักงาน" };
+  const meta = await opsAuditRequestMeta();
 
   const email = String(formData.get("email") || "");
   const name = String(formData.get("name") || "");
@@ -74,12 +76,14 @@ export async function createOpsStaffAction(
       resourceType: "ops_staff",
       resourceId: String(staff.id),
       detail: { email: staff.email, role: staff.role },
+      ...meta,
     });
   } catch (error) {
     writeOpsAudit({
       actor,
       action: "staff.create",
       status: "denied",
+      ...meta,
       errorMessage: error instanceof Error ? error.message : "create failed",
     });
     return {
@@ -101,6 +105,7 @@ export async function updateOpsStaffAction(
   }
   const actor = await requireOpsActor("users.write");
   if (!actor) return { ok: false, error: "ไม่มีสิทธิ์จัดการพนักงาน" };
+  const meta = await opsAuditRequestMeta();
 
   const id = Number(formData.get("id") || 0);
   if (!Number.isInteger(id) || id < 1) {
@@ -139,6 +144,7 @@ export async function updateOpsStaffAction(
       resourceType: "ops_staff",
       resourceId: String(staff.id),
       detail: { email: staff.email, role: staff.role, active: staff.active },
+      ...meta,
     });
   } catch (error) {
     writeOpsAudit({
@@ -147,6 +153,7 @@ export async function updateOpsStaffAction(
       status: "denied",
       resourceType: "ops_staff",
       resourceId: String(id),
+      ...meta,
       errorMessage: error instanceof Error ? error.message : "update failed",
     });
     return {

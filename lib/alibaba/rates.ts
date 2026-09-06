@@ -13,6 +13,13 @@ import type {
 export type RateCell = { cbm: number; kg: number };
 
 export const SMARTGIFT_FX_CNY_THB = 5;
+/** Spec USD→THB used in catalog / forced-min-qty formulas. */
+export const SMARTGIFT_FX_USD_THB = 32.5;
+/**
+ * Factory PO form fallback when the live market guide is unavailable.
+ * Kept separate from the catalog formula rate above.
+ */
+export const FACTORY_MARKET_FX_USD_THB = 33;
 
 export const DENSITY_THRESHOLD_KG_PER_CBM = 400;
 export const MIN_CHARGEABLE_CBM = 0.01;

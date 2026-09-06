@@ -3,7 +3,8 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { getDb, getSqlitePath } from "@/lib/database";
 import { getObject, objectKey, putObject } from "@/lib/object-storage";
-import { bangkokDateYmd } from "@/lib/quote-service";
+import { recordObjectAccess } from "@/lib/object-access";
+import { bangkokDateYmd } from "@/lib/bangkok-date";
 import type { SlipCheckStatus } from "@/lib/slip-verify";
 
 export const SLIP_MAX_BYTES = 4_000_000;
@@ -158,6 +159,14 @@ export async function saveSlipFile(input: {
     fileName: rel,
     bytes: input.bytes,
     contentType: input.mimeType,
+  });
+  recordObjectAccess({
+    action: "object.upload",
+    status: "ok",
+    kind: "slips",
+    key: objectKey("slips", rel),
+    resourceId: input.slipId,
+    purpose: "payment_slip",
   });
   return rel;
 }

@@ -1,9 +1,10 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { teardownTempDir } from "./teardown-temp";
 
 function resolveProjectRoot(): string {
   if (
@@ -46,7 +47,7 @@ describe("ops cycle: GR, supplier pay, cash receipt, issues", () => {
   });
 
   after(() => {
-    if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+    teardownTempDir(dataDir);
   });
 
   async function seedOrderAndPo() {
@@ -138,6 +139,24 @@ describe("ops cycle: GR, supplier pay, cash receipt, issues", () => {
       amount: snap!.unpaidAmount,
     });
     assert.equal(pay.amount, snap!.unpaidAmount);
+    assert.equal(pay.payableKind, "factory");
+
+    const { listJournals } = await import("../lib/ledger-repository");
+    const books = listJournals({ poId: po.poId, limit: 30 });
+    assert.ok(books.some((j) => j.sourceKey.startsWith("inv:")));
+    assert.ok(books.some((j) => j.lines.some((line) => line.accountCode === "1140")));
+
+    const freightPay = payFactoryForReceived({
+      poId: po.poId,
+      amount: snap!.unpaidFreight,
+      payableKind: "freight",
+    });
+    assert.equal(freightPay.payableKind, "freight");
+    assert.ok(
+      listJournals({ poId: po.poId, limit: 30 }).some((j) =>
+        j.lines.some((line) => line.accountCode === "2140" && line.debit > 0),
+      ),
+    );
 
     assert.throws(
       () =>

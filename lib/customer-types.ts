@@ -92,6 +92,7 @@ export type UpsertCustomerFromQuoteParams = {
   quoteSubmittedAt: string;
   province?: string | null;
   taxId?: string | null;
+  billingBranch?: string | null;
 };
 
 export type CreateCustomerParams = {

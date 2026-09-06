@@ -136,6 +136,18 @@ export type CashReceiptRecord = {
   lines: CashReceiptLine[];
 };
 
+export const PAYABLE_KINDS = ["factory", "freight"] as const;
+export type PayableKind = (typeof PAYABLE_KINDS)[number];
+
+export const PAYABLE_KIND_LABELS: Record<PayableKind, string> = {
+  factory: "เจ้าหนี้โรงงาน",
+  freight: "เจ้าหนี้ขนส่งและนำเข้า",
+};
+
+export function isPayableKind(value: string | null | undefined): value is PayableKind {
+  return (PAYABLE_KINDS as readonly string[]).includes(String(value || ""));
+}
+
 export type SupplierPaymentRecord = {
   id: number;
   payId: string;
@@ -148,6 +160,7 @@ export type SupplierPaymentRecord = {
   notes: string | null;
   createdBy: string | null;
   createdAt: string;
+  payableKind: PayableKind;
 };
 
 export type AssetRecord = {

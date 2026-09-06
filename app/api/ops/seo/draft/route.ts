@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { draftPageSeo } from "@/lib/seo-draft";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
-import { hashIp, resolveClientIp } from "@/lib/quote-service";
+import { opsAuditContextFromHeaders } from "@/lib/ops-request-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
     path: String(body.path || ""),
     brief: String(body.brief || ""),
   });
-  const ip = resolveClientIp(request.headers);
   writeOpsAudit({
     actor,
     action: "seo.draft",
@@ -33,8 +32,7 @@ export async function POST(request: Request) {
     resourceId: String(body.path || ""),
     toolName: "seo.draft",
     prompt: String(body.brief || ""),
-    ipHash: hashIp(ip),
-    userAgent: request.headers.get("user-agent"),
+    ...opsAuditContextFromHeaders(request.headers),
     errorMessage: result.ok ? null : result.error,
   });
 

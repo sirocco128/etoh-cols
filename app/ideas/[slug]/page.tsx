@@ -70,7 +70,7 @@ export default async function IdeaThemePage({ params }: PageProps) {
     <>
       <JsonLd data={breadcrumbs} />
       <JsonLd data={faqLd} />
-      <article className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
+      <article className="mx-auto max-w-content px-page py-10 sm:py-14">
         <Breadcrumbs
           items={[
             { href: "/ideas", label: "ไอเดียชุดของขวัญ" },

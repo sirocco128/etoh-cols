@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { CopyCustomerOrderLink } from "@/components/CopyCustomerOrderLink";
 import {
   ConfirmPaymentForm,
   OrderFulfillmentForm,
@@ -11,6 +13,7 @@ import {
   BILLING_DOCUMENT_LABELS,
   PAYMENT_KIND_LABELS,
   PAYMENT_RECORD_STATUS_LABELS,
+  type PaymentRecord,
 } from "@/lib/order-types";
 import {
   currentDueAmount,
@@ -24,8 +27,10 @@ import { promptPayQrDataUrl } from "@/lib/qr-svg";
 import { site } from "@/lib/site";
 import { formatThb, formatThaiDateTime } from "@/lib/th-billing";
 import { getCustomerById } from "@/lib/customer-repository";
-import { listPosForOrder } from "@/lib/factory-po-service";
+import { draftFromOrder, listPosForOrder } from "@/lib/factory-po-queries";
 import { FACTORY_PO_STATUS_LABELS } from "@/lib/factory-po-types";
+import { CreateFactoryPoPanel } from "@/components/CreateFactoryPoPanel";
+import { listFactoriesForPoForm } from "@/lib/factory-registry-service";
 import { EntityTagForm } from "@/components/EntityTagForm";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
 
@@ -54,18 +59,10 @@ export default async function OpsOrderDetailPage({
       (p) => p.status === "pending" || p.status === "submitted" || p.status === "rejected",
     ) ?? null;
 
-  let qrDataUrl: string | null = null;
-  if (due?.qrPayload) {
-    try {
-      qrDataUrl = await promptPayQrDataUrl(due.qrPayload);
-    } catch {
-      qrDataUrl = null;
-    }
-  }
-
   const customerUrl = `${site.url}/orders/${order.orderId}?t=${order.accessToken}`;
   const customer = order.customerId ? getCustomerById(order.customerId) : null;
   const factoryPos = canFactory ? listPosForOrder(order.orderId) : [];
+  const factoryDraft = canFactoryWrite ? draftFromOrder(order.orderId) : null;
   const tagSuggestions = listDistinctOpsTags();
 
   return (
@@ -104,12 +101,11 @@ export default async function OpsOrderDetailPage({
         ) : null}
       </p>
 
-      <p className="mt-3 text-xs">
-        ลิงก์ลูกค้า:{" "}
-        <a href={customerUrl} className="break-all text-forest underline">
-          {customerUrl}
-        </a>
-      </p>
+      <CopyCustomerOrderLink
+        orderId={order.orderId}
+        customerUrl={customerUrl}
+        contactName={order.contactName}
+      />
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-2">
         <div>
@@ -179,16 +175,18 @@ export default async function OpsOrderDetailPage({
       </section>
 
       {canFactory ? (
-        <section className="mt-8 rounded-xl border border-forest/15 bg-paper p-4">
+        <section
+          id="factory-po"
+          className="mt-8 rounded-xl border border-forest/15 bg-paper p-4"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-forest">ใบสั่งโรงงานจีน</h2>
-            {canFactoryWrite ? (
-              <Link
-                href={`/ops/factory-po/new?orderId=${order.orderId}`}
-                className="rounded bg-forest px-3 py-1.5 text-sm text-paper"
-              >
-                สร้างใบสั่งโรงงาน
-              </Link>
+            {factoryDraft ? (
+              <CreateFactoryPoPanel
+                orderId={order.orderId}
+                defaults={factoryDraft}
+                factories={listFactoriesForPoForm()}
+              />
             ) : null}
           </div>
           {factoryPos.length === 0 ? (
@@ -231,14 +229,13 @@ export default async function OpsOrderDetailPage({
         </div>
 
         {due && currentDueAmount(order) > 0 ? (
-          <PromptPayPanel
-            qrDataUrl={qrDataUrl}
-            amount={due.amount}
-            payment={due}
-            orderId={order.orderId}
-            token={order.accessToken}
-            showNotify={false}
-          />
+          <Suspense fallback={<PromptPayQrFallback />}>
+            <OrderPromptPayPanel
+              due={due}
+              orderId={order.orderId}
+              token={order.accessToken}
+            />
+          </Suspense>
         ) : (
           <p className="rounded border border-forest/15 bg-paper p-4 text-sm">
             ไม่มียอดค้างชำระ
@@ -345,6 +342,49 @@ export default async function OpsOrderDetailPage({
           ))}
         </ol>
       </section>
+    </div>
+  );
+}
+
+async function OrderPromptPayPanel({
+  due,
+  orderId,
+  token,
+}: {
+  due: PaymentRecord;
+  orderId: string;
+  token: string;
+}) {
+  let qrDataUrl: string | null = null;
+  if (due.qrPayload) {
+    try {
+      qrDataUrl = await promptPayQrDataUrl(due.qrPayload);
+    } catch {
+      qrDataUrl = null;
+    }
+  }
+  return (
+    <PromptPayPanel
+      qrDataUrl={qrDataUrl}
+      amount={due.amount}
+      payment={due}
+      orderId={orderId}
+      token={token}
+      showNotify={false}
+    />
+  );
+}
+
+function PromptPayQrFallback() {
+  return (
+    <div
+      className="rounded-2xl border border-forest/15 bg-paper p-6"
+      role="status"
+      aria-label="กำลังสร้างคิวอาร์โค้ด"
+    >
+      <div className="h-6 w-40 animate-pulse rounded bg-forest/10" />
+      <p className="mt-2 text-sm text-ink/70">กำลังสร้างคิวอาร์โค้ดพร้อมเพย์…</p>
+      <div className="mx-auto mt-4 h-52 w-52 animate-pulse rounded bg-forest/10" />
     </div>
   );
 }
