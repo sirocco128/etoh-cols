@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isMoreNavActive, isNavActive, moreNavLinks, withOptionalBasketLink } from "../lib/nav";
+import { isMoreNavActive, isNavActive, moreNavLinks, quoteShortcutHref, UTILITY_NAV_LINKS, withOptionalBasketLink } from "../lib/nav";
 
 describe("nav helpers (UX)", () => {
   it("marks nested product paths as active for /products", () => {
@@ -47,5 +47,25 @@ describe("nav helpers (UX)", () => {
     const on = withOptionalBasketLink(true);
     assert.equal(off.some((l) => l.href === "/quote-basket"), false);
     assert.equal(on.some((l) => l.href === "/quote-basket"), true);
+  });
+
+  it("keeps the quote shortcut href stable for a given flag", () => {
+    assert.equal(quoteShortcutHref(false), "/contact");
+    assert.equal(quoteShortcutHref(true), "/quote-basket");
+  });
+
+  it("groups returning-buyer hub and ops console as top-bar utilities", () => {
+    assert.equal(UTILITY_NAV_LINKS[0]?.href, "/account");
+    assert.equal(UTILITY_NAV_LINKS[0]?.label, "ลูกค้าที่สั่งแล้ว");
+    assert.equal(UTILITY_NAV_LINKS[1]?.href, "/ops");
+    assert.equal(UTILITY_NAV_LINKS[1]?.label, "พนักงาน");
+    assert.equal(
+      withOptionalBasketLink(false).some((l) => l.href === "/ops"),
+      false,
+    );
+    assert.equal(
+      moreNavLinks().some((l) => l.href === "/account"),
+      false,
+    );
   });
 });

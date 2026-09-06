@@ -15,7 +15,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-presets";
-import { isTaipWidgetEnabled } from "@/lib/feature-flags";
+import { isP2QuoteToolsEnabled, isTaipWidgetEnabled } from "@/lib/feature-flags";
 import { buildMetadata } from "@/lib/metadata";
 import {
   buildLocalBusinessJsonLd,
@@ -63,6 +63,7 @@ export default function RootLayout({
 }>) {
   const organization = buildOrganizationJsonLd();
   const localBusiness = buildLocalBusinessJsonLd();
+  const enableP2QuoteTools = isP2QuoteToolsEnabled();
 
   return (
     <html
@@ -89,7 +90,7 @@ export default function RootLayout({
             chrome={
               <>
                 <EnvironmentBanner />
-                <Navbar />
+                <Navbar enableP2QuoteTools={enableP2QuoteTools} />
               </>
             }
           >
@@ -99,7 +100,9 @@ export default function RootLayout({
           </SiteChrome>
           <SiteChrome chrome={<Footer />}>{null}</SiteChrome>
           <SiteChrome chrome={<MobileStickyCta />}>{null}</SiteChrome>
-          <SiteChrome chrome={<FloatingQuoteDock />}>{null}</SiteChrome>
+          <SiteChrome chrome={<FloatingQuoteDock enableP2QuoteTools={enableP2QuoteTools} />}>
+            {null}
+          </SiteChrome>
           <SiteChrome
             chrome={isTaipWidgetEnabled() ? <TerabisAiWidget /> : <BuyerAssistantWidget />}
           >

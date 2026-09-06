@@ -44,8 +44,17 @@ export const ORDER_TRACKING_INTRO =
 export const ISSUE_REPORT_INTRO =
   "แจ้งปัญหาคุณภาพ สกรีนโลโก้ ของไม่ครบ หรือจัดส่ง ทีมจะรับเรื่องและติดต่อกลับ ไม่มีการชำระเงินในหน้านี้";
 
-/** Hub for returning buyers — not a primary marketing nav item. */
+/** Hub for returning buyers — grouped with ops in the storefront top bar. */
 export const ACCOUNT_HUB_TITLE = "ลูกค้าที่สั่งแล้ว";
+
+export const ACCOUNT_HUB_NAV_HINT = "ติดตามออเดอร์ · แจ้งปัญหา";
+
+export const OPS_CONSOLE_TITLE = "คอนโซลปฏิบัติการ";
+
+/** Short storefront label — keep “คอนโซลปฏิบัติการ” for staff chrome, not the buyer header. */
+export const OPS_CONSOLE_NAV_LABEL = "พนักงาน";
+
+export const OPS_CONSOLE_NAV_HINT = "เข้าทำงาน — สำหรับพนักงาน";
 
 export const ACCOUNT_HUB_INTRO =
   "โซนนี้สำหรับลูกค้าที่มีออเดอร์จากทีมขายแล้ว ใช้ติดตามสถานะ แจ้งโอน หรือแจ้งปัญหาสินค้า หากยังไม่ได้สั่ง ให้ขอใบเสนอราคาก่อน";

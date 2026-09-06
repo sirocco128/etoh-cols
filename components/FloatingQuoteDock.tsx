@@ -4,8 +4,8 @@ import Link from "next/link";
 import { MessageCircle, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
 import { loadBasketFromStorage } from "@/lib/quote-basket";
+import { quoteShortcutHref } from "@/lib/nav";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
 import { QUOTE_BASKET_FAB, QUOTE_FAB_LABEL } from "@/lib/ux-copy";
@@ -13,13 +13,18 @@ import { cn } from "@/lib/utils";
 
 const HIDDEN_PREFIXES = ["/contact", "/privacy", "/terms", "/issues"];
 
-export function FloatingQuoteDock() {
+export function FloatingQuoteDock({
+  enableP2QuoteTools,
+}: {
+  enableP2QuoteTools: boolean;
+}) {
   const pathname = usePathname() || "/";
   const hidden = HIDDEN_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
   const contact = getPublicContact(site);
-  const showBasket = isP2QuoteToolsEnabled();
+  const showBasket = enableP2QuoteTools;
+  const shortcutHref = quoteShortcutHref(enableP2QuoteTools);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -48,23 +53,13 @@ export function FloatingQuoteDock() {
       role="region"
       aria-label="ทางลัดติดต่อ"
     >
-      {showBasket ? (
-        <Link
-          href="/quote-basket"
-          className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-forest/90 px-4 py-2 text-sm font-semibold text-paper shadow-lg backdrop-blur-md transition hover:bg-forest-light"
-        >
-          <ShoppingBag className="h-4 w-4" aria-hidden />
-          {QUOTE_BASKET_FAB} ({count})
-        </Link>
-      ) : (
-        <Link
-          href="/contact"
-          className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-forest/90 px-4 py-2 text-sm font-semibold text-paper shadow-lg backdrop-blur-md transition hover:bg-forest-light"
-        >
-          <ShoppingBag className="h-4 w-4" aria-hidden />
-          {QUOTE_FAB_LABEL}
-        </Link>
-      )}
+      <Link
+        href={shortcutHref}
+        className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-forest/90 px-4 py-2 text-sm font-semibold text-paper shadow-lg backdrop-blur-md transition hover:bg-forest-light"
+      >
+        <ShoppingBag className="h-4 w-4" aria-hidden />
+        {showBasket ? `${QUOTE_BASKET_FAB} (${count})` : QUOTE_FAB_LABEL}
+      </Link>
       {contact.showLine ? (
         <a
           href={site.lineUrl}

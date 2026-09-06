@@ -1,9 +1,33 @@
+import {
+  ACCOUNT_HUB_NAV_HINT,
+  ACCOUNT_HUB_TITLE,
+  OPS_CONSOLE_NAV_HINT,
+  OPS_CONSOLE_NAV_LABEL,
+} from "./ux-copy";
+
 /** Shared primary navigation (desktop + mobile). */
 export type NavLinkItem = {
   href: string;
   label: string;
   hint?: string;
 };
+
+/**
+ * Returning-buyer + staff doors — sit together on the storefront top bar,
+ * not in the marketing nav (so the quote CTA stays scannable).
+ */
+export const UTILITY_NAV_LINKS: NavLinkItem[] = [
+  {
+    href: "/account",
+    label: ACCOUNT_HUB_TITLE,
+    hint: ACCOUNT_HUB_NAV_HINT,
+  },
+  {
+    href: "/ops",
+    label: OPS_CONSOLE_NAV_LABEL,
+    hint: OPS_CONSOLE_NAV_HINT,
+  },
+];
 
 /** First-time buyer destinations — keep short so the quote CTA stays in view. */
 export const PRIMARY_NAV_LINKS: NavLinkItem[] = [
@@ -37,6 +61,11 @@ export function withOptionalBasketLink(
     ...PRIMARY_NAV_LINKS,
     { href: "/quote-basket", label: "ตะกร้าใบเสนอราคา" },
   ];
+}
+
+/** Desktop quote FAB — same href on server HTML and client hydration. */
+export function quoteShortcutHref(enableP2QuoteTools: boolean): string {
+  return enableP2QuoteTools ? "/quote-basket" : "/contact";
 }
 
 export function moreNavLinks(): NavLinkItem[] {

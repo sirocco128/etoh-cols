@@ -32,7 +32,7 @@ export function EnvironmentBanner() {
       role="status"
       className="flex items-center justify-center gap-3 bg-brass px-4 py-1.5 text-center text-xs font-medium leading-snug text-forest sm:text-sm"
     >
-      <p>
+      <p className="min-w-0 text-pretty">
         <span className="font-semibold">โหมดสาธิต</span>
         {" — "}
         ข้อมูลติดต่อและสินค้าเป็นตัวอย่าง ยังไม่เปิดให้ค้นจาก Search Engine

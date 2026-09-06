@@ -3,7 +3,7 @@ import { RecentOrderHint } from "@/components/RecentOrderHint";
 import { formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
-import { ACCOUNT_HUB_TITLE } from "@/lib/ux-copy";
+import { ACCOUNT_HUB_TITLE, OPS_CONSOLE_TITLE } from "@/lib/ux-copy";
 
 const SERVICE_LINKS = [
   { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
@@ -123,6 +123,11 @@ export function Footer() {
             <li>
               <Link href="/account" className="text-paper/85 hover:text-brass-soft">
                 {ACCOUNT_HUB_TITLE}
+              </Link>
+            </li>
+            <li>
+              <Link href="/ops" className="text-paper/85 hover:text-brass-soft">
+                {OPS_CONSOLE_TITLE}
               </Link>
             </li>
             <RecentOrderHint variant="footer" />

@@ -3,15 +3,19 @@ import { Button } from "@/components/ui/button";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavLink } from "@/components/NavLink";
 import { NavMore } from "@/components/NavMore";
+import { NavUtilityCluster } from "@/components/NavUtilityCluster";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
 import { withOptionalBasketLink } from "@/lib/nav";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-export function Navbar() {
-  const links = withOptionalBasketLink(isP2QuoteToolsEnabled());
+export function Navbar({
+  enableP2QuoteTools,
+}: {
+  enableP2QuoteTools: boolean;
+}) {
+  const links = withOptionalBasketLink(enableP2QuoteTools);
 
   return (
     <header
@@ -20,15 +24,25 @@ export function Navbar() {
         "dark:border-white/10 dark:bg-forest/70",
       )}
     >
+      <div
+        className={cn(
+          "hidden border-b border-forest/10 bg-forest-mist/80 lg:block",
+          "dark:border-white/10 dark:bg-forest/40",
+        )}
+      >
+        <div className="mx-auto flex max-w-content items-center justify-end px-page py-1.5">
+          <NavUtilityCluster />
+        </div>
+      </div>
       <div className="mx-auto flex max-w-content items-center justify-between gap-2 px-page py-2.5 sm:gap-4 sm:py-3">
         <Link
           href="/"
-          className="min-w-0 truncate text-base font-bold tracking-tight text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass xs:text-lg dark:text-brass-soft"
+          className="shrink-0 text-base font-bold tracking-tight text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass xs:text-lg dark:text-brass-soft"
         >
           {site.name}
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:gap-6 lg:flex" aria-label="เมนูหลัก">
+        <nav className="hidden min-w-0 items-center gap-3 lg:flex xl:gap-6" aria-label="เมนูหลัก">
           {links.map((link) => (
             <NavLink
               key={link.href}
@@ -43,7 +57,7 @@ export function Navbar() {
           <NavMore />
           <ThemeSwitcher />
           <ThemeToggle />
-          <Button asChild>
+          <Button asChild className="shrink-0">
             <Link href="/contact">ขอใบเสนอราคา</Link>
           </Button>
         </nav>
@@ -51,7 +65,7 @@ export function Navbar() {
         <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
           <ThemeToggle />
           <ThemeSwitcher compact />
-          <MobileMenu enableP2QuoteTools={isP2QuoteToolsEnabled()} />
+          <MobileMenu enableP2QuoteTools={enableP2QuoteTools} />
         </div>
       </div>
     </header>

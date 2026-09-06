@@ -7,7 +7,7 @@ import { getPublicContact } from "@/lib/public-contact";
 import { NavLink } from "@/components/NavLink";
 import { moreNavLinks, withOptionalBasketLink } from "@/lib/nav";
 import { RecentOrderHint } from "@/components/RecentOrderHint";
-import { ACCOUNT_HUB_TITLE } from "@/lib/ux-copy";
+import { NavUtilityCluster } from "@/components/NavUtilityCluster";
 
 type MobileMenuProps = {
   enableP2QuoteTools?: boolean;
@@ -120,6 +120,9 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
               className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
               aria-label="เมนูมือถือ"
             >
+              <div className="mb-3 rounded-2xl border border-forest/10 bg-forest-mist/50 px-2 py-2 dark:border-white/10 dark:bg-forest/30">
+                <NavUtilityCluster layout="drawer" onNavigate={close} />
+              </div>
               {navLinks.map((link) => (
                 <NavLink
                   key={link.href}
@@ -157,17 +160,6 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   ) : null}
                 </NavLink>
               ))}
-              <NavLink
-                href="/account"
-                onClick={close}
-                className="mt-2 rounded-lg px-3 py-3 text-base font-medium text-ink/80 hover:bg-forest-mist"
-                activeClassName="bg-forest-mist text-forest"
-              >
-                <span className="block">{ACCOUNT_HUB_TITLE}</span>
-                <span className="mt-0.5 block text-xs font-normal text-ink/55">
-                  ติดตามออเดอร์ · แจ้งปัญหา
-                </span>
-              </NavLink>
               <div onClick={close}>
                 <RecentOrderHint variant="menu" />
               </div>
