@@ -39,6 +39,9 @@ yarn-error.log*
 # lighthouse
 .lighthouseci/
 
+# local agent / review artifacts
+.jez/
+
 # test output
 .tmp/tests/
 
