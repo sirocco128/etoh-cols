@@ -3,6 +3,18 @@ export default ({ env }) => {
     /\/+$/,
     "",
   );
+  const publicBase = String(env("MINIO_PUBLIC_BASE_URL", "")).replace(/\/+$/, "");
+  const mediaHosts = [
+    minio,
+    publicBase,
+    "http://minio:9000",
+    "http://127.0.0.1:9000",
+    "http://localhost:9000",
+    "http://127.0.0.1:9020",
+    "http://127.0.0.1:33920",
+    "http://192.168.1.30:33920",
+    "https://tarabiz.next-dev.net",
+  ].filter(Boolean);
 
   return [
     "strapi::logger",
@@ -19,18 +31,14 @@ export default ({ env }) => {
               "data:",
               "blob:",
               "market-assets.strapi.io",
-              minio,
-              "http://127.0.0.1:9000",
-              "http://localhost:9000",
+              ...mediaHosts,
             ],
             "media-src": [
               "'self'",
               "data:",
               "blob:",
               "market-assets.strapi.io",
-              minio,
-              "http://127.0.0.1:9000",
-              "http://localhost:9000",
+              ...mediaHosts,
             ],
             upgradeInsecureRequests: null,
           },

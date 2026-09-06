@@ -1,11 +1,26 @@
 # Git remotes — backup & CI
 
-This project can use **two remotes**:
+This project can use **three remotes**:
 
 | Remote | Host | Purpose |
 | --- | --- | --- |
+| `gitea` / NAS `origin` | Gitea on NAS (`192.168.1.30:3000`) | Source of truth for Portainer |
 | `origin` | [Cursor origin](https://origin.cursor.com) | Personal/team backup (private) |
 | `gitlab` | GitLab.com (or self-hosted) | CI/CD, MR workflow, team review |
+
+## Gitea on NAS (Portainer)
+
+```
+http://192.168.1.30:3000/tong/premium-giftset-web.git
+https://git.next-dev.net/tong/premium-giftset-web
+```
+
+```bash
+git remote add gitea http://192.168.1.30:3000/tong/premium-giftset-web.git
+git push -u gitea main
+```
+
+Portainer deploys `docker-compose.portainer.yml` from this repo. See [NAS-PORTAINER.md](./NAS-PORTAINER.md).
 
 ---
 

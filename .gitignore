@@ -55,5 +55,6 @@ strapi/node_modules/
 .env.cms.local
 cms/.env
 .env.staging
+.env.portainer
 intake/sprint2-intake.json
 data/1688-offers.json

@@ -66,6 +66,17 @@ docker run --rm \
 curl -f 'http://127.0.0.1:3000/api/health?deep=1'
 ```
 
+### NAS / Portainer (`https://tarabiz.next-dev.net`)
+
+Full stack (Next.js + Strapi + Postgres + MinIO) on the NAS:
+
+```bash
+docker compose -f docker-compose.portainer.yml config
+```
+
+Deploy from Gitea via Portainer. LAN web: http://192.168.1.30:33100  
+See [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md).
+
 ## PM2 (VM)
 
 ```bash
@@ -107,7 +118,7 @@ If Strapi is partially configured, set `STRAPI_FALLBACK_TO_MOCK=true` to avoid b
 npm run minio:up
 ```
 
-Console: http://127.0.0.1:9001 (user `terabis` / password from `.env.example`). Copy the `MINIO_*` block from `.env.example` into `.env.local`. Payment slips, catalog source photos, mockups, and ops PDFs go to buckets `terabis-private` / `terabis-public`. Strapi product photos use `terabis-public/cms/` — run `npm run cms:media:minio` after `minio:up`, then restart Strapi. If `MINIO_ENDPOINT` is empty, Next.js files stay under `.data/objects/` and Strapi stays on `cms/public/uploads`.
+Console: http://127.0.0.1:9021 (root user `terabis` / password from `.env.example`). API is `http://127.0.0.1:9020` so it does not collide with genesis-minio on 9000. Copy the `MINIO_*` block from `.env.example` into `.env.local` so the app uses `giftset-app`, not root. Catalog photos go to `terabis-public`. Payment slips go to `terabis-restricted`, PDFs to `terabis-confidential`, mockups to `terabis-private`. Strapi product photos use `terabis-public/cms/` — run `npm run cms:media:minio` after `minio:up`, then restart Strapi. If `MINIO_ENDPOINT` is empty, Next.js files stay under `.data/objects/` and Strapi stays on `cms/public/uploads`.
 
 ## P2 quote tools (optional)
 
@@ -153,7 +164,8 @@ npm run db:migrate
 | [docs/UAT-CHECKLIST.md](docs/UAT-CHECKLIST.md) | UAT sign-off template |
 | [docs/UAT-AUTO-RESULTS.md](docs/UAT-AUTO-RESULTS.md) | Automated route crawl results |
 | [docs/OPS-CONSOLE.md](docs/OPS-CONSOLE.md) | ลูกค้า + ใบเสนอราคา (local ops) |
-| [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + GitLab setup |
+| [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + Gitea NAS + GitLab |
+| [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md) | NAS Docker Compose + Cloudflare `tarabiz.next-dev.net` |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
 | [SECURITY.md](SECURITY.md) | Security baseline summary |
 

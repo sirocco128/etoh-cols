@@ -1,13 +1,10 @@
 # Optional overlay for local CMS work.
 #
-# Sprint 1 keeps Strapi on the host (./cms), not in Docker, because create-strapi /
-# admin builds are more reliable that way. Postgres stays in docker-compose.yml.
+# Local/dev: Strapi still runs on the host from ./cms (see docs/SPRINT1-LOCAL-CMS.md).
+# NAS/Portainer: Strapi is a container in docker-compose.portainer.yml.
 #
-# Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.cms.yml up -d postgres
 #   npm run cms:bootstrap
 #   cd cms && npm install && npm run develop
-#
-# To add a containerized Strapi service later, extend `services` below.
 
 services: {}
