@@ -8,8 +8,12 @@ import { PriceDisclaimer } from "@/components/PriceDisclaimer";
 import { buildCatalogBook, catalogPageNumberForSlug } from "@/lib/catalog-book";
 import { catalogPdfUrl, flipHtml5EmbedUrl, parseFlipPageParam } from "@/lib/fliphtml5";
 import { metadataForPath } from "@/lib/page-seo";
-import { getCategories, getProducts } from "@/lib/strapi";
+import { getPublicCatalog } from "@/lib/strapi";
 import {
+  CATALOG_EMPTY_BODY,
+  CATALOG_EMPTY_TITLE,
+  CATALOG_UNAVAILABLE_BODY,
+  CATALOG_UNAVAILABLE_TITLE,
   FLIP_CATALOG_CLOSING_BODY,
   FLIP_CATALOG_CLOSING_TITLE,
   FLIP_CATALOG_LEAD,
@@ -28,11 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
-  const params = await searchParams;
-  const [products, categories] = await Promise.all([
-    getProducts(),
-    getCategories(),
-  ]);
+  const [catalog, params] = await Promise.all([getPublicCatalog(), searchParams]);
+  const { products, categories, unavailable } = catalog;
   const book = buildCatalogBook({
     products,
     categories,
@@ -74,8 +75,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 
         {products.length === 0 ? (
           <EmptyState
-            title="ยังไม่มีสินค้าในสมุดแคตตาล็อก"
-            description="ขณะนี้ยังไม่มีรายการเผยแพร่ ติดต่อทีมขายเพื่อขอคำแนะนำเซ็ตที่สกรีนโลโก้ได้"
+            title={unavailable ? CATALOG_UNAVAILABLE_TITLE : CATALOG_EMPTY_TITLE}
+            description={unavailable ? CATALOG_UNAVAILABLE_BODY : CATALOG_EMPTY_BODY}
             actionHref="/contact"
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />
@@ -87,7 +88,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             initialPage={initialPage}
           />
         )}
-        {products.length > 0 ? <PriceDisclaimer className="mt-8" /> : null}
+        {products.length > 0 ? <PriceDisclaimer className="mt-8" variant="full" /> : null}
       </div>
     </div>
   );

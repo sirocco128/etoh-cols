@@ -57,7 +57,7 @@ export function ProductCompareTray() {
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[4.75rem] z-40 print:hidden lg:bottom-4">
+    <div className="fixed inset-x-0 bottom-[6.5rem] z-40 print:hidden lg:bottom-4">
       <div className="mx-auto max-w-content px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:px-6">
         <div className="rounded-2xl border border-forest/15 bg-paper/95 p-3 shadow-2xl backdrop-blur-md">
           <div className="flex flex-wrap items-center justify-between gap-2">

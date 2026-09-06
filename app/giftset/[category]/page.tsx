@@ -13,9 +13,15 @@ import { resolveSeoFields } from "@/lib/page-seo";
 import {
   getCategories,
   getCategoryBySlug,
-  getProductsByCategory,
+  getPublicCategoryCatalog,
 } from "@/lib/strapi";
 import { canonicalCategorySlug } from "@/lib/smartgift-products";
+import {
+  CATALOG_EMPTY_BODY,
+  CATALOG_EMPTY_TITLE,
+  CATALOG_UNAVAILABLE_BODY,
+  CATALOG_UNAVAILABLE_TITLE,
+} from "@/lib/ux-copy";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -46,10 +52,22 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
   const canonical = canonicalCategorySlug(slug);
   if (canonical !== slug) redirect(`/giftset/${canonical}`);
 
-  const category = await getCategoryBySlug(slug);
-  if (!category) notFound();
-
-  const products = await getProductsByCategory(category.slug);
+  const { category, products, unavailable } = await getPublicCategoryCatalog(slug);
+  if (!category) {
+    if (unavailable) {
+      return (
+        <div className="mx-auto max-w-content px-page py-10 sm:py-14">
+          <EmptyState
+            title={CATALOG_UNAVAILABLE_TITLE}
+            description={CATALOG_UNAVAILABLE_BODY}
+            actionHref="/contact"
+            actionLabel="ขอคำแนะนำจากทีมขาย"
+          />
+        </div>
+      );
+    }
+    notFound();
+  }
 
   const breadcrumbs = buildBreadcrumbJsonLd([
     { name: "หน้าแรก", path: "/" },
@@ -110,8 +128,8 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
           </p>
           {products.length === 0 ? (
             <EmptyState
-              title="ยังไม่มีสินค้าในหมวดนี้"
-              description="แจ้งโจทย์และงบประมาณ ทีมขายจะช่วยออกแบบเซ็ตให้เหมาะกับแคมเปญของคุณ"
+              title={unavailable ? CATALOG_UNAVAILABLE_TITLE : CATALOG_EMPTY_TITLE}
+              description={unavailable ? CATALOG_UNAVAILABLE_BODY : CATALOG_EMPTY_BODY}
               actionHref="/contact"
               actionLabel="ขอคำแนะนำจากทีมขาย"
             />
@@ -124,7 +142,7 @@ export default async function GiftsetCategoryPage({ params }: PageProps) {
                 </li>
               ))}
               </ul>
-              <PriceDisclaimer className="mt-8" />
+              <PriceDisclaimer className="mt-8" variant="full" />
             </>
           )}
         </section>

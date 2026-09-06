@@ -6,6 +6,21 @@ Local staff UI for RFQ leads and a lightweight CRM. **Not** Strapi CMS and **not
 
 เช็กลิสต์ลงมือทำทีละขั้น (ช่องติ๊ก + ปุ่มในหน้าจอ): [SOP-CHECKLIST.md](./SOP-CHECKLIST.md)
 
+## SOP Guide SPA (`/sop`)
+
+Interactive Thai operations guide (every Ops menu: purpose, how-to, real screenshots). **Read access is token-gated** — not the Ops staff login.
+
+- URL: http://localhost:3000/sop
+- One-shot link: `http://localhost:3000/sop?token=YOUR_SOP_GUIDE_TOKEN`
+- Env: `SOP_GUIDE_TOKEN` (min 16 chars) + existing `ADMIN_SESSION_SECRET` (signs the `sop_guide` cookie)
+- Recapture screenshots (app must be running, uses Ops login):
+
+```bash
+npm run sop:screenshots
+```
+
+PNGs land in `public/sop/screenshots/`. Content catalog: `lib/sop-guide-content.ts`.
+
 ## URL
 
 - Login: http://localhost:3000/ops/login

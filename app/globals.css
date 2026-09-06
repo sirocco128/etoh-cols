@@ -392,7 +392,7 @@ html.dark .ops-shell .text-forest {
   }
 
   .flipbook-frame__ratio {
-    @apply relative aspect-[3/4] w-full sm:aspect-[4/5] lg:aspect-[16/10];
+    @apply relative aspect-[3/4] w-full max-h-[min(62dvh,34rem)] sm:max-h-none sm:aspect-[4/5] lg:aspect-[16/10];
   }
 
   .glass-panel {

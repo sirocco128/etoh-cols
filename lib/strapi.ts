@@ -318,6 +318,45 @@ async function loadProducts(): Promise<Product[]> {
 
 export const getProducts = cache(loadProducts);
 
+export type PublicCatalog = {
+  products: Product[];
+  categories: Category[];
+  unavailable: boolean;
+};
+
+/** Catalog pages: never throw a blank error screen when MySQL is slow or down. */
+export async function getPublicCatalog(): Promise<PublicCatalog> {
+  try {
+    const [products, categories] = await Promise.all([
+      getProducts(),
+      getCategories(),
+    ]);
+    return { products, categories, unavailable: false };
+  } catch (error) {
+    console.error("[catalog] public catalog unavailable", error);
+    return { products: [], categories: [], unavailable: true };
+  }
+}
+
+export async function getPublicCategoryCatalog(slug: string): Promise<{
+  category: Category | null;
+  products: Product[];
+  categories: Category[];
+  unavailable: boolean;
+}> {
+  try {
+    const [category, products, categories] = await Promise.all([
+      getCategoryBySlug(slug),
+      getProductsByCategory(slug),
+      getCategories(),
+    ]);
+    return { category, products, categories, unavailable: false };
+  } catch (error) {
+    console.error("[catalog] category catalog unavailable", error);
+    return { category: null, products: [], categories: [], unavailable: true };
+  }
+}
+
 async function loadProductsByCategory(slug: string): Promise<Product[]> {
   const wanted = canonicalCategorySlug(slug);
   if (getCmsMode() === "mysql" && isSmartgiftMysqlEnabled()) {

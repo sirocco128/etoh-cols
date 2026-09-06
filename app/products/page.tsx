@@ -7,10 +7,18 @@ import { FadeIn } from "@/components/FadeIn";
 import { EmptyState } from "@/components/EmptyState";
 import { PriceDisclaimer } from "@/components/PriceDisclaimer";
 import { ProductCard } from "@/components/ProductCard";
-import { getCategories, getProducts } from "@/lib/strapi";
+import { getPublicCatalog } from "@/lib/strapi";
 import { canonicalCategorySlug } from "@/lib/smartgift-products";
 import { metadataForPath } from "@/lib/page-seo";
-import { CATALOG_PILL, CATALOG_SUBTITLE, FLIP_CATALOG_OPEN } from "@/lib/ux-copy";
+import {
+  CATALOG_EMPTY_BODY,
+  CATALOG_EMPTY_TITLE,
+  CATALOG_PILL,
+  CATALOG_SUBTITLE,
+  CATALOG_UNAVAILABLE_BODY,
+  CATALOG_UNAVAILABLE_TITLE,
+  FLIP_CATALOG_OPEN,
+} from "@/lib/ux-copy";
 
 export const revalidate = 300;
 
@@ -29,10 +37,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     : params.category;
   const queryRaw = Array.isArray(params.q) ? params.q[0] : params.q;
   const query = (queryRaw || "").trim().toLowerCase();
-  const [products, categories] = await Promise.all([
-    getProducts(),
-    getCategories(),
-  ]);
+  const { products, categories, unavailable } = await getPublicCatalog();
   const hasClearance = products.some((item) => item.isClearance);
   const requestedCategory = categorySlug
     ? canonicalCategorySlug(categorySlug)
@@ -124,8 +129,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
         {products.length === 0 ? (
           <EmptyState
-            title="ยังไม่มีสินค้าในแคตตาล็อก"
-            description="ขณะนี้ยังไม่มีรายการเผยแพร่ ติดต่อทีมขายเพื่อขอคำแนะนำเซ็ตที่เหมาะกับงบและโอกาสของคุณ"
+            title={unavailable ? CATALOG_UNAVAILABLE_TITLE : CATALOG_EMPTY_TITLE}
+            description={unavailable ? CATALOG_UNAVAILABLE_BODY : CATALOG_EMPTY_BODY}
             actionHref="/contact"
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />
@@ -145,7 +150,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             ))}
           </ul>
         )}
-        {visible.length > 0 ? <PriceDisclaimer className="mt-8" /> : null}
+        {visible.length > 0 ? <PriceDisclaimer className="mt-8" variant="full" /> : null}
       </div>
     </div>
   );

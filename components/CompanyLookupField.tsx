@@ -32,6 +32,8 @@ type CompanyLookupFieldProps = {
   billingBranch?: string;
   taxError?: string;
   companyError?: string;
+  /** When false, parent renders the company field; lookup still fills it. */
+  showCompanyField?: boolean;
   onTaxIdChange: (value: string) => void;
   onCompanyChange: (value: string) => void;
   onFill: (fill: CompanyLookupFill) => void;
@@ -53,6 +55,7 @@ export function CompanyLookupField({
   billingBranch = "",
   taxError,
   companyError,
+  showCompanyField = true,
   onTaxIdChange,
   onCompanyChange,
   onFill,
@@ -190,6 +193,7 @@ export function CompanyLookupField({
           </p>
         ) : null}
       </div>
+      {showCompanyField ? (
       <div>
         <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-ink">
           บริษัท / องค์กร *
@@ -211,6 +215,7 @@ export function CompanyLookupField({
           </p>
         ) : null}
       </div>
+      ) : null}
     </div>
     {showBranchSelect ? (
       <div>

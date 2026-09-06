@@ -38,7 +38,8 @@
     "minio:up": "docker compose up -d minio minio-replica minio-init minio-mirror",
     "minio:down": "docker compose stop minio minio-replica minio-mirror",
     "vault:up": "docker compose up -d minio minio-replica minio-init minio-mirror clamav",
-    "cms:media:minio": "node scripts/migrate-strapi-media-to-minio.mjs"
+    "cms:media:minio": "node scripts/migrate-strapi-media-to-minio.mjs",
+    "sop:screenshots": "node --experimental-strip-types scripts/capture-sop-screenshots.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -74,6 +75,7 @@
     "autoprefixer": "10.5.4",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.25",
+    "playwright": "^1.63.0",
     "postcss": "8.5.26",
     "tailwindcss": "3.4.19",
     "typescript": "5.9.3"

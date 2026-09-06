@@ -21,6 +21,7 @@ import {
   appendQuoteDetailTemplate,
   QUOTE_DETAIL_HINT,
   QUOTE_DETAIL_TEMPLATES,
+  QUOTE_NOT_AN_ORDER,
   RFQ_NO_PAYMENT,
 } from "@/lib/ux-copy";
 import { emailFieldError, phoneFieldError } from "@/lib/contact-validate";
@@ -59,7 +60,18 @@ type QuoteFormProps = {
   minOrder?: number;
 };
 
-const QUOTE_STEPS = ["ผู้ติดต่อ", "งานที่ต้องการ", "ที่อยู่และส่งคำขอ"] as const;
+const OPTIONAL_ERROR_KEYS = [
+  "taxId",
+  "billingBranch",
+  "streetAddress",
+  "province",
+  "district",
+  "subdistrict",
+  "zip",
+  "budgetPerSet",
+  "neededDate",
+  "decorationMethod",
+] as const;
 
 function fieldError(
   fieldErrors: Record<string, string> | undefined,
@@ -133,20 +145,9 @@ export function QuoteForm({
   const [draftReady, setDraftReady] = useState(false);
   const [draft, setDraft] = useState<QuoteFormValues>({});
   const [contactAttempted, setContactAttempted] = useState(false);
-  const [step, setStep] = useState(0);
   const startedRef = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const stepperRef = useRef<HTMLOListElement>(null);
-  const stepMounted = useRef(false);
-
-  useEffect(() => {
-    if (!stepMounted.current) {
-      stepMounted.current = true;
-      return;
-    }
-    stepperRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [step]);
 
   const attribution = useMemo(() => {
     if (typeof window === "undefined") {
@@ -228,22 +229,6 @@ export function QuoteForm({
     window.addEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
     return () => window.removeEventListener(MOCKUP_BRIEF_EVENT, onMockupBrief);
   }, []);
-
-  useEffect(() => {
-    if (!state.fieldErrors) return;
-    const keys = Object.keys(state.fieldErrors);
-    if (keys.some((key) => ["name", "company", "email", "phone", "taxId", "billingBranch"].includes(key))) {
-      setStep(0);
-    } else if (
-      keys.some((key) =>
-        ["quantity", "budgetPerSet", "neededDate", "productInterest", "decorationMethod", "detail"].includes(key),
-      )
-    ) {
-      setStep(1);
-    } else {
-      setStep(2);
-    }
-  }, [state.fieldErrors]);
 
   useEffect(() => {
     if (state.ok && state.requestId) {
@@ -350,7 +335,8 @@ export function QuoteForm({
             เลือกสินค้าเพิ่ม
           </Link>
         </div>
-        <p className="mt-6 text-xs text-ink/60">{RFQ_NO_PAYMENT}</p>
+        <p className="mt-6 text-sm font-medium text-forest">{QUOTE_NOT_AN_ORDER}</p>
+        <p className="mt-1 text-xs text-ink/60">{RFQ_NO_PAYMENT}</p>
       </div>
     );
   }
@@ -367,21 +353,9 @@ export function QuoteForm({
     );
   }
 
-  function goNext() {
-    if (step === 0) {
-      const emailIssue = emailFieldError(val("email"));
-      const phoneIssue = phoneFieldError(val("phone"));
-      if (!val("name")?.trim() || !val("company")?.trim() || emailIssue || phoneIssue) {
-        setContactAttempted(true);
-        return;
-      }
-    }
-    if (step === 1 && !(val("quantity") || "").trim()) return;
-    setStep((current) => Math.min(QUOTE_STEPS.length - 1, current + 1));
-  }
-
   const errors = state.fieldErrors;
   const errorSummaryId = "quote-error-summary";
+  const openOptional = OPTIONAL_ERROR_KEYS.some((key) => Boolean(errors?.[key]));
 
   return (
     <form
@@ -401,33 +375,18 @@ export function QuoteForm({
     >
       <div>
         <h2 className="text-2xl font-bold text-forest">{heading}</h2>
-        <p className="mt-2 text-sm text-ink/70">{RFQ_NO_PAYMENT}</p>
-        <p className="mt-1 text-xs text-ink/55">
+        <div
+          role="note"
+          className="mt-3 rounded-xl border border-brass/40 bg-brass/10 px-4 py-3"
+        >
+          <p className="text-sm font-semibold text-forest">{QUOTE_NOT_AN_ORDER}</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink/75">{RFQ_NO_PAYMENT}</p>
+        </div>
+        <p className="mt-2 text-xs text-ink/55">
+          กรอกช่องที่มี * ให้ครบ แล้วกดส่ง — ทีมขายติดต่อกลับในเวลาทำการ
           หากส่งไม่สำเร็จ ระบบเก็บบร่างไว้ในเครื่องนี้ให้กดส่งซ้ำได้
         </p>
       </div>
-
-      <ol
-        ref={stepperRef}
-        className="flex flex-wrap gap-2 text-xs"
-        aria-label="ขั้นตอนแบบฟอร์ม"
-      >
-        {QUOTE_STEPS.map((label, index) => (
-          <li
-            key={label}
-            aria-current={index === step ? "step" : undefined}
-            className={`rounded-full px-3 py-1 ${
-              index === step
-                ? "bg-forest text-paper"
-                : index < step
-                  ? "bg-forest-mist text-forest"
-                  : "bg-forest-mist/50 text-ink/50"
-            }`}
-          >
-            {index + 1}. {label}
-          </li>
-        ))}
-      </ol>
 
       {state.formError ? (
         <div
@@ -477,7 +436,7 @@ export function QuoteForm({
         value={val("productSlug", productSlug)}
       />
 
-      <div className={step === 0 ? "space-y-5" : "hidden"}>
+      <div className="space-y-5">
       <Field
         id="name"
         name="name"
@@ -487,32 +446,27 @@ export function QuoteForm({
         defaultValue={val("name")}
       />
 
-      <CompanyLookupField
-        taxId={val("taxId")}
-        company={val("company")}
-        billingBranch={val("billingBranch")}
-        taxError={fieldError(errors, "taxId")}
-        companyError={fieldError(errors, "company")}
-        onTaxIdChange={(value) =>
-          patchDraft({
-            taxId: value,
-            ...(value.replace(/\D/g, "").length !== 13 ? { billingBranch: "" } : {}),
-          })
-        }
-        onCompanyChange={(value) => patchDraft({ company: value })}
-        onFill={(fill) =>
-          patchDraft({
-            taxId: fill.taxId,
-            company: fill.company,
-            ...(fill.billingBranch ? { billingBranch: fill.billingBranch } : {}),
-            ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
-            ...(fill.province ? { province: fill.province } : {}),
-            ...(fill.district ? { district: fill.district } : {}),
-            ...(fill.subdistrict ? { subdistrict: fill.subdistrict } : {}),
-            ...(fill.zip ? { zip: fill.zip } : {}),
-          })
-        }
-      />
+      <div>
+        <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-ink">
+          บริษัท / องค์กร *
+        </label>
+        <input
+          id="company"
+          name="company"
+          required
+          autoComplete="organization"
+          value={val("company")}
+          onChange={(event) => patchDraft({ company: event.target.value })}
+          className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+          aria-invalid={Boolean(fieldError(errors, "company"))}
+          aria-describedby={fieldError(errors, "company") ? "company-error" : undefined}
+        />
+        {fieldError(errors, "company") ? (
+          <p id="company-error" className="mt-1 text-sm text-red-700">
+            {fieldError(errors, "company")}
+          </p>
+        ) : null}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ContactFields
@@ -524,9 +478,7 @@ export function QuoteForm({
           onChange={(next) => patchDraft(next)}
         />
       </div>
-      </div>
 
-      <div className={step === 1 ? "space-y-5" : "hidden"}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           id="quantity"
@@ -538,67 +490,17 @@ export function QuoteForm({
           defaultValue={val("quantity") || (minOrder > 1 ? String(minOrder) : "")}
         />
         <Field
-          id="budgetPerSet"
-          name="budgetPerSet"
-          type="number"
-          label="งบประมาณต่อเซ็ต (บาท)"
-          error={fieldError(errors, "budgetPerSet")}
-          min={0}
-          defaultValue={val("budgetPerSet")}
+          id="productInterest"
+          name="productInterest"
+          label="สินค้า / เซ็ตที่สนใจ"
+          defaultValue={val("productInterest", productInterest)}
+          error={fieldError(errors, "productInterest")}
         />
-        <Field
-          id="neededDate"
-          name="neededDate"
-          type="date"
-          label="วันที่ต้องการใช้งาน"
-          error={fieldError(errors, "neededDate")}
-          defaultValue={val("neededDate")}
-        />
-      </div>
-
-      <Field
-        id="productInterest"
-        name="productInterest"
-        label="สินค้า / เซ็ตที่สนใจ"
-        defaultValue={val("productInterest", productInterest)}
-        error={fieldError(errors, "productInterest")}
-      />
-
-      <div>
-        <label
-          htmlFor="decorationMethod"
-          className="mb-1.5 block text-sm font-medium text-ink"
-        >
-          วิธีตกแต่งโลโก้
-        </label>
-        <select
-          id="decorationMethod"
-          name="decorationMethod"
-          defaultValue={val("decorationMethod", "not-sure")}
-          className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
-          aria-invalid={Boolean(fieldError(errors, "decorationMethod"))}
-          aria-describedby={
-            fieldError(errors, "decorationMethod")
-              ? "decorationMethod-error"
-              : undefined
-          }
-        >
-          {DECORATION_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {fieldError(errors, "decorationMethod") ? (
-          <p id="decorationMethod-error" className="mt-1 text-sm text-red-700">
-            {fieldError(errors, "decorationMethod")}
-          </p>
-        ) : null}
       </div>
 
       <div>
         <label htmlFor="detail" className="mb-1.5 block text-sm font-medium text-ink">
-          รายละเอียดเพิ่มเติม
+          รายละเอียดงาน (ถ้ามี)
         </label>
         <p id="detail-hint" className="mb-2 text-xs text-ink/60">
           {QUOTE_DETAIL_HINT}
@@ -626,7 +528,7 @@ export function QuoteForm({
         <textarea
           id="detail"
           name="detail"
-          rows={6}
+          rows={4}
           value={detailValue}
           onChange={(event) => {
             const nextDetail = event.target.value;
@@ -651,17 +553,109 @@ export function QuoteForm({
       </div>
       </div>
 
-      <div className={step === 2 ? "space-y-5" : "hidden"}>
-      <ThaiAddressFields
-        streetAddress={val("streetAddress")}
-        province={val("province")}
-        district={val("district")}
-        subdistrict={val("subdistrict")}
-        zip={val("zip")}
-        streetError={fieldError(errors, "streetAddress")}
-        provinceError={fieldError(errors, "province")}
-        onChange={(next) => patchDraft(next)}
-      />
+      <details
+        className="rounded-2xl border border-forest/15 bg-forest-mist/40 px-4 py-3"
+        {...(openOptional ? { open: true } : {})}
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-forest">
+          รายละเอียดเพิ่มเติม (ไม่บังคับ)
+        </summary>
+        <p className="mt-2 text-xs text-ink/60">
+          เลขผู้เสียภาษี ที่อยู่ งบ และวันที่ใช้ ใส่ทีหลังก็ได้ ทีมขายถามต่อเมื่อต้องออกใบเสนอราคา
+        </p>
+        <div className="mt-4 space-y-5">
+          <CompanyLookupField
+            taxId={val("taxId")}
+            company={val("company")}
+            billingBranch={val("billingBranch")}
+            taxError={fieldError(errors, "taxId")}
+            companyError={fieldError(errors, "company")}
+            showCompanyField={false}
+            onTaxIdChange={(value) =>
+              patchDraft({
+                taxId: value,
+                ...(value.replace(/\D/g, "").length !== 13 ? { billingBranch: "" } : {}),
+              })
+            }
+            onCompanyChange={(value) => patchDraft({ company: value })}
+            onFill={(fill) =>
+              patchDraft({
+                taxId: fill.taxId,
+                company: fill.company,
+                ...(fill.billingBranch ? { billingBranch: fill.billingBranch } : {}),
+                ...(fill.streetAddress ? { streetAddress: fill.streetAddress } : {}),
+                ...(fill.province ? { province: fill.province } : {}),
+                ...(fill.district ? { district: fill.district } : {}),
+                ...(fill.subdistrict ? { subdistrict: fill.subdistrict } : {}),
+                ...(fill.zip ? { zip: fill.zip } : {}),
+              })
+            }
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              id="budgetPerSet"
+              name="budgetPerSet"
+              type="number"
+              label="งบประมาณต่อเซ็ต (บาท)"
+              error={fieldError(errors, "budgetPerSet")}
+              min={0}
+              defaultValue={val("budgetPerSet")}
+            />
+            <Field
+              id="neededDate"
+              name="neededDate"
+              type="date"
+              label="วันที่ต้องการใช้งาน"
+              error={fieldError(errors, "neededDate")}
+              defaultValue={val("neededDate")}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="decorationMethod"
+              className="mb-1.5 block text-sm font-medium text-ink"
+            >
+              วิธีตกแต่งโลโก้
+            </label>
+            <select
+              id="decorationMethod"
+              name="decorationMethod"
+              defaultValue={val("decorationMethod", "not-sure")}
+              className="min-h-11 w-full rounded-xl border border-forest/20 bg-paper px-3 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
+              aria-invalid={Boolean(fieldError(errors, "decorationMethod"))}
+              aria-describedby={
+                fieldError(errors, "decorationMethod")
+                  ? "decorationMethod-error"
+                  : undefined
+              }
+            >
+              {DECORATION_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {fieldError(errors, "decorationMethod") ? (
+              <p id="decorationMethod-error" className="mt-1 text-sm text-red-700">
+                {fieldError(errors, "decorationMethod")}
+              </p>
+            ) : null}
+          </div>
+
+          <ThaiAddressFields
+            streetAddress={val("streetAddress")}
+            province={val("province")}
+            district={val("district")}
+            subdistrict={val("subdistrict")}
+            zip={val("zip")}
+            streetError={fieldError(errors, "streetAddress")}
+            provinceError={fieldError(errors, "province")}
+            onChange={(next) => patchDraft(next)}
+          />
+        </div>
+      </details>
 
       <div className="flex items-start gap-3">
         <input
@@ -669,7 +663,7 @@ export function QuoteForm({
           name="consent"
           type="checkbox"
           value="true"
-          required={step === 2}
+          required
           defaultChecked={val("consent") === "true"}
           className="mt-1 h-5 w-5 rounded border-forest/30 text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
           aria-invalid={Boolean(fieldError(errors, "consent"))}
@@ -684,36 +678,17 @@ export function QuoteForm({
           {fieldError(errors, "consent")}
         </p>
       ) : null}
-      </div>
 
       <div className="flex flex-wrap gap-3">
-        {step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep((current) => Math.max(0, current - 1))}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-          >
-            ย้อนกลับ
-          </button>
-        ) : null}
-        {step < QUOTE_STEPS.length - 1 ? (
-          <button
-            type="button"
-            onClick={goNext}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper"
-          >
-            ถัดไป
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={pending || !startedAt}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper transition hover:bg-forest-light disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass sm:w-auto"
-          >
-            {pending ? "กำลังส่ง..." : "ส่งคำขอใบเสนอราคา"}
-          </button>
-        )}
+        <button
+          type="submit"
+          disabled={pending || !startedAt}
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-forest px-6 text-sm font-semibold text-paper transition hover:bg-forest-light disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass sm:w-auto"
+        >
+          {pending ? "กำลังส่ง..." : "ส่งคำขอใบเสนอราคา"}
+        </button>
       </div>
+
     </form>
   );
 }

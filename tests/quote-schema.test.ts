@@ -111,6 +111,19 @@ describe("quote-schema (§31.1)", () => {
     assert.equal(result.success, true);
   });
 
+  it("accepts a minimal request without tax ID or address", () => {
+    const parsed = quoteSchema.safeParse({
+      name: basePayload.name,
+      company: basePayload.company,
+      email: basePayload.email,
+      phone: basePayload.phone,
+      quantity: basePayload.quantity,
+      consent: true,
+      website: "",
+    });
+    assert.equal(parsed.success, true);
+  });
+
   it("accepts a 13-digit tax ID and composes tambon/district/province", () => {
     const parsed = quoteSchema.safeParse({
       ...basePayload,

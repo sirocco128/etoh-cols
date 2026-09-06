@@ -147,7 +147,7 @@ export function ProductCard({
 
         <div className="border-t border-forest/10 pt-3 dark:border-white/10">
           <span className="block text-[10px] font-medium uppercase tracking-wider text-ink/40">
-            ราคาโดยประมาณ · Custom Quote
+            ราคาโดยประมาณ — ไม่ใช่ราคาชำระ
           </span>
           <span className="text-base font-bold text-forest dark:text-brass-soft">
             {price}
@@ -168,7 +168,8 @@ export function ProductCard({
               className="inline-flex min-h-11 items-center justify-center gap-1 rounded-full border border-forest/20 px-3 py-1.5 text-xs font-medium text-forest hover:border-brass/50 sm:min-h-9"
             >
               <BookOpen className="h-3.5 w-3.5" aria-hidden />
-              ดูในสมุดพลิก
+              <span className="sm:hidden">สมุดพลิก</span>
+              <span className="hidden sm:inline">ดูในสมุดพลิก</span>
             </Link>
             <button
               type="button"

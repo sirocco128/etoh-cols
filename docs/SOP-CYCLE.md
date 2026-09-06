@@ -4,6 +4,8 @@
 
 เอกสารนี้เป็นคู่มือปฏิบัติการภายใน คู่กับ [OPS-CONSOLE.md](./OPS-CONSOLE.md)
 
+คู่มือภาพหน้าจอแบบ SPA (ต้องมีโทเค็น): [/sop](http://localhost:3000/sop)
+
 ลงมือทำทีละขั้น: [SOP-CHECKLIST.md](./SOP-CHECKLIST.md)
 
 ---

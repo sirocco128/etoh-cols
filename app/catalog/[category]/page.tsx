@@ -11,10 +11,12 @@ import { buildCatalogBook, catalogPageNumberForSlug } from "@/lib/catalog-book";
 import { catalogPdfUrl, flipHtml5EmbedUrl, parseFlipPageParam } from "@/lib/fliphtml5";
 import { metadataFromSeo } from "@/lib/metadata";
 import { clampSeoTitle, fitSeoDescription } from "@/lib/seo-limits";
-import { getCategories, getCategoryBySlug, getProductsByCategory } from "@/lib/strapi";
+import { getCategories, getCategoryBySlug, getPublicCategoryCatalog } from "@/lib/strapi";
 import { canonicalCategorySlug } from "@/lib/smartgift-products";
 import { categoryTabLabel } from "@/lib/product-media";
 import {
+  CATALOG_UNAVAILABLE_BODY,
+  CATALOG_UNAVAILABLE_TITLE,
   FLIP_CATALOG_CLOSING_BODY,
   FLIP_CATALOG_CLOSING_TITLE,
   FLIP_CATALOG_LEAD,
@@ -58,12 +60,24 @@ export default async function CatalogGroupPage({ params, searchParams }: PagePro
   const canonical = canonicalCategorySlug(slug);
   if (canonical !== slug) redirect(`/catalog/${canonical}`);
 
-  const [category, products, categories] = await Promise.all([
-    getCategoryBySlug(slug),
-    getProductsByCategory(slug),
-    getCategories(),
-  ]);
-  if (!category) notFound();
+  const { category, products, categories, unavailable } = await getPublicCategoryCatalog(slug);
+  if (!category) {
+    if (unavailable) {
+      return (
+        <div className="bg-premium-mesh">
+          <div className="mx-auto max-w-content px-page py-6 sm:py-8">
+            <EmptyState
+              title={CATALOG_UNAVAILABLE_TITLE}
+              description={CATALOG_UNAVAILABLE_BODY}
+              actionHref="/contact"
+              actionLabel="ขอคำแนะนำจากทีมขาย"
+            />
+          </div>
+        </div>
+      );
+    }
+    notFound();
+  }
 
   const book = buildCatalogBook({
     products,
@@ -113,8 +127,10 @@ export default async function CatalogGroupPage({ params, searchParams }: PagePro
 
         {inGroup.length === 0 ? (
           <EmptyState
-            title="ยังไม่มีสินค้าในกลุ่มนี้"
-            description="ลองดูกลุ่มอื่น หรือส่งโจทย์ให้ทีมขายแนะนำเซ็ตที่สกรีนโลโก้ได้"
+            title={unavailable ? CATALOG_UNAVAILABLE_TITLE : "ยังไม่มีสินค้าในกลุ่มนี้"}
+            description={
+              unavailable ? CATALOG_UNAVAILABLE_BODY : "ลองดูกลุ่มอื่น หรือส่งโจทย์ให้ทีมขายแนะนำเซ็ตที่สกรีนโลโก้ได้"
+            }
             actionHref="/contact"
             actionLabel="ขอคำแนะนำจากทีมขาย"
           />
@@ -126,7 +142,7 @@ export default async function CatalogGroupPage({ params, searchParams }: PagePro
             initialPage={initialPage}
           />
         )}
-        {inGroup.length > 0 ? <PriceDisclaimer className="mt-8" /> : null}
+        {inGroup.length > 0 ? <PriceDisclaimer className="mt-8" variant="full" /> : null}
         <p className="mt-6 text-sm text-ink/55">
           <Link href={`/giftset/${category.slug}`} className="font-medium text-forest underline-offset-4 hover:underline">
             ดูหน้ากลุ่มนี้แบบรายการ

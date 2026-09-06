@@ -12,7 +12,8 @@ export function SiteChrome({
 }) {
   const pathname = usePathname() || "/";
   const isOps = pathname === "/ops" || pathname.startsWith("/ops/");
-  if (isOps) return <>{children}</>;
+  const isSop = pathname === "/sop" || pathname.startsWith("/sop/");
+  if (isOps || isSop) return <>{children}</>;
   return (
     <>
       <div className="print:hidden">{chrome}</div>

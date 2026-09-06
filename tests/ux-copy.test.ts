@@ -22,10 +22,16 @@ import {
   ORDER_TRACKING_INTRO,
   ISSUE_REPORT_INTRO,
   PRICE_DISCLAIMER_FULL,
+  PRICE_DISCLAIMER_HEADING,
+  PRICE_DISCLAIMER_POINTS,
   PRICE_DISCLAIMER_SHORT,
   QUOTE_DETAIL_HINT,
   QUOTE_DETAIL_TEMPLATES,
+  QUOTE_NOT_AN_ORDER,
   RFQ_NO_PAYMENT,
+  CATALOG_EMPTY_BODY,
+  CATALOG_LOADING,
+  CATALOG_UNAVAILABLE_BODY,
   appendQuoteDetailTemplate,
 } from "../lib/ux-copy.js";
 
@@ -36,6 +42,9 @@ describe("ux-copy (buyer-facing strings)", () => {
     assert.doesNotMatch(RFQ_NO_PAYMENT, BUYER_JARGON);
     assert.match(RFQ_NO_PAYMENT, /ไม่มีการชำระเงิน/);
     assert.match(RFQ_NO_PAYMENT, /ยังไม่ใช่การยืนยัน/);
+    assert.doesNotMatch(QUOTE_NOT_AN_ORDER, BUYER_JARGON);
+    assert.match(QUOTE_NOT_AN_ORDER, /ไม่ใช่การสั่งซื้อ/);
+    assert.match(QUOTE_NOT_AN_ORDER, /ไม่มีการชำระเงิน/);
   });
 
   it("issue report copy avoids jargon and says no payment", () => {
@@ -57,6 +66,20 @@ describe("ux-copy (buyer-facing strings)", () => {
       assert.match(copy, /ประมาณ|โดยประมาณ/);
       assert.match(copy, /จีน/);
     }
+    assert.match(PRICE_DISCLAIMER_HEADING, /ประมาณ/);
+    assert.ok(PRICE_DISCLAIMER_POINTS.length >= 3);
+    for (const point of PRICE_DISCLAIMER_POINTS) {
+      assert.doesNotMatch(point, BUYER_JARGON);
+    }
+  });
+
+  it("catalog empty and slow-load copy is jargon-free", () => {
+    assert.match(CATALOG_LOADING, /โหลด/);
+    assert.match(CATALOG_EMPTY_BODY, /ทีมขาย/);
+    assert.match(CATALOG_UNAVAILABLE_BODY, /ฐานสินค้า/);
+    assert.doesNotMatch(CATALOG_LOADING, BUYER_JARGON);
+    assert.doesNotMatch(CATALOG_EMPTY_BODY, BUYER_JARGON);
+    assert.doesNotMatch(CATALOG_UNAVAILABLE_BODY, BUYER_JARGON);
   });
 
   it("how-it-works steps are complete", () => {

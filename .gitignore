@@ -20,6 +20,10 @@ coverage/
 .env.*.local
 !.env.example
 
+# SOP screenshot capture report (PNGs are kept)
+public/sop/screenshots/capture-report.json
+public/sop/screenshots/*.txt
+
 # logs / debug
 npm-debug.log*
 yarn-debug.log*
