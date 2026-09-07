@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getOpsActor, isOpsAuthConfigured } from "@/lib/ops-auth";
+import { opsDeskUserLine } from "@/lib/ops-desk-guard";
 import { buildOpsNavLinks, opsActorLabel } from "@/lib/ops-nav";
 import { OpsNav } from "@/components/OpsNav";
 
@@ -23,7 +24,11 @@ export default async function OpsLayout({
   if (actor) {
     return (
       <div className="ops-shell min-h-dvh bg-forest-mist/40 text-ink">
-        <OpsNav actorLabel={opsActorLabel(actor)} links={buildOpsNavLinks(actor)}>
+        <OpsNav
+          actorLabel={opsActorLabel(actor)}
+          watermarkUser={opsDeskUserLine(actor)}
+          links={buildOpsNavLinks(actor)}
+        >
           {children}
         </OpsNav>
       </div>

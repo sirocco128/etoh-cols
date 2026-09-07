@@ -34,6 +34,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Menu, Search, X } from "lucide-react";
 import { opsLogoutAction } from "@/app/actions/ops";
+import { OpsDeskGuard } from "@/components/OpsDeskGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   filterOpsNavGroups,
@@ -283,10 +284,12 @@ function SidebarBody({
 
 export function OpsNav({
   actorLabel,
+  watermarkUser,
   links,
   children,
 }: {
   actorLabel: string;
+  watermarkUser: string;
   links: OpsNavLink[];
   children: ReactNode;
 }) {
@@ -354,7 +357,7 @@ export function OpsNav({
         />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <OpsDeskGuard userLine={watermarkUser}>
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-forest/10 bg-forest px-page py-2.5 text-paper print:hidden pt-[max(0.5rem,env(safe-area-inset-top))]">
           <div className="flex min-w-0 items-center gap-2">
             <button
@@ -386,10 +389,10 @@ export function OpsNav({
             </form>
           </div>
         </header>
-        <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-page py-6 sm:py-8 print:max-w-none print:overflow-visible print:px-0 print:py-0">
+        <main className="relative z-0 mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-page py-6 sm:py-8 print:max-w-none print:overflow-visible print:px-0 print:py-0">
           {children}
         </main>
-      </div>
+      </OpsDeskGuard>
     </div>
   );
 }

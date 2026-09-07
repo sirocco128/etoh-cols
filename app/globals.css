@@ -221,6 +221,28 @@ html.dark[data-theme="teal"] {
   --accent-foreground: #14352a;
 }
 
+.ops-desk-watermark__sheet {
+  position: absolute;
+  inset: -28%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  gap: 4.5rem 5.5rem;
+  transform: rotate(-22deg);
+}
+
+.ops-desk-watermark__tile {
+  flex: 0 0 auto;
+  color: rgb(var(--color-forest-rgb) / 0.12);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+}
+
 html[data-theme="navy"] .ops-shell {
   --color-forest: #0b1f3a;
   --color-forest-rgb: 11 31 58;
