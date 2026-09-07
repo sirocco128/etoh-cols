@@ -9,7 +9,14 @@ import {
   type ThemeId,
 } from "@/lib/theme-presets";
 
-export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
+export function ThemeSwitcher({
+  compact = false,
+  tone = "paper",
+}: {
+  compact?: boolean;
+  /** `onDark` for forest/navy chrome such as the ops header. */
+  tone?: "paper" | "onDark";
+}) {
   const labelId = useId();
   const [theme, setTheme] = useState<ThemeId>("forest");
   const [mounted, setMounted] = useState(false);
@@ -43,7 +50,11 @@ export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
       <div
         role="radiogroup"
         aria-labelledby={labelId}
-        className="flex items-center gap-1 rounded-full border border-forest/15 bg-paper/80 p-1 backdrop-blur-md"
+        className={
+          tone === "onDark"
+            ? "flex items-center gap-1 rounded-full border border-paper/25 bg-forest-light/70 p-1"
+            : "flex items-center gap-1 rounded-full border border-forest/15 bg-paper/80 p-1 backdrop-blur-md"
+        }
       >
         {THEME_PRESETS.map((preset) => {
           const active = mounted && theme === preset.id;
@@ -57,7 +68,13 @@ export function ThemeSwitcher({ compact = false }: { compact?: boolean }) {
               title={preset.label}
               onClick={() => select(preset.id)}
               className={`flex h-8 items-center gap-1.5 rounded-full px-1.5 transition ${
-                active ? "bg-forest text-paper" : "text-ink/70 hover:bg-forest-mist"
+                tone === "onDark"
+                  ? active
+                    ? "bg-paper/18 text-brass-soft"
+                    : "text-paper/70 hover:bg-paper/10"
+                  : active
+                    ? "bg-forest text-paper"
+                    : "text-ink/70 hover:bg-forest-mist"
               } ${compact ? "" : "sm:px-2.5"}`}
             >
               <span

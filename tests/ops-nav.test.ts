@@ -3,8 +3,11 @@ import assert from "node:assert/strict";
 import {
   buildOpsNavLinks,
   filterOpsNavGroups,
+  groupHasActiveLink,
   groupOpsNavLinks,
   isOpsNavActive,
+  parseCollapsedGroupIds,
+  withActiveGroupExpanded,
 } from "../lib/ops-nav";
 import { OPS_PERMISSIONS, PERMISSION_GROUPS } from "../lib/ops-roles";
 
@@ -116,6 +119,25 @@ describe("ops nav", () => {
       ["รูปโรงงาน", "ใบสั่งโรงงาน", "ทะเบียนโรงงาน"],
     );
     assert.equal(filterOpsNavGroups(grouped, "zzzz").length, 0);
+  });
+
+  it("parses collapsed group ids and keeps the current stage open", () => {
+    assert.deepEqual(parseCollapsedGroupIds(["sales", "nope", "catalog"]), ["sales", "catalog"]);
+    assert.deepEqual(parseCollapsedGroupIds('["cycle","today"]'), ["today", "cycle"]);
+    assert.deepEqual(parseCollapsedGroupIds("not-json"), []);
+    const admin = buildOpsNavLinks({
+      email: "admin",
+      name: "ผู้ดูแล",
+      role: "admin",
+    });
+    const grouped = groupOpsNavLinks(admin);
+    const sales = grouped.find((group) => group.id === "sales");
+    assert.equal(groupHasActiveLink(sales!, "/ops/quotes"), true);
+    assert.equal(groupHasActiveLink(sales!, "/ops/pricing"), false);
+    assert.deepEqual(
+      withActiveGroupExpanded(["sales", "catalog"], grouped, "/ops/quotes"),
+      ["catalog"],
+    );
   });
 });
 

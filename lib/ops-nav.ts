@@ -133,6 +133,44 @@ export function filterOpsNavGroups(
   });
 }
 
+export const OPS_NAV_COLLAPSE_STORAGE_KEY = "smartgift:ops-nav-collapsed";
+
+export function groupHasActiveLink(group: OpsNavGroup, pathname: string): boolean {
+  return group.links.some((link) => isOpsNavActive(pathname, link.href));
+}
+
+export function parseCollapsedGroupIds(value: unknown): OpsNavGroupId[] {
+  const source =
+    typeof value === "string"
+      ? (() => {
+          try {
+            return JSON.parse(value) as unknown;
+          } catch {
+            return null;
+          }
+        })()
+      : value;
+  if (!Array.isArray(source)) return [];
+  const allowed = new Set(
+    source.filter((id): id is OpsNavGroupId =>
+      (OPS_NAV_GROUP_IDS as readonly string[]).includes(id as string),
+    ),
+  );
+  return OPS_NAV_GROUP_IDS.filter((id) => allowed.has(id));
+}
+
+/** Keep the current page's work-stage card open so staff still see where they are. */
+export function withActiveGroupExpanded(
+  stored: Iterable<string>,
+  groups: OpsNavGroup[],
+  pathname: string,
+): OpsNavGroupId[] {
+  const collapsed = new Set(parseCollapsedGroupIds([...stored]));
+  const activeId = groups.find((group) => groupHasActiveLink(group, pathname))?.id;
+  if (activeId) collapsed.delete(activeId);
+  return OPS_NAV_GROUP_IDS.filter((id) => collapsed.has(id));
+}
+
 export function isOpsNavActive(pathname: string, href: string): boolean {
   if (href.startsWith("http://") || href.startsWith("https://")) return false;
   if (href === "/ops") return pathname === "/ops";

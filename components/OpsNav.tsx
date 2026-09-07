@@ -11,15 +11,15 @@
  * — UI —
  * Aesthetic:   Utilitarian — same forest/brass chrome, no new brand fonts
  * Type:        inherit storefront (ops stays in existing shell)
- * Palette:     forest / forest-light / brass-soft / paper — existing ops-shell tokens
+ * Palette:     forest / forest-light / brass-soft / paper — follows data-theme
  * Spatial:     Dense utility left rail; content keeps max-w-6xl
- * Motion:      Mechanical 150ms — drawer only, no fade-on-everything
- * Signature:   Brass left rail on the active item (pressed-key, not a pill)
+ * Motion:      Mechanical 150ms — drawer rows + mobile drawer, no fade-on-everything
+ * Signature:   Brass left rail on the active item; folder cards with a file-tab header
  *
  * — UX —
  * Navigation:  Work-stage sidebar (not a flat top wrap + “เพิ่มเติม”)
- * Interaction: Filter-in-place “หาเมนู” — no command palette overlay
- * Feedback:    aria-current=page; drawer closes on navigate
+ * Interaction: Filter-in-place “หาเมนู” + independently collapsible stage cards
+ * Feedback:    aria-current=page; drawer closes on navigate; current stage stays open
  *
  * — Voice —
  * Tone:        Formal + terse. CTA=ออกจากระบบ, Empty=ไม่มีเมนูที่ตรง
@@ -31,13 +31,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { Menu, Search, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, Menu, Search, X } from "lucide-react";
 import { opsLogoutAction } from "@/app/actions/ops";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import {
   filterOpsNavGroups,
+  groupHasActiveLink,
   groupOpsNavLinks,
   isOpsNavActive,
+  OPS_NAV_COLLAPSE_STORAGE_KEY,
+  parseCollapsedGroupIds,
+  withActiveGroupExpanded,
+  type OpsNavGroup,
+  type OpsNavGroupId,
   type OpsNavLink,
 } from "@/lib/ops-nav";
 import { cn } from "@/lib/utils";
@@ -83,6 +90,91 @@ function NavItem({
   );
 }
 
+function NavGroupCard({
+  group,
+  pathname,
+  open,
+  onToggle,
+  onNavigate,
+  headerId,
+}: {
+  group: OpsNavGroup;
+  pathname: string;
+  open: boolean;
+  onToggle: () => void;
+  onNavigate?: () => void;
+  headerId: string;
+}) {
+  const panelId = `${headerId}-panel`;
+  const hasActive = groupHasActiveLink(group, pathname);
+
+  return (
+    <section
+      className={cn(
+        "overflow-hidden rounded-lg bg-forest-light/55 ring-1 ring-paper/10",
+        hasActive && "ring-brass-soft/40",
+      )}
+    >
+      <h2 className="m-0">
+        <button
+          id={headerId}
+          type="button"
+          className="flex w-full items-center gap-2 px-2.5 py-2.5 text-left text-sm font-semibold leading-snug text-brass-soft hover:bg-paper/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brass-soft"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={onToggle}
+        >
+          <span className="min-w-0 flex-1 truncate">{group.label}</span>
+          {hasActive && !open ? (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass-soft" aria-hidden />
+          ) : null}
+          <span className="tabular-nums text-[0.7rem] font-medium text-paper/50">
+            {group.links.length}
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-paper/55 transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+              !open && "-rotate-90",
+            )}
+            aria-hidden
+          />
+        </button>
+      </h2>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={headerId}
+        className={cn(
+          "grid transition-[grid-template-rows] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+        aria-hidden={!open}
+      >
+        <div className="min-h-0 overflow-hidden" {...(!open ? { inert: true } : {})}>
+          <ul className="flex flex-col gap-px px-1 pb-1.5">
+            {group.links.map((link) => {
+              const active = isOpsNavActive(pathname, link.href);
+              return (
+                <li key={link.href}>
+                  <NavItem
+                    link={link}
+                    active={active}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center rounded-md border-l-[3px] border-transparent py-1.5 pl-2 pr-2 text-[0.8125rem] leading-snug text-paper/80 hover:bg-paper/10 hover:text-paper",
+                      active && "border-brass-soft bg-paper/12 font-medium text-brass-soft",
+                    )}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SidebarBody({
   links,
   pathname,
@@ -94,11 +186,57 @@ function SidebarBody({
   onNavigate?: () => void;
   searchId: string;
 }) {
+  const groupHeaderId = useId();
+  const didHydrate = useRef(false);
   const [query, setQuery] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<OpsNavGroupId>>(new Set());
+  const [hydrated, setHydrated] = useState(false);
+  const allGroups = useMemo(() => groupOpsNavLinks(links), [links]);
   const groups = useMemo(
-    () => filterOpsNavGroups(groupOpsNavLinks(links), query),
-    [links, query],
+    () => filterOpsNavGroups(allGroups, query),
+    [allGroups, query],
   );
+  const searching = query.trim().length > 0;
+
+  useEffect(() => {
+    if (didHydrate.current) return;
+    didHydrate.current = true;
+    let stored: string[] = [];
+    try {
+      stored = parseCollapsedGroupIds(localStorage.getItem(OPS_NAV_COLLAPSE_STORAGE_KEY));
+    } catch {
+      stored = [];
+    }
+    setCollapsed(new Set(withActiveGroupExpanded(stored, allGroups, pathname)));
+    setHydrated(true);
+  }, [allGroups, pathname]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setCollapsed((prev) => {
+      const nextIds = withActiveGroupExpanded(prev, allGroups, pathname);
+      if (nextIds.length === prev.size && nextIds.every((id) => prev.has(id))) return prev;
+      return new Set(nextIds);
+    });
+  }, [allGroups, hydrated, pathname]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(OPS_NAV_COLLAPSE_STORAGE_KEY, JSON.stringify([...collapsed]));
+    } catch {
+      /* private mode */
+    }
+  }, [collapsed, hydrated]);
+
+  function toggleGroup(id: OpsNavGroupId) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <>
@@ -122,33 +260,18 @@ function SidebarBody({
           />
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="เมนูปฏิบัติการ">
+      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 py-3" aria-label="เมนูปฏิบัติการ">
         {groups.length ? (
           groups.map((group) => (
-            <section key={group.id} className="mb-3">
-              <h2 className="px-2 pb-1 text-[0.7rem] font-semibold tracking-wide text-brass-soft/90">
-                {group.label}
-              </h2>
-              <ul className="flex flex-col gap-0.5">
-                {group.links.map((link) => {
-                  const active = isOpsNavActive(pathname, link.href);
-                  return (
-                    <li key={link.href}>
-                      <NavItem
-                        link={link}
-                        active={active}
-                        onClick={onNavigate}
-                        className={cn(
-                          "flex items-center border-l-[3px] border-transparent py-1.5 pl-2 pr-2 text-[0.8125rem] leading-snug text-paper/80 hover:bg-paper/10 hover:text-paper",
-                          active &&
-                            "border-brass-soft bg-paper/12 font-medium text-brass-soft",
-                        )}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
+            <NavGroupCard
+              key={group.id}
+              group={group}
+              pathname={pathname}
+              open={searching || !collapsed.has(group.id)}
+              onToggle={() => toggleGroup(group.id)}
+              onNavigate={onNavigate}
+              headerId={`${groupHeaderId}-${group.id}`}
+            />
           ))
         ) : (
           <p className="px-2 py-4 text-sm text-paper/55">ไม่มีเมนูที่ตรง — ลองคำอื่น</p>
@@ -248,7 +371,8 @@ export function OpsNav({
               คอนโซลปฏิบัติการ
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <ThemeSwitcher compact tone="onDark" />
             <span className="hidden max-w-[10rem] truncate text-xs text-paper/75 sm:inline md:max-w-none">
               {actorLabel}
             </span>

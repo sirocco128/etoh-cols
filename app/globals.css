@@ -191,7 +191,8 @@ html.dark[data-theme="teal"] {
   --primary-foreground: #001219;
 }
 
-/* Ops console stays light even when the storefront is in dark mode. */
+/* Ops stays light (readable tables) even if the storefront is in dark mode,
+   but follows the selected html[data-theme] palette. */
 .ops-shell {
   color-scheme: light;
   --color-forest: #14352a;
@@ -218,6 +219,87 @@ html.dark[data-theme="teal"] {
   --primary-foreground: #ffffff;
   --accent: #b08a3e;
   --accent-foreground: #14352a;
+}
+
+html[data-theme="navy"] .ops-shell {
+  --color-forest: #0b1f3a;
+  --color-forest-rgb: 11 31 58;
+  --color-forest-light: #163056;
+  --color-forest-light-rgb: 22 48 86;
+  --color-forest-mist: #e7eef6;
+  --color-forest-mist-rgb: 231 238 246;
+  --color-brass: #c59b27;
+  --color-brass-rgb: 197 155 39;
+  --color-brass-soft: #e0c56a;
+  --color-brass-soft-rgb: 224 197 106;
+  --color-ink: #1a2430;
+  --color-ink-rgb: 26 36 48;
+  --color-paper: #ffffff;
+  --color-paper-rgb: 255 255 255;
+  --background: #e7eef6;
+  --foreground: #1a2430;
+  --card: #ffffff;
+  --muted: #e7eef6;
+  --border: rgba(11, 31, 58, 0.12);
+  --ring: #c59b27;
+  --primary: #0b1f3a;
+  --primary-foreground: #ffffff;
+  --accent: #c59b27;
+  --accent-foreground: #0b1f3a;
+}
+
+html[data-theme="festive"] .ops-shell {
+  --color-forest: #8b0000;
+  --color-forest-rgb: 139 0 0;
+  --color-forest-light: #a31212;
+  --color-forest-light-rgb: 163 18 18;
+  --color-forest-mist: #f8eaea;
+  --color-forest-mist-rgb: 248 234 234;
+  --color-brass: #d4af37;
+  --color-brass-rgb: 212 175 55;
+  --color-brass-soft: #e8d07a;
+  --color-brass-soft-rgb: 232 208 122;
+  --color-ink: #2c1616;
+  --color-ink-rgb: 44 22 22;
+  --color-paper: #fffdf8;
+  --color-paper-rgb: 255 253 248;
+  --background: #f8eaea;
+  --foreground: #2c1616;
+  --card: #fffdf8;
+  --muted: #f8eaea;
+  --border: rgba(139, 0, 0, 0.14);
+  --ring: #d4af37;
+  --primary: #8b0000;
+  --primary-foreground: #fffdf8;
+  --accent: #d4af37;
+  --accent-foreground: #8b0000;
+}
+
+html[data-theme="teal"] .ops-shell {
+  --color-forest: #005f73;
+  --color-forest-rgb: 0 95 115;
+  --color-forest-light: #0a7a90;
+  --color-forest-light-rgb: 10 122 144;
+  --color-forest-mist: #e6f4f5;
+  --color-forest-mist-rgb: 230 244 245;
+  --color-brass: #0a9396;
+  --color-brass-rgb: 10 147 150;
+  --color-brass-soft: #94d2bd;
+  --color-brass-soft-rgb: 148 210 189;
+  --color-ink: #001219;
+  --color-ink-rgb: 0 18 25;
+  --color-paper: #ffffff;
+  --color-paper-rgb: 255 255 255;
+  --background: #e6f4f5;
+  --foreground: #001219;
+  --card: #ffffff;
+  --muted: #e6f4f5;
+  --border: rgba(0, 95, 115, 0.14);
+  --ring: #0a9396;
+  --primary: #005f73;
+  --primary-foreground: #ffffff;
+  --accent: #0a9396;
+  --accent-foreground: #ffffff;
 }
 
 @layer base {
