@@ -42,6 +42,15 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   archived: "เก็บถาวร",
 };
 
+export const WEBHOOK_STATUS_LABELS: Record<WebhookStatus, string> = {
+  pending: "รอส่งต่อ",
+  processing: "กำลังส่งต่อ",
+  sent: "ส่งต่อแล้ว",
+  failed: "ส่งต่อไม่สำเร็จ",
+  dead: "หยุดส่งต่อ",
+  skipped: "ไม่ได้ตั้งค่า",
+};
+
 export type QuoteRequestInput = {
   name: string;
   company: string;

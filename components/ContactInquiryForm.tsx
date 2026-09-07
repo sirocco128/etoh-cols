@@ -16,6 +16,8 @@ import {
 } from "@/lib/contact-inquiry-types";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
+import { trackEvent } from "@/lib/analytics";
+import { captureFirstPartyAttribution } from "@/lib/attribution";
 
 const initialState: ContactInquiryActionState = { ok: false };
 
@@ -49,6 +51,7 @@ export function ContactInquiryForm() {
     callbackChannel: "email",
   });
   const startedAt = useMemo(() => String(Date.now()), []);
+  const [landingPath, setLandingPath] = useState("/contact");
   const [contactAttempted, setContactAttempted] = useState(false);
   const successRef = useRef<HTMLDivElement>(null);
   const contact = getPublicContact(site);
@@ -58,10 +61,25 @@ export function ContactInquiryForm() {
   }
 
   useEffect(() => {
+    setLandingPath(
+      captureFirstPartyAttribution({
+        href: window.location.href,
+        referrer: document.referrer,
+        pageOrigin: window.location.origin,
+      }).landingPath || "/contact",
+    );
+  }, []);
+
+  useEffect(() => {
     if (state.ok && state.inquiryId) {
+      const topic = state.values?.topic || values.topic;
+      trackEvent("generate_lead", {
+        method: "contact_form",
+        ...(topic ? { content_type: topic } : {}),
+      });
       successRef.current?.focus();
     }
-  }, [state.ok, state.inquiryId]);
+  }, [state.ok, state.inquiryId, state.values?.topic, values.topic]);
 
   if (state.ok && state.inquiryId) {
     return (
@@ -130,7 +148,7 @@ export function ContactInquiryForm() {
       ) : null}
 
       <input type="hidden" name="startedAt" value={startedAt} />
-      <input type="hidden" name="landingPath" value="/contact" />
+      <input type="hidden" name="landingPath" value={landingPath} />
       <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
         <label htmlFor="inquiry-website">เว็บไซต์</label>
         <input id="inquiry-website" name="website" tabIndex={-1} autoComplete="off" />

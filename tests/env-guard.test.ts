@@ -30,12 +30,22 @@ describe("env-guard (§31 required)", () => {
   it("validate-env exits 0 when indexing is false (demo allowed)", () => {
     const result = runGuard("validate-env.mjs", {
       NEXT_PUBLIC_ALLOW_INDEXING: "false",
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: "",
     });
     assert.equal(
       result.status,
       0,
       result.stderr || result.stdout || "validate-env failed unexpectedly",
     );
+  });
+
+  it("validate-env exits 1 when GA measurement id is set but invalid", () => {
+    const result = runGuard("validate-env.mjs", {
+      NEXT_PUBLIC_ALLOW_INDEXING: "false",
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: "UA-123456-1",
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr || result.stdout, /GA_MEASUREMENT_ID/i);
   });
 
   it("validate-env exits 1 when indexing=true with example.com phone/email", () => {

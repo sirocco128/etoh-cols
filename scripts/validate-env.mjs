@@ -82,6 +82,14 @@ function isRealHttpsUrl(url) {
 
 const allowIndexing = truthy(process.env.NEXT_PUBLIC_ALLOW_INDEXING);
 
+const gaMeasurementId = String(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "").trim();
+if (gaMeasurementId && !/^G-[A-Z0-9]+$/i.test(gaMeasurementId)) {
+  console.error(
+    "validate:env FAILED — NEXT_PUBLIC_GA_MEASUREMENT_ID must be a GA4 id (G-XXXXXXXX).",
+  );
+  process.exit(1);
+}
+
 if (!allowIndexing) {
   console.log(
     "validate:env OK — indexing disabled; demo/placeholder config allowed.",

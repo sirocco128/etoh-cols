@@ -10,9 +10,12 @@ import {
   getQuoteByRequestId,
   listQuoteSalesTimeline,
 } from "@/lib/quote-repository";
+import { formatCampaignSourceLabel, listCampaignAttributionRows } from "@/lib/attribution";
 import {
   LEAD_STATUS_LABELS,
+  WEBHOOK_STATUS_LABELS,
   type LeadStatus,
+  type WebhookStatus,
 } from "@/lib/quote-types";
 import { formatThb } from "@/lib/th-billing";
 import {
@@ -49,6 +52,7 @@ export default async function OpsQuoteDetailPage({
   const quotedOrWon =
     quote.leadStatus === "quoted" || quote.leadStatus === "won";
   const shipTo = quoteShipToParts(quote);
+  const attributionRows = listCampaignAttributionRows(quote).slice(1);
 
   return (
     <div>
@@ -81,7 +85,10 @@ export default async function OpsQuoteDetailPage({
       )}
       <p className="mt-1 text-sm text-ink/70">
         สถานะ: {LEAD_STATUS_LABELS[quote.leadStatus as LeadStatus] || quote.leadStatus}
-        {" · "}Webhook: {quote.webhookStatus}
+        {" · "}
+        เชื่อมต่อภายนอก:{" "}
+        {WEBHOOK_STATUS_LABELS[quote.webhookStatus as WebhookStatus] ||
+          quote.webhookStatus}
       </p>
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -144,6 +151,23 @@ export default async function OpsQuoteDetailPage({
           </dd>
         </div>
       </dl>
+
+      <section className="mt-8 rounded-xl border border-forest/10 p-4">
+        <h2 className="text-sm font-semibold text-forest">แหล่งที่มา</h2>
+        <p className="mt-1 text-xs text-ink/55">
+          {formatCampaignSourceLabel(quote)}
+        </p>
+        {attributionRows.length > 0 ? (
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+            {attributionRows.map((row) => (
+              <div key={row.label}>
+                <dt className="text-xs text-ink/55">{row.label}</dt>
+                <dd className="break-all text-sm">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </section>
 
       {customer ? (
         <p className="mt-4 text-sm">

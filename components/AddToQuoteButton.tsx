@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
+import { trackEvent } from "@/lib/analytics";
 import {
   PRICE_ESTIMATE_DISCLAIMER,
   addItem,
@@ -58,6 +59,10 @@ export function AddToQuoteButton({
     });
     saveBasketToStorage(next);
     setStatus("added");
+    trackEvent("add_to_cart", {
+      item_id: productSlug,
+      quantity: addQty,
+    });
   }, [productSlug, productName, skuCode, addQty, priceMin, priceMax]);
 
   if (!enabled) {

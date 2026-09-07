@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Noto_Sans_Thai, Sarabun } from "next/font/google";
+import { Suspense } from "react";
+import { AnalyticsConsentBanner } from "@/components/AnalyticsConsentBanner";
+import { CaptureAttribution } from "@/components/CaptureAttribution";
 import { BuyerAssistantWidget } from "@/components/BuyerAssistantWidget";
 import { TerabisAiWidget } from "@/components/TerabisAiWidget";
 import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 import { FloatingQuoteDock } from "@/components/FloatingQuoteDock";
 import { Footer } from "@/components/Footer";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { JsonLd } from "@/components/JsonLd";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { Navbar } from "@/components/Navbar";
@@ -113,6 +117,11 @@ export default function RootLayout({
           <SiteChrome chrome={<Toaster />}>{null}</SiteChrome>
           <JsonLd data={organization} />
           {localBusiness ? <JsonLd data={localBusiness} /> : null}
+          <Suspense fallback={null}>
+            <GoogleAnalytics />
+          </Suspense>
+          <SiteChrome chrome={<CaptureAttribution />}>{null}</SiteChrome>
+          <SiteChrome chrome={<AnalyticsConsentBanner />}>{null}</SiteChrome>
         </ThemeProvider>
       </body>
     </html>

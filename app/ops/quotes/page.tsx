@@ -15,6 +15,7 @@ import {
   LEAD_STATUS_LABELS,
   type LeadStatus,
 } from "@/lib/quote-types";
+import { formatCampaignSourceLabel } from "@/lib/attribution";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -124,20 +125,24 @@ export default async function OpsQuotesPage({
                 <p className="mt-2 text-sm text-ink/75">
                   {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus} · จำนวน {row.quantity}
                 </p>
-                <p className="mt-1 text-xs text-ink/55">{formatWhen(row.createdAt)}</p>
+                <p className="mt-1 text-xs text-ink/55">
+                  {formatCampaignSourceLabel(row)}
+                  {" · "}
+                  {formatWhen(row.createdAt)}
+                </p>
               </li>
             ))}
           </ul>
 
           <div className="mt-6 hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-forest/15 text-forest">
                   <th className="px-2 py-2 font-semibold">เลขคำขอ</th>
                   <th className="px-2 py-2 font-semibold">บริษัท / ผู้ติดต่อ</th>
                   <th className="px-2 py-2 font-semibold">จำนวน</th>
                   <th className="px-2 py-2 font-semibold">สถานะ</th>
-                  <th className="px-2 py-2 font-semibold">Webhook</th>
+                  <th className="px-2 py-2 font-semibold">แหล่งที่มา</th>
                   <th className="px-2 py-2 font-semibold">เมื่อ</th>
                 </tr>
               </thead>
@@ -165,8 +170,8 @@ export default async function OpsQuotesPage({
                     <td className="px-2 py-2.5">
                       {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus}
                     </td>
-                    <td className="px-2 py-2.5 font-mono text-xs">
-                      {row.webhookStatus}
+                    <td className="px-2 py-2.5 text-xs text-ink/70">
+                      {formatCampaignSourceLabel(row)}
                     </td>
                     <td className="px-2 py-2.5 text-xs text-ink/70">
                       {formatWhen(row.createdAt)}

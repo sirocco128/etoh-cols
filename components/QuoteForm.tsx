@@ -8,7 +8,6 @@ import Link from "next/link";
 import {
   useActionState,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -38,6 +37,11 @@ import {
   type QuoteInterestLine,
 } from "@/lib/quote-basket";
 import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
+import { trackEvent } from "@/lib/analytics";
+import {
+  captureFirstPartyAttribution,
+  EMPTY_ATTRIBUTION,
+} from "@/lib/attribution";
 import { minNeededDateYmd } from "@/lib/bangkok-date";
 import {
   MOCKUP_BRIEF_EVENT,
@@ -157,34 +161,19 @@ export function QuoteForm({
   const successRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const attribution = useMemo(() => {
-    if (typeof window === "undefined") {
-      return {
-        landingPath: "",
-        referrer: "",
-        utmSource: "",
-        utmMedium: "",
-        utmCampaign: "",
-        utmTerm: "",
-        utmContent: "",
-      };
-    }
-    const params = new URLSearchParams(window.location.search);
-    return {
-      landingPath: `${window.location.pathname}${window.location.search}`,
-      referrer: document.referrer || "",
-      utmSource: params.get("utm_source") || "",
-      utmMedium: params.get("utm_medium") || "",
-      utmCampaign: params.get("utm_campaign") || "",
-      utmTerm: params.get("utm_term") || "",
-      utmContent: params.get("utm_content") || "",
-    };
-  }, []);
+  const [attribution, setAttribution] = useState(EMPTY_ATTRIBUTION);
 
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
     setStartedAt(String(Date.now()));
+    setAttribution(
+      captureFirstPartyAttribution({
+        href: window.location.href,
+        referrer: document.referrer,
+        pageOrigin: window.location.origin,
+      }),
+    );
 
     const query = readQueryPrefill();
     const stored = loadDraft();
@@ -263,9 +252,13 @@ export function QuoteForm({
           // ignore
         }
       }
+      trackEvent("generate_lead", {
+        method: "quote_form",
+        ...(productSlug ? { item_id: productSlug } : {}),
+      });
       successRef.current?.focus();
     }
-  }, [state.ok, state.requestId]);
+  }, [state.ok, state.requestId, productSlug]);
 
   function onFormInput(event: FormEvent<HTMLFormElement>) {
     const native = event.nativeEvent as InputEvent;

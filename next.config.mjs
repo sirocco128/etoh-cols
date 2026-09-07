@@ -92,8 +92,16 @@ function buildContentSecurityPolicy() {
   const scriptSrc = isDev
     ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
     : ["'self'", "'unsafe-inline'"];
+  scriptSrc.push("https://www.googletagmanager.com");
 
-  const connectSrc = ["'self'"];
+  const connectSrc = [
+    "'self'",
+    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
+    "https://www.googletagmanager.com",
+    "https://*.googletagmanager.com",
+    "https://*.analytics.google.com",
+  ];
   const strapiOrigin = safeOrigin(process.env.STRAPI_URL);
   if (strapiOrigin) connectSrc.push(strapiOrigin);
   try {
@@ -114,7 +122,16 @@ function buildContentSecurityPolicy() {
     connectSrc.push("ws:", "wss:");
   }
 
-  const imgSrc = ["'self'", "data:", "blob:", ...mediaOrigins];
+  const imgSrc = [
+    "'self'",
+    "data:",
+    "blob:",
+    ...mediaOrigins,
+    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
+    "https://www.googletagmanager.com",
+    "https://*.googletagmanager.com",
+  ];
 
   /** @type {Record<string, string[]>} */
   const directives = {
