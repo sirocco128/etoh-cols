@@ -73,6 +73,7 @@ const SKIP_PATH_PREFIXES = [
   "/api/line/webhook",
   "/api/jobs",
   "/api/revalidate",
+  "/api/partner",
   "/robots.txt",
   "/sitemap.xml",
 ];

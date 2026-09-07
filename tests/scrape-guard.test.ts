@@ -24,6 +24,7 @@ describe("scrape-guard", () => {
   it("skips health, robots, sitemap, and static prefixes", () => {
     assert.equal(shouldSkipScrapeGuard("/api/health"), true);
     assert.equal(shouldSkipScrapeGuard("/api/health?deep=1"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/partner/v1/quotes"), true);
     assert.equal(shouldSkipScrapeGuard("/robots.txt"), true);
     assert.equal(shouldSkipScrapeGuard("/sitemap.xml"), true);
     assert.equal(shouldSkipScrapeGuard("/_next/static/chunk.js"), true);

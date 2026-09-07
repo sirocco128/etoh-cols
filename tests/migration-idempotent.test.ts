@@ -67,6 +67,7 @@ describe("migration-idempotent (§31 required)", () => {
       assert.match(second.stdout, /skip\s+024_catalog_albums\.sql/);
       assert.match(second.stdout, /skip\s+025_contact_inquiries\.sql/);
       assert.match(second.stdout, /skip\s+026_schedule\.sql/);
+      assert.match(second.stdout, /skip\s+027_partner_api_keys\.sql/);
 
       const db = new DatabaseSync(sqlitePath);
       try {
@@ -274,6 +275,15 @@ describe("migration-idempotent (§31 required)", () => {
         assert.ok(inquiryNames.has("topic"));
         assert.ok(inquiryNames.has("callback_channel"));
         assert.ok(inquiryNames.has("mail_status"));
+
+        const partnerKeys = db
+          .prepare("PRAGMA table_info(partner_api_keys)")
+          .all() as Array<{ name: string }>;
+        const partnerNames = new Set(partnerKeys.map((c) => c.name));
+        assert.ok(partnerNames.has("key_id"));
+        assert.ok(partnerNames.has("secret_hash"));
+        assert.ok(partnerNames.has("scopes_json"));
+        assert.ok(partnerNames.has("revoked_at"));
       } finally {
         db.close();
       }

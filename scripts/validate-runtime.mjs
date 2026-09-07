@@ -148,6 +148,13 @@ if (isPlaceholderSecret(process.env.CRON_SECRET)) {
   );
 }
 
+const partnerApiKey = String(process.env.PARTNER_API_KEY ?? "").trim();
+if (partnerApiKey && isPlaceholderSecret(process.env.PARTNER_API_KEY)) {
+  errors.push(
+    "PARTNER_API_KEY must be at least 32 characters and not a placeholder when set.",
+  );
+}
+
 if (errors.length > 0) {
   console.error("validate:runtime FAILED:");
   for (const e of errors) console.error(`  - ${e}`);

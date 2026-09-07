@@ -164,10 +164,21 @@ npm run db:migrate
 | [docs/UAT-CHECKLIST.md](docs/UAT-CHECKLIST.md) | UAT sign-off template |
 | [docs/UAT-AUTO-RESULTS.md](docs/UAT-AUTO-RESULTS.md) | Automated route crawl results |
 | [docs/OPS-CONSOLE.md](docs/OPS-CONSOLE.md) | ลูกค้า + ใบเสนอราคา (local ops) |
+| [docs/PARTNER-API.md](docs/PARTNER-API.md) | REST คู่ค้า (API key, quotes/orders) |
 | [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + Gitea NAS + GitLab |
 | [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md) | NAS Docker Compose + Cloudflare `tarabiz.next-dev.net` |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
 | [SECURITY.md](SECURITY.md) | Security baseline summary |
+
+## Partner REST API
+
+Read-only quotes/orders for CRM, n8n, or ERP. API key auth, not `/ops` cookies. See [docs/PARTNER-API.md](docs/PARTNER-API.md).
+
+```bash
+npm run db:migrate
+npm run partner:key -- --name n8n
+curl -H "Authorization: Bearer sgp_…" http://localhost:3000/api/partner/v1/quotes
+```
 
 ## Retry worker
 

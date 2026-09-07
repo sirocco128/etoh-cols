@@ -118,6 +118,7 @@
 | `/api/mockup/generate` | AI mockup | Rate-limit |
 | `/api/assistant/chat` | Buyer assistant | Rate-limit |
 | `/api/line/webhook` | LINE OA | Signature |
+| `/api/partner/v1/*` | REST คู่ค้า (quotes/orders อ่านอย่างเดียว) | API key + scope |
 | `/api/ops/*` | Ops assistants, SEO, FX, docs, catalog, Google OAuth | Session |
 
 ---

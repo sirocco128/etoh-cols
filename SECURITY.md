@@ -34,6 +34,7 @@ Summary of the security baseline (runbook §25). Full detail lives in `docs/LLMs
 - `IP_HASH_SECRET`
 - `QUOTE_WEBHOOK_SECRET`
 - `CRON_SECRET`
+- `PARTNER_API_KEY`
 - `ALIBABA_APP_SECRET`
 - `ALIBABA_ACCESS_TOKEN`
 - `GOOGLE_CLIENT_SECRET`
@@ -59,6 +60,8 @@ SQLite stores name, company, email, phone, project detail, and attribution. Prod
 | Prompt injection / AI overreach | Mockup + chat refuse jailbreaks; factory CNY / 1688 never in public answers |
 | CMS XSS | Safe block model, plain-text conversion |
 | Unauthorized revalidation | Bearer secret, allowlisted models/paths, payload limit |
+| Partner API scrape | `/api/partner` skipped in scrape-guard; Bearer API key + scopes |
+| Partner API key leak | Secrets hashed at rest (`partner_api_keys`); env bootstrap optional |
 | Webhook duplicates | Idempotency-Key + transactional status |
 | Lead loss | Persist before webhook + outbox retry |
 | IP spoofing | Trusted reverse proxy must overwrite client IP headers |
