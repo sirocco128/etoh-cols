@@ -248,7 +248,7 @@ html.dark[data-theme="teal"] {
 
 .ops-desk-watermark__tile {
   flex: 0 0 auto;
-  color: rgb(var(--color-forest-rgb) / 0.14);
+  color: rgb(var(--color-forest-rgb) / 0.035);
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -264,7 +264,7 @@ html.dark[data-theme="teal"] {
   width: 140%;
   margin: 0;
   transform: translateY(-50%) rotate(-22deg);
-  color: rgb(var(--color-forest-rgb) / 0.24);
+  color: rgb(var(--color-forest-rgb) / 0.06);
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -275,11 +275,11 @@ html.dark[data-theme="teal"] {
 }
 
 html.dark .ops-desk-watermark__tile {
-  color: rgb(255 255 255 / 0.1);
+  color: rgb(255 255 255 / 0.025);
 }
 
 html.dark .ops-desk-watermark__band {
-  color: rgb(255 255 255 / 0.2);
+  color: rgb(255 255 255 / 0.05);
 }
 
 html[data-theme="navy"] .ops-shell {
