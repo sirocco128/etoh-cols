@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { customerLoginAction } from "@/app/actions/customer-auth";
-import { LoginRoster } from "@/components/LoginRoster";
+import { FillUserPasswordButton, LoginRoster } from "@/components/LoginRoster";
 import { DEMO_CUSTOMER_PASSWORD } from "@/lib/demo-logins";
 
 export function CustomerLoginForm() {
@@ -14,32 +14,22 @@ export function CustomerLoginForm() {
     <div className="rounded-2xl border border-forest/15 bg-paper p-5">
       <h2 className="text-lg font-semibold text-forest">เข้าสู่ระบบลูกค้า</h2>
       <p className="mt-1 text-sm text-ink/70">
-        กดเลือกบัญชีเพื่อใส่ชื่อและรหัสผ่าน
+        กดปุ่มใส่ชื่อผู้ใช้และรหัสผ่าน หรือเลือกบัญชีด้านล่าง
       </p>
       <form action={action} className="mt-5 space-y-4" aria-busy={pending}>
         <div className="block text-sm">
           <label htmlFor="customer-login-username" className="font-medium text-forest">
             ชื่อผู้ใช้
           </label>
-          <div className="mt-1 flex gap-2">
-            <input
-              id="customer-login-username"
-              type="text"
-              name="username"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className="min-w-0 flex-1 rounded border border-forest/20 bg-paper px-3 py-2"
-            />
-            <LoginRoster
-              highlight="customer"
-              onPick={(name, pass) => {
-                if (pass !== DEMO_CUSTOMER_PASSWORD) return;
-                setUsername(name);
-                setPassword(pass);
-              }}
-            />
-          </div>
+          <input
+            id="customer-login-username"
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
+          />
         </div>
         <label className="block text-sm">
           <span className="font-medium text-forest">รหัสผ่าน</span>
@@ -53,6 +43,15 @@ export function CustomerLoginForm() {
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
           />
         </label>
+        <FillUserPasswordButton
+          side="customer"
+          username={username}
+          onPick={(name, pass) => {
+            if (pass !== DEMO_CUSTOMER_PASSWORD) return;
+            setUsername(name);
+            setPassword(pass);
+          }}
+        />
         {state?.error ? (
           <p className="text-sm text-red-700" role="alert">
             {state.error}
@@ -66,6 +65,18 @@ export function CustomerLoginForm() {
           {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         </button>
       </form>
+      <div className="mt-5">
+        <LoginRoster
+          variant="inline"
+          highlight="customer"
+          sides="customer"
+          onPick={(name, pass) => {
+            if (pass !== DEMO_CUSTOMER_PASSWORD) return;
+            setUsername(name);
+            setPassword(pass);
+          }}
+        />
+      </div>
     </div>
   );
 }
