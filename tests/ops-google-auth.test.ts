@@ -5,11 +5,13 @@ import {
   authenticateOpsUser,
   isGoogleEmailDomainAllowed,
 } from "../lib/ops-auth";
+import { DEMO_ADMIN_PASSWORD } from "../lib/demo-logins";
 import {
   buildGoogleAuthorizeUrl,
   createGoogleOAuthPending,
   exchangeGoogleAuthorizationCode,
   googleAuthRedirectUri,
+  googleOAuthCookieOrigin,
   isOpsGoogleAuthConfigured,
   parseGoogleOAuthPending,
   pkceChallenge,
@@ -20,6 +22,8 @@ const KEYS = [
   "ADMIN_PASSWORD",
   "ADMIN_EMAIL",
   "OPS_USERS",
+  "DEMO_ADMIN_PASSWORD",
+  "SUPERADMIN_PASSWORD",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_HOSTED_DOMAIN",
@@ -104,6 +108,18 @@ describe("ops Google Sign-In", () => {
         googleAuthRedirectUri(),
         "http://localhost:3000/api/ops/auth/google/callback",
       );
+      assert.equal(
+        googleAuthRedirectUri("http://127.0.0.1:3000/ops/login"),
+        "http://localhost:3000/api/ops/auth/google/callback",
+      );
+      assert.equal(
+        googleOAuthCookieOrigin("http://127.0.0.1:3000/api/ops/auth/google"),
+        "http://localhost:3000",
+      );
+      assert.equal(
+        googleOAuthCookieOrigin("http://localhost:3000/api/ops/auth/google"),
+        "http://localhost:3000",
+      );
     });
   });
 
@@ -114,6 +130,7 @@ describe("ops Google Sign-In", () => {
       assert.ok(parsed);
       assert.equal(parsed?.state, pending.state);
       assert.equal(parsed?.verifier, pending.verifier);
+      assert.equal(parsed?.redirectUri, "http://localhost:3000/api/ops/auth/google/callback");
       assert.equal(parseGoogleOAuthPending(pending.cookieValue, 1_000 + 11 * 60 * 1000), null);
       assert.equal(
         parseGoogleOAuthPending(`${pending.cookieValue.slice(0, -2)}xx`, 1_000),
@@ -275,6 +292,24 @@ describe("ops Google Sign-In", () => {
       const actor = authenticateOpsUser("admin", AUTH_ENV.ADMIN_PASSWORD);
       assert.equal(actor?.email, AUTH_ENV.ADMIN_EMAIL);
       assert.equal(actor?.role, "admin");
+    });
+  });
+
+  it("logs in seeded SuperAdmin and department admins with Admin1234", () => {
+    withEnv({ ...AUTH_ENV, DEMO_ADMIN_PASSWORD: undefined, SUPERADMIN_PASSWORD: undefined }, () => {
+      const superadmin = authenticateOpsUser("superadmin", DEMO_ADMIN_PASSWORD);
+      assert.equal(superadmin?.email, "superadmin");
+      assert.equal(superadmin?.role, "superadmin");
+      const salesAdmin = authenticateOpsUser("sales-admin", DEMO_ADMIN_PASSWORD);
+      assert.equal(salesAdmin?.role, "sales_admin");
+      const warehouseAdmin = authenticateOpsUser(
+        "warehouse-admin@local",
+        DEMO_ADMIN_PASSWORD,
+      );
+      assert.equal(warehouseAdmin?.role, "warehouse_admin");
+      const sales = authenticateOpsUser("sales", DEMO_ADMIN_PASSWORD);
+      assert.equal(sales?.role, "sales");
+      assert.equal(authenticateOpsUser("superadmin", AUTH_ENV.ADMIN_PASSWORD), null);
     });
   });
 });

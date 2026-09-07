@@ -14,6 +14,7 @@ import {
 import { isArticleStatus } from "@/lib/article-types";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
+import { isPlatformAdmin } from "@/lib/ops-roles";
 import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 
 const ERRORS: Record<string, string> = {
@@ -175,7 +176,7 @@ export async function setArticleStatusAction(
     const updated = await setArticleStatus({
       id,
       to,
-      isAdmin: actor.role === "admin",
+      isAdmin: isPlatformAdmin(actor.role),
       actorEmail: actor.email,
     });
     writeOpsAudit({

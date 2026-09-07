@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { opsLoginAction, type OpsActionResult } from "@/app/actions/ops";
+import { LoginRoster } from "@/components/LoginRoster";
+import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-logins";
 import {
   GOOGLE_LOGIN_ERROR_MESSAGES,
   isGoogleLoginError,
@@ -40,6 +42,8 @@ function GoogleMark() {
 
 export function OpsLoginForm({ googleError }: { googleError?: string }) {
   const [state, action, pending] = useActionState(opsLoginAction, initial);
+  const [username, setUsername] = useState("superadmin");
+  const [password, setPassword] = useState("");
   const oauthMessage =
     googleError && isGoogleLoginError(googleError)
       ? GOOGLE_LOGIN_ERROR_MESSAGES[googleError]
@@ -52,17 +56,31 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
   return (
     <>
       <form action={action} className="mt-6 space-y-4" aria-busy={pending}>
-        <label className="block text-sm">
-          <span className="font-medium text-forest">อีเมลหรือชื่อผู้ใช้</span>
-          <input
-            type="text"
-            name="email"
-            autoComplete="username"
-            placeholder="admin"
-            defaultValue="admin"
-            className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
-          />
-        </label>
+        <div className="block text-sm">
+          <label htmlFor="ops-login-username" className="font-medium text-forest">
+            อีเมลหรือชื่อผู้ใช้
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              id="ops-login-username"
+              type="text"
+              name="email"
+              autoComplete="username"
+              placeholder="superadmin"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              className="min-w-0 flex-1 rounded border border-forest/20 bg-paper px-3 py-2"
+            />
+            <LoginRoster
+              highlight="admin"
+              onPick={(name, pass) => {
+                if (pass !== DEMO_ADMIN_PASSWORD) return;
+                setUsername(name);
+                setPassword(pass);
+              }}
+            />
+          </div>
+        </div>
         <label className="block text-sm">
           <span className="font-medium text-forest">รหัสผ่าน</span>
           <input
@@ -70,6 +88,8 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
             name="password"
             required
             autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
           />
         </label>
@@ -104,8 +124,6 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
       </a>
 
       <p className="mt-4 text-xs text-ink/55">
-        ผู้ดูแลหรือพนักงานใช้อีเมลที่ได้รับ รหัสผ่านอย่างน้อย 12 ตัวอักษร
-        ผู้ดูแลระบบเดิมใช้อีเมลที่ตั้งไว้ (ค่าเริ่มต้น admin) หรือเว้นว่างแล้วใส่รหัสผ่านผู้ดูแล
         เข้าด้วย Google ได้เฉพาะอีเมลที่อยู่ในรายชื่อพนักงาน
       </p>
     </>

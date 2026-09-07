@@ -4,6 +4,8 @@ import {
   GOOGLE_OAUTH_TTL_MS,
   buildGoogleAuthorizeUrl,
   createGoogleOAuthPending,
+  googleAuthRedirectUri,
+  googleOAuthCookieOrigin,
   isOpsGoogleAuthConfigured,
 } from "@/lib/ops-google-auth";
 
@@ -21,9 +23,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const pending = createGoogleOAuthPending();
+  const cookieOrigin = googleOAuthCookieOrigin(request.url);
+  const requestOrigin = new URL(request.url).origin;
+  if (cookieOrigin !== requestOrigin) {
+    return NextResponse.redirect(new URL("/api/ops/auth/google", cookieOrigin));
+  }
+
+  const redirectUri = googleAuthRedirectUri(request.url);
+  const pending = createGoogleOAuthPending(Date.now(), redirectUri);
   const response = NextResponse.redirect(
-    buildGoogleAuthorizeUrl(pending.state, pending.verifier),
+    buildGoogleAuthorizeUrl(pending.state, pending.verifier, redirectUri),
   );
   response.cookies.set({
     name: GOOGLE_OAUTH_COOKIE,

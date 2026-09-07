@@ -8,6 +8,7 @@ import { getDb } from "@/lib/database";
 import {
   isOpsPermission,
   isOpsRole,
+  isPlatformAdmin,
   isStaffDepartment,
   type OpsActor,
   type OpsPermission,
@@ -147,14 +148,14 @@ export function countActiveAdmins(exceptId?: number): number {
   if (exceptId) {
     const row = getDb()
       .prepare(
-        "SELECT COUNT(*) AS n FROM ops_staff WHERE active = 1 AND role = 'admin' AND id != ?",
+        "SELECT COUNT(*) AS n FROM ops_staff WHERE active = 1 AND role IN ('admin','superadmin') AND id != ?",
       )
       .get(exceptId) as { n: number } | undefined;
     return Number(row?.n || 0);
   }
   const row = getDb()
     .prepare(
-      "SELECT COUNT(*) AS n FROM ops_staff WHERE active = 1 AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM ops_staff WHERE active = 1 AND role IN ('admin','superadmin')",
     )
     .get() as { n: number } | undefined;
   return Number(row?.n || 0);
@@ -299,8 +300,8 @@ export function updateOpsStaff(input: UpdateOpsStaffInput): OpsStaff {
   }
 
   const remainingAdmins = countActiveAdmins(current.id);
-  const wouldBeAdmin = active && role === "admin";
-  if (current.role === "admin" && current.active && !wouldBeAdmin && remainingAdmins < 1) {
+  const wouldBeAdmin = active && isPlatformAdmin(role);
+  if (isPlatformAdmin(current.role) && current.active && !wouldBeAdmin && remainingAdmins < 1) {
     throw new Error("ต้องเหลือผู้ดูแลที่ใช้งานได้อย่างน้อย 1 คน");
   }
 

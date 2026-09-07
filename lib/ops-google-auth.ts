@@ -55,8 +55,41 @@ export function siteOrigin(): string {
   return "http://localhost:3000";
 }
 
-export function googleAuthRedirectUri(): string {
-  return `${siteOrigin()}/api/ops/auth/google/callback`;
+export function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
+function originPort(url: URL): string {
+  return url.port || (url.protocol === "https:" ? "443" : "80");
+}
+
+/**
+ * Host that must own the PKCE cookie. Loopback aliases (localhost vs 127.0.0.1)
+ * collapse to NEXT_PUBLIC_SITE_URL so Google callback and the cookie share a host.
+ */
+export function googleOAuthCookieOrigin(requestUrl: string): string {
+  const site = siteOrigin();
+  try {
+    const req = new URL(requestUrl);
+    const preferred = new URL(site);
+    if (
+      isLoopbackHostname(req.hostname) &&
+      isLoopbackHostname(preferred.hostname) &&
+      originPort(req) === originPort(preferred) &&
+      req.protocol === preferred.protocol
+    ) {
+      return preferred.origin;
+    }
+    return req.origin;
+  } catch {
+    return site;
+  }
+}
+
+export function googleAuthRedirectUri(requestUrl?: string): string {
+  const origin = requestUrl ? googleOAuthCookieOrigin(requestUrl) : siteOrigin();
+  return `${origin}/api/ops/auth/google/callback`;
 }
 
 export function isOpsGoogleAuthConfigured(): boolean {
@@ -72,28 +105,32 @@ function sign(payload: string): string {
 }
 
 type PendingOAuth = {
-  v: 1;
+  v: 1 | 2;
   state: string;
   verifier: string;
   exp: number;
+  redirectUri?: string;
 };
 
 export function createGoogleOAuthPending(
   now = Date.now(),
-): { state: string; verifier: string; cookieValue: string } {
+  redirectUri = googleAuthRedirectUri(),
+): { state: string; verifier: string; cookieValue: string; redirectUri: string } {
   const state = randomBytes(24).toString("base64url");
   const verifier = randomBytes(32).toString("base64url");
   const body: PendingOAuth = {
-    v: 1,
+    v: 2,
     state,
     verifier,
     exp: now + GOOGLE_OAUTH_TTL_MS,
+    redirectUri,
   };
   const encoded = Buffer.from(JSON.stringify(body), "utf8").toString("base64url");
   const payload = `g1.${encoded}`;
   return {
     state,
     verifier,
+    redirectUri,
     cookieValue: `${payload}.${sign(payload)}`,
   };
 }
@@ -113,7 +150,11 @@ export function parseGoogleOAuthPending(
     const parsed = JSON.parse(
       Buffer.from(payload.slice(3), "base64url").toString("utf8"),
     ) as PendingOAuth;
-    if (parsed.v !== 1 || !Number.isFinite(parsed.exp) || parsed.exp < now) {
+    if (
+      (parsed.v !== 1 && parsed.v !== 2) ||
+      !Number.isFinite(parsed.exp) ||
+      parsed.exp < now
+    ) {
       return null;
     }
     if (!parsed.state || !parsed.verifier) return null;
@@ -127,10 +168,14 @@ export function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
 
-export function buildGoogleAuthorizeUrl(state: string, verifier: string): string {
+export function buildGoogleAuthorizeUrl(
+  state: string,
+  verifier: string,
+  redirectUri = googleAuthRedirectUri(),
+): string {
   const params = new URLSearchParams({
     client_id: googleClientId(),
-    redirect_uri: googleAuthRedirectUri(),
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: "openid email profile",
     state,
@@ -261,12 +306,13 @@ export async function exchangeGoogleAuthorizationCode(
   code: string,
   verifier: string,
   fetchImpl: typeof fetch = fetch,
+  redirectUri = googleAuthRedirectUri(),
 ): Promise<ExchangeResult> {
   const body = new URLSearchParams({
     code,
     client_id: googleClientId(),
     client_secret: googleClientSecret(),
-    redirect_uri: googleAuthRedirectUri(),
+    redirect_uri: redirectUri,
     grant_type: "authorization_code",
     code_verifier: verifier,
   });

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
+import { isPlatformAdmin } from "@/lib/ops-roles";
 import { opsAuditRequestMeta as requestMeta } from "@/lib/ops-request-context";
 import {
   ensureOpsStaffBookingSlug,
@@ -225,7 +226,7 @@ export async function saveScheduleAvailabilityAction(
   let staffEmail = String(formData.get("staffEmail") || actor.email)
     .trim()
     .toLowerCase();
-  if (actor.role !== "admin" && staffEmail !== actor.email.toLowerCase()) {
+  if (!isPlatformAdmin(actor.role) && staffEmail !== actor.email.toLowerCase()) {
     staffEmail = actor.email.toLowerCase();
   }
   let intervals: ScheduleAvailabilityInterval[] = [];

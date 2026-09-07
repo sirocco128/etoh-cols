@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CustomerAuthPanel } from "@/components/CustomerAuthPanel";
 import { RecentOrderHint } from "@/components/RecentOrderHint";
 import {
   ACCOUNT_HUB_INTRO,
@@ -39,6 +40,10 @@ export default function AccountHubPage() {
       <p className="relative mt-4 max-w-xl text-sm leading-relaxed text-ink/80">
         {ACCOUNT_HUB_INTRO}
       </p>
+
+      <div className="relative mt-6">
+        <CustomerAuthPanel />
+      </div>
 
       <div className="relative mt-6">
         <RecentOrderHint variant="hub" />

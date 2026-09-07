@@ -15,7 +15,7 @@ export default async function OpsLoginPage({
   const params = await searchParams;
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-2xl">
       <h1 className="text-2xl font-bold text-forest">เข้าสู่ระบบปฏิบัติการ</h1>
       <p className="mt-2 text-sm text-ink/70">
         จัดการลูกค้าและใบเสนอราคา — เข้าได้เฉพาะพนักงาน

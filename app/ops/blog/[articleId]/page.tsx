@@ -8,6 +8,7 @@ import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { getArticleById } from "@/lib/article-repository";
 import { ARTICLE_STATUS_LABELS, type ArticleStatus } from "@/lib/article-types";
 import { requireOpsPage } from "@/lib/ops-auth";
+import { isPlatformAdmin } from "@/lib/ops-roles";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,7 +38,7 @@ export default async function OpsArticlePage({
   const article = await getArticleById(id);
   if (!article) notFound();
 
-  const isAdmin = actor.role === "admin";
+  const isAdmin = isPlatformAdmin(actor.role);
   const transitions = STATUS_ACTIONS.filter(
     (step) => step.from === article.status && (!step.adminOnly || isAdmin),
   );

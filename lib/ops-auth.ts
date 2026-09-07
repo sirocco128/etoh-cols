@@ -12,6 +12,7 @@ import {
   actorMay,
   findOpsUserByEmail,
   isOpsRole,
+  isPlatformAdmin,
   listOpsUserSeeds,
   type OpsActor,
   type OpsPermission,
@@ -33,7 +34,7 @@ export const OPS_COOKIE = "ops_session";
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type { OpsActor, OpsPermission };
-export { actorMay };
+export { actorMay, isPlatformAdmin };
 
 export function isOpsAuthConfigured(): boolean {
   const secret = (process.env.ADMIN_SESSION_SECRET || "").trim();
@@ -145,8 +146,17 @@ export function verifyOpsSessionToken(
 
 export function verifyOpsPassword(password: string): boolean {
   const expected = (process.env.ADMIN_PASSWORD || "").trim();
-  if (!isOpsAuthConfigured() || expected.length < 12) return false;
+  if (!isOpsAuthConfigured() || expected.length < 8) return false;
   return timingSafeEqualString(expected, password);
+}
+
+function loginKeys(email: string): string[] {
+  const raw = email.trim().toLowerCase();
+  if (!raw) return [];
+  const keys = [raw];
+  if (raw.endsWith("@local")) keys.push(raw.slice(0, -6));
+  else if (!raw.includes("@")) keys.push(`${raw}@local`);
+  return [...new Set(keys)];
 }
 
 export function authenticateOpsUser(
@@ -156,14 +166,16 @@ export function authenticateOpsUser(
   if (!isOpsAuthConfigured()) return null;
   const trimmedEmail = email.trim().toLowerCase();
   if (trimmedEmail) {
-    const dbUser = getOpsStaffByEmail(trimmedEmail);
-    if (dbUser) {
-      if (!dbUser.active) return null;
-      return authenticateOpsStaff(trimmedEmail, password);
-    }
-    const user = findOpsUserByEmail(trimmedEmail);
-    if (user && timingSafeEqualString(user.password, password)) {
-      return { email: user.email, name: user.name, role: user.role };
+    for (const key of loginKeys(trimmedEmail)) {
+      const dbUser = getOpsStaffByEmail(key);
+      if (dbUser) {
+        if (!dbUser.active) return null;
+        return authenticateOpsStaff(key, password);
+      }
+      const user = findOpsUserByEmail(key);
+      if (user && timingSafeEqualString(user.password, password)) {
+        return { email: user.email, name: user.name, role: user.role };
+      }
     }
     if (trimmedEmail === "admin" && verifyOpsPassword(password)) {
       return defaultAdminActor();

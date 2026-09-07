@@ -73,21 +73,30 @@ export async function GET(request: NextRequest) {
 
   const code = params.get("code") || "";
   const state = params.get("state") || "";
-  const pending = parseGoogleOAuthPending(
-    request.cookies.get(GOOGLE_OAUTH_COOKIE)?.value,
-  );
+  const pendingCookie = request.cookies.get(GOOGLE_OAUTH_COOKIE)?.value;
+  const pending = parseGoogleOAuthPending(pendingCookie);
   if (!code || !state || !pending || !timingSafeEqualString(pending.state, state)) {
     writeOpsAudit({
       action: "login",
       status: "denied",
-      detail: { method: "google" },
+      detail: {
+        method: "google",
+        hasCode: Boolean(code),
+        hasState: Boolean(state),
+        hasCookie: Boolean(pendingCookie),
+      },
       ...ctx,
       errorMessage: "invalid google oauth state",
     });
     return loginRedirect(request, "google_invalid");
   }
 
-  const exchanged = await exchangeGoogleAuthorizationCode(code, pending.verifier);
+  const exchanged = await exchangeGoogleAuthorizationCode(
+    code,
+    pending.verifier,
+    fetch,
+    pending.redirectUri,
+  );
   if (!exchanged.ok) {
     const error: GoogleOAuthError =
       exchanged.reason === "unverified" ? "google_unverified" : "google_failed";
@@ -113,8 +122,8 @@ export async function GET(request: NextRequest) {
     return loginRedirect(request, "google_not_staff");
   }
 
-  const quotesUrl = new URL("/ops/quotes", request.url);
-  const response = NextResponse.redirect(quotesUrl);
+  const homeUrl = new URL("/ops", request.url);
+  const response = NextResponse.redirect(homeUrl);
   response.cookies.set({
     name: OPS_COOKIE,
     value: createOpsSessionToken(Date.now(), actor),

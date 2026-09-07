@@ -48,9 +48,12 @@ PNGs land in `public/sop/screenshots/`. Content catalog: `lib/sop-guide-content.
 ## Env
 
 ```bash
-ADMIN_PASSWORD=at-least-12-chars
+ADMIN_PASSWORD=Admin1234
 ADMIN_SESSION_SECRET=at-least-32-random-characters
 ADMIN_EMAIL=admin
+# Seeded usernames use Admin1234: superadmin, admin, sales-admin, accountant-admin,
+# warehouse-admin, office-admin, sales, accountant, viewer
+# Customer hub (/account): customer / Customer1234
 # Optional extra users:
 # OPS_USERS=[{"email":"sales@local","password":"sales-pass-12x","role":"sales","name":"เซลล์"},{"email":"view@local","password":"viewer-pass-12","role":"viewer","name":"ดูอย่างเดียว"}]
 # Google Sign-In (optional). Create a Web OAuth client and add the redirect URI:
@@ -63,7 +66,7 @@ ADMIN_EMAIL=admin
 
 Restart Next after changing env. Cookie session lasts 12 hours (`ops_session`).
 
-**Google Login:** ปุ่มบน `/ops/login` ส่งไป Google แล้วกลับที่ `/api/ops/auth/google/callback`. เข้าได้เฉพาะอีเมลที่ตรงกับพนักงานใน `/ops/users` หรือ `OPS_USERS` / `ADMIN_EMAIL` (ต้องเป็นอีเมลจริง ไม่ใช่ `admin`). ไม่สร้างบัญชีใหม่อัตโนมัติ. ต้องยืนยันอีเมลที่ Google แล้ว.
+**Google Login:** ปุ่มบน `/ops/login` ส่งไป Google แล้วกลับที่ `/api/ops/auth/google/callback`. เข้าได้เฉพาะอีเมลที่ตรงกับพนักงานใน `/ops/users` หรือ `OPS_USERS` / `ADMIN_EMAIL` (ต้องเป็นอีเมลจริง ไม่ใช่ `admin`). ไม่สร้างบัญชีใหม่อัตโนมัติ. ต้องยืนยันอีเมลที่ Google แล้ว. ใช้ `http://localhost:3000` ให้ตรงกับ Redirect URI ใน Google Cloud — อย่าสลับกับ `127.0.0.1` กลางทาง (ระบบจะย้าย loopback ไปโฮสต์ใน `NEXT_PUBLIC_SITE_URL` ให้อัตโนมัติ).
 
 Roles:
 

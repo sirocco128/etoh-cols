@@ -1,14 +1,43 @@
 /**
  * Ops console roles. Not TMS roles and not Strapi CMS roles.
+ * superadmin = ชั้นสูงสุด (เพิ่มจาก admin) — สิทธิ์เต็มเหมือนผู้ดูแล
  * admin = full console including factory PO + finance
- * accountant = books, COA, slip approval, pay factory/freight (no factory CNY write)
- * sales = quotes/customers/orders + รายงานวงจร (no factory CNY, no GP)
- * viewer = read only + รายงานวงจร (no factory, no finance / GP)
+ * *Admin = หัวหน้าฝ่าย (สิทธิ์ฝ่ายตนเอง + ดูผู้ใช้)
+ * accountant / sales / viewer = พนักงาน
  */
 
-export const OPS_ROLES = ["admin", "accountant", "sales", "viewer"] as const;
+export const OPS_ROLES = [
+  "superadmin",
+  "admin",
+  "sales_admin",
+  "accountant_admin",
+  "warehouse_admin",
+  "office_admin",
+  "accountant",
+  "sales",
+  "viewer",
+] as const;
 
 export type OpsRole = (typeof OPS_ROLES)[number];
+
+export const PLATFORM_ADMIN_ROLES = ["superadmin", "admin"] as const;
+export type PlatformAdminRole = (typeof PLATFORM_ADMIN_ROLES)[number];
+
+export const DEPARTMENT_ADMIN_ROLES = [
+  "sales_admin",
+  "accountant_admin",
+  "warehouse_admin",
+  "office_admin",
+] as const;
+export type DepartmentAdminRole = (typeof DEPARTMENT_ADMIN_ROLES)[number];
+
+export function isPlatformAdmin(role: string | null | undefined): boolean {
+  return role === "superadmin" || role === "admin";
+}
+
+export function isDepartmentAdmin(role: string | null | undefined): boolean {
+  return (DEPARTMENT_ADMIN_ROLES as readonly string[]).includes(String(role || ""));
+}
 
 export const OPS_PERMISSIONS = [
   "quotes.read",
@@ -51,6 +80,7 @@ export type OpsActor = {
 };
 
 export const ROLE_PERMISSIONS: Record<OpsRole, OpsPermission[]> = {
+  superadmin: [...OPS_PERMISSIONS],
   admin: [...OPS_PERMISSIONS],
   accountant: [
     "quotes.read",
@@ -94,10 +124,47 @@ export const ROLE_PERMISSIONS: Record<OpsRole, OpsPermission[]> = {
     "reports.read",
     "schedule.read",
   ],
+  sales_admin: [],
+  accountant_admin: [],
+  warehouse_admin: [
+    "quotes.read",
+    "customers.read",
+    "orders.read",
+    "orders.write",
+    "documents.read",
+    "documents.write",
+    "documents.restricted",
+    "documents.hold",
+    "factory.read",
+    "catalog.write",
+    "reports.read",
+    "schedule.read",
+    "users.read",
+  ],
+  office_admin: [
+    "quotes.read",
+    "customers.read",
+    "customers.write",
+    "orders.read",
+    "documents.read",
+    "documents.write",
+    "reports.read",
+    "schedule.read",
+    "schedule.write",
+    "users.read",
+  ],
 };
 
+ROLE_PERMISSIONS.sales_admin = [...ROLE_PERMISSIONS.sales, "users.read", "audit.read"];
+ROLE_PERMISSIONS.accountant_admin = [...ROLE_PERMISSIONS.accountant, "users.read"];
+
 export const ROLE_LABELS: Record<OpsRole, string> = {
+  superadmin: "ผู้ดูแลสูงสุด",
   admin: "ผู้ดูแล",
+  sales_admin: "หัวหน้าฝ่ายขาย",
+  accountant_admin: "หัวหน้าฝ่ายบัญชี",
+  warehouse_admin: "หัวหน้าฝ่ายคลัง",
+  office_admin: "หัวหน้าสำนักงาน",
   accountant: "ผู้ทำบัญชี",
   sales: "เซลล์",
   viewer: "ดูอย่างเดียว",
@@ -252,7 +319,8 @@ export function listOpsUserSeeds(): OpsUserSeed[] {
   const users = parseOpsUsersJson(process.env.OPS_USERS || "");
   const adminPassword = (process.env.ADMIN_PASSWORD || "").trim();
   const adminEmail = (process.env.ADMIN_EMAIL || "admin").trim().toLowerCase();
-  if (adminPassword.length >= 12) {
+  const seedPassword = (process.env.DEMO_ADMIN_PASSWORD || "Admin1234").trim();
+  if (adminPassword.length >= 8) {
     const already = users.some((u) => u.email === adminEmail);
     if (!already) {
       users.unshift({
@@ -261,6 +329,70 @@ export function listOpsUserSeeds(): OpsUserSeed[] {
         role: "admin",
         name: (process.env.ADMIN_NAME || "").trim() || "ผู้ดูแล",
       });
+    }
+  }
+  if (seedPassword.length >= 8) {
+    const superFromEnv = (process.env.SUPERADMIN_PASSWORD || "").trim();
+    const superPassword =
+      superFromEnv.length >= 8 ? superFromEnv : seedPassword;
+    const builtins: OpsUserSeed[] = [
+      {
+        email: "superadmin",
+        password: superPassword,
+        role: "superadmin",
+        name: (process.env.SUPERADMIN_NAME || "").trim() || "ผู้ดูแลสูงสุด",
+      },
+      {
+        email: "admin",
+        password: seedPassword,
+        role: "admin",
+        name: "ผู้ดูแลระบบ",
+      },
+      {
+        email: "sales-admin",
+        password: seedPassword,
+        role: "sales_admin",
+        name: "หัวหน้าฝ่ายขาย",
+      },
+      {
+        email: "accountant-admin",
+        password: seedPassword,
+        role: "accountant_admin",
+        name: "หัวหน้าฝ่ายบัญชี",
+      },
+      {
+        email: "warehouse-admin",
+        password: seedPassword,
+        role: "warehouse_admin",
+        name: "หัวหน้าฝ่ายคลัง",
+      },
+      {
+        email: "office-admin",
+        password: seedPassword,
+        role: "office_admin",
+        name: "หัวหน้าสำนักงาน",
+      },
+      {
+        email: "sales",
+        password: seedPassword,
+        role: "sales",
+        name: "เซลล์",
+      },
+      {
+        email: "accountant",
+        password: seedPassword,
+        role: "accountant",
+        name: "บัญชี",
+      },
+      {
+        email: "viewer",
+        password: seedPassword,
+        role: "viewer",
+        name: "ดูอย่างเดียว",
+      },
+    ];
+    for (const extra of builtins) {
+      if (!users.some((u) => u.email === extra.email)) users.push(extra);
     }
   }
   return users;

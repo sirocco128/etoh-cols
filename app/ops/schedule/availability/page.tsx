@@ -5,6 +5,7 @@ import {
 } from "@/app/actions/ops-schedule";
 import { AvailabilityEditor } from "@/components/schedule/AvailabilityEditor";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
+import { isPlatformAdmin } from "@/lib/ops-roles";
 import { getSiteConfig } from "@/lib/site";
 import {
   ensureOpsStaffBookingSlug,
@@ -27,7 +28,7 @@ export default async function OpsScheduleAvailabilityPage({
   const sp = await searchParams;
   const staffList = listOpsStaff().filter((s) => s.active);
   let staffEmail = actor.email.toLowerCase();
-  if (actor.role === "admin" && sp.staff) {
+  if (isPlatformAdmin(actor.role) && sp.staff) {
     const wanted = sp.staff.trim().toLowerCase();
     if (staffList.some((s) => s.email === wanted) || wanted === actor.email.toLowerCase()) {
       staffEmail = wanted;
@@ -64,7 +65,7 @@ export default async function OpsScheduleAvailabilityPage({
         </p>
       </div>
 
-      {actor.role === "admin" && staffList.length > 0 ? (
+      {isPlatformAdmin(actor.role) && staffList.length > 0 ? (
         <form className="flex flex-wrap items-end gap-2 text-sm">
           <label>
             <span className="mb-1 block text-forest/70">พนักงาน</span>
