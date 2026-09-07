@@ -4,6 +4,7 @@ import {
   formatOpsDeskStamp,
   isOpsDeskContextMenuTarget,
   opsDeskUserLine,
+  opsDeskWatermarkBand,
   opsDeskWatermarkLine,
 } from "../lib/ops-desk-guard";
 
@@ -29,6 +30,9 @@ describe("ops desk guard", () => {
       opsDeskWatermarkLine("สมชาย · somchai@local", now),
       `สมชาย · somchai@local · ${stamp}`,
     );
+    const band = opsDeskWatermarkBand("สมชาย · somchai@local", now, 3);
+    assert.equal(band.split("   ·   ").length, 3);
+    assert.ok(band.includes(stamp));
   });
 
   it("lets form fields keep the native context menu", () => {

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import {
   isOpsDeskContextMenuTarget,
+  opsDeskWatermarkBand,
   opsDeskWatermarkLine,
 } from "@/lib/ops-desk-guard";
 
-const TILES = 42;
+const TILES = 72;
 
 export function OpsDeskGuard({
   userLine,
@@ -28,6 +29,10 @@ export function OpsDeskGuard({
     () => opsDeskWatermarkLine(userLine, now),
     [userLine, now],
   );
+  const band = useMemo(
+    () => opsDeskWatermarkBand(userLine, now),
+    [userLine, now],
+  );
 
   function onContextMenu(event: MouseEvent<HTMLDivElement>) {
     if (isOpsDeskContextMenuTarget(event.target)) return;
@@ -39,8 +44,9 @@ export function OpsDeskGuard({
       className="relative flex min-w-0 flex-1 flex-col"
       onContextMenu={onContextMenu}
     >
+      {children}
       <div
-        className="ops-desk-watermark pointer-events-none absolute inset-0 z-[15] overflow-hidden print:hidden"
+        className="ops-desk-watermark pointer-events-none print:hidden"
         aria-hidden
       >
         <div className="ops-desk-watermark__sheet">
@@ -50,8 +56,8 @@ export function OpsDeskGuard({
             </span>
           ))}
         </div>
+        <p className="ops-desk-watermark__band">{band}</p>
       </div>
-      {children}
     </div>
   );
 }

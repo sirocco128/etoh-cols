@@ -389,7 +389,7 @@ export function OpsNav({
             </form>
           </div>
         </header>
-        <main className="relative z-0 mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-page py-6 sm:py-8 print:max-w-none print:overflow-visible print:px-0 print:py-0">
+        <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-auto px-page py-6 sm:py-8 print:max-w-none print:overflow-visible print:px-0 print:py-0">
           {children}
         </main>
       </OpsDeskGuard>

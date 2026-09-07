@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { opsLoginAction, type OpsActionResult } from "@/app/actions/ops";
-import { FillUserPasswordButton, LoginRoster } from "@/components/LoginRoster";
+import { LoginRoster } from "@/components/LoginRoster";
 import { DEMO_ADMIN_PASSWORD } from "@/lib/demo-logins";
 import {
   GOOGLE_LOGIN_ERROR_MESSAGES,
@@ -89,11 +89,7 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
           />
         </label>
-        <FillUserPasswordButton
-          side="admin"
-          username={username}
-          onPick={fillAccount}
-        />
+        <LoginRoster highlight="admin" sides="admin" onPick={fillAccount} />
         {alert ? (
           <p className="text-sm text-red-700" role="alert">
             {alert}
@@ -107,15 +103,6 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
           {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         </button>
       </form>
-
-      <div className="mt-5">
-        <LoginRoster
-          variant="inline"
-          highlight="admin"
-          sides="admin"
-          onPick={fillAccount}
-        />
-      </div>
 
       <div className="mt-5 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-forest/15" />
@@ -134,7 +121,7 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
       </a>
 
       <p className="mt-4 text-xs text-ink/55">
-        กดปุ่มใส่ชื่อผู้ใช้และรหัสผ่าน หรือเลือกบัญชีด้านบน — แล้วค่อยเข้าสู่ระบบ
+        กดปุ่มรายชื่อและรหัสผ่านเพื่อเลือกบัญชี — แล้วค่อยเข้าสู่ระบบ
         เข้าด้วย Google ได้เฉพาะอีเมลที่อยู่ในรายชื่อพนักงาน
       </p>
     </>

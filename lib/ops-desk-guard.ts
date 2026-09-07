@@ -26,6 +26,16 @@ export function opsDeskWatermarkLine(
   return `${userLine.trim()} · ${formatOpsDeskStamp(now)}`;
 }
 
+/** Repeated sash so the stamp stays readable across the middle of the desk. */
+export function opsDeskWatermarkBand(
+  userLine: string,
+  now = new Date(),
+  repeats = 6,
+): string {
+  const line = opsDeskWatermarkLine(userLine, now);
+  return Array.from({ length: Math.max(1, repeats) }, () => line).join("   ·   ");
+}
+
 export function isOpsDeskContextMenuTarget(target: EventTarget | null): boolean {
   if (!target || typeof Element === "undefined") return false;
   if (!(target instanceof Element)) return false;
