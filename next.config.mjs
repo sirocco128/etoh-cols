@@ -195,6 +195,10 @@ const nextConfig = {
         value:
           "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
       },
+      {
+        key: "X-Robots-Tag",
+        value: "noai, noimageai",
+      },
     ];
 
     if (isSecureProduction) {
