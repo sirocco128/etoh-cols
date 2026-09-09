@@ -65,6 +65,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/db ./db
+# Work-manual markdown for /ops/manual (loader reads process.cwd()/docs)
+COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
 COPY --from=builder /app/scripts/validate-runtime.mjs ./scripts/validate-runtime.mjs
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
