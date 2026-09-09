@@ -121,6 +121,36 @@ describe("ops Google Sign-In", () => {
         "http://localhost:3000",
       );
     });
+    withEnv(
+      {
+        ...AUTH_ENV,
+        NEXT_PUBLIC_SITE_URL: "https://tarabiz.next-dev.net",
+      },
+      () => {
+        assert.equal(
+          googleOAuthCookieOrigin("http://0.0.0.0:3000/api/ops/auth/google"),
+          "https://tarabiz.next-dev.net",
+        );
+        assert.equal(
+          googleAuthRedirectUri("http://0.0.0.0:3000/api/ops/auth/google"),
+          "https://tarabiz.next-dev.net/api/ops/auth/google/callback",
+        );
+        assert.equal(
+          googleOAuthCookieOrigin("http://0.0.0.0:3000/api/ops/auth/google", {
+            "x-forwarded-host": "tarabiz.next-dev.net",
+            "x-forwarded-proto": "https",
+          }),
+          "https://tarabiz.next-dev.net",
+        );
+        assert.equal(
+          googleOAuthCookieOrigin("http://web:3000/api/ops/auth/google", {
+            "x-forwarded-host": "192.168.1.30:33100",
+            "x-forwarded-proto": "http",
+          }),
+          "http://192.168.1.30:33100",
+        );
+      },
+    );
   });
 
   it("signs and verifies a short-lived PKCE cookie", () => {

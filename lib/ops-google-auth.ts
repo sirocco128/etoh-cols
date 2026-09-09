@@ -60,19 +60,55 @@ export function isLoopbackHostname(hostname: string): boolean {
   return host === "localhost" || host === "127.0.0.1" || host === "::1";
 }
 
+/** Docker / Node bind-all hosts are not valid browser origins. */
+export function isBindAllHostname(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  return host === "0.0.0.0" || host === "::";
+}
+
 function originPort(url: URL): string {
   return url.port || (url.protocol === "https:" ? "443" : "80");
 }
 
+function headerValue(
+  headers: Headers | Record<string, string | null | undefined> | undefined,
+  name: string,
+): string {
+  if (!headers) return "";
+  if (headers instanceof Headers) return (headers.get(name) || "").trim();
+  const direct = headers[name] ?? headers[name.toLowerCase()];
+  return String(direct || "").trim();
+}
+
 /**
- * Host that must own the PKCE cookie. Loopback aliases (localhost vs 127.0.0.1)
- * collapse to NEXT_PUBLIC_SITE_URL so Google callback and the cookie share a host.
+ * Host that must own the PKCE cookie. Prefer reverse-proxy hosts, collapse
+ * loopback aliases to NEXT_PUBLIC_SITE_URL, and never publish 0.0.0.0.
  */
-export function googleOAuthCookieOrigin(requestUrl: string): string {
+export function googleOAuthCookieOrigin(
+  requestUrl: string,
+  headers?: Headers | Record<string, string | null | undefined>,
+): string {
   const site = siteOrigin();
+  const forwardedHost = headerValue(headers, "x-forwarded-host").split(",")[0]?.trim() || "";
+  if (forwardedHost) {
+    const forwardedProto = headerValue(headers, "x-forwarded-proto").split(",")[0]?.trim() || "";
+    const proto =
+      forwardedProto === "http" || forwardedProto === "https"
+        ? forwardedProto
+        : new URL(site).protocol.replace(":", "");
+    try {
+      return new URL(`${proto}://${forwardedHost}`).origin;
+    } catch {
+      /* fall through */
+    }
+  }
+
   try {
     const req = new URL(requestUrl);
     const preferred = new URL(site);
+    if (isBindAllHostname(req.hostname)) {
+      return preferred.origin;
+    }
     if (
       isLoopbackHostname(req.hostname) &&
       isLoopbackHostname(preferred.hostname) &&
@@ -87,8 +123,13 @@ export function googleOAuthCookieOrigin(requestUrl: string): string {
   }
 }
 
-export function googleAuthRedirectUri(requestUrl?: string): string {
-  const origin = requestUrl ? googleOAuthCookieOrigin(requestUrl) : siteOrigin();
+export function googleAuthRedirectUri(
+  requestUrl?: string,
+  headers?: Headers | Record<string, string | null | undefined>,
+): string {
+  const origin = requestUrl
+    ? googleOAuthCookieOrigin(requestUrl, headers)
+    : siteOrigin();
   return `${origin}/api/ops/auth/google/callback`;
 }
 

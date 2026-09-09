@@ -6,6 +6,7 @@ import {
   createGoogleOAuthPending,
   googleAuthRedirectUri,
   googleOAuthCookieOrigin,
+  isLoopbackHostname,
   isOpsGoogleAuthConfigured,
 } from "@/lib/ops-google-auth";
 
@@ -17,19 +18,29 @@ function cookieSecure(): boolean {
 }
 
 export async function GET(request: Request) {
-  const loginUrl = new URL("/ops/login", request.url);
+  const publicOrigin = googleOAuthCookieOrigin(request.url, request.headers);
   if (!isOpsGoogleAuthConfigured()) {
+    const loginUrl = new URL("/ops/login", publicOrigin);
     loginUrl.searchParams.set("error", "google_not_configured");
     return NextResponse.redirect(loginUrl);
   }
 
-  const cookieOrigin = googleOAuthCookieOrigin(request.url);
-  const requestOrigin = new URL(request.url).origin;
-  if (cookieOrigin !== requestOrigin) {
-    return NextResponse.redirect(new URL("/api/ops/auth/google", cookieOrigin));
+  // Collapse localhost ↔ 127.0.0.1 onto NEXT_PUBLIC_SITE_URL before setting the cookie.
+  try {
+    const requestHost = new URL(request.url).hostname;
+    const preferredHost = new URL(publicOrigin).hostname;
+    if (
+      isLoopbackHostname(requestHost) &&
+      isLoopbackHostname(preferredHost) &&
+      new URL(request.url).origin !== publicOrigin
+    ) {
+      return NextResponse.redirect(new URL("/api/ops/auth/google", publicOrigin));
+    }
+  } catch {
+    /* continue with public origin */
   }
 
-  const redirectUri = googleAuthRedirectUri(request.url);
+  const redirectUri = googleAuthRedirectUri(request.url, request.headers);
   const pending = createGoogleOAuthPending(Date.now(), redirectUri);
   const response = NextResponse.redirect(
     buildGoogleAuthorizeUrl(pending.state, pending.verifier, redirectUri),

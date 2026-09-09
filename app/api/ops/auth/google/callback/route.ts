@@ -9,6 +9,7 @@ import {
 import {
   GOOGLE_OAUTH_COOKIE,
   exchangeGoogleAuthorizationCode,
+  googleOAuthCookieOrigin,
   isOpsGoogleAuthConfigured,
   parseGoogleOAuthPending,
   type GoogleOAuthError,
@@ -25,8 +26,12 @@ function cookieSecure(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
+function publicOrigin(request: NextRequest): string {
+  return googleOAuthCookieOrigin(request.url, request.headers);
+}
+
 function loginRedirect(request: NextRequest, error: GoogleOAuthError) {
-  const url = new URL("/ops/login", request.url);
+  const url = new URL("/ops/login", publicOrigin(request));
   url.searchParams.set("error", error);
   const response = NextResponse.redirect(url);
   response.cookies.set({
@@ -122,7 +127,7 @@ export async function GET(request: NextRequest) {
     return loginRedirect(request, "google_not_staff");
   }
 
-  const homeUrl = new URL("/ops", request.url);
+  const homeUrl = new URL("/ops", publicOrigin(request));
   const response = NextResponse.redirect(homeUrl);
   response.cookies.set({
     name: OPS_COOKIE,
