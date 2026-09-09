@@ -102,6 +102,8 @@ describe("ops manual markdown", () => {
     );
     assert.match(html, /ops-mermaid/);
     assert.match(html, /ops-mermaid-source/);
+    assert.match(html, /ops-mermaid-viewport/);
+    assert.match(html, /ops-mermaid-zoom-in/);
     assert.match(html, /erDiagram/);
     assert.doesNotMatch(html, /<pre class="overflow-x-auto rounded-lg bg-forest\/95/);
   });
