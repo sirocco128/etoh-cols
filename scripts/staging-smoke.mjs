@@ -3,18 +3,25 @@
  * Local staging smoke — expects docker-compose.staging web on port 3001.
  */
 import { spawnSync } from "node:child_process";
+import { platform } from "node:os";
 
 const BASE = process.env.STAGING_URL || "http://127.0.0.1:3011";
 const paths = ["/api/health", "/api/health?deep=1", "/"];
+const nullDevice = platform() === "win32" ? "NUL" : "/dev/null";
+const curlBin = platform() === "win32" ? "curl.exe" : "curl";
 
 console.log(`staging:smoke — ${BASE}`);
 
 /** @param {string} path */
 function curl(path) {
   const url = `${BASE.replace(/\/+$/, "")}${path}`;
-  const result = spawnSync("curl", ["-fsS", "-o", "/dev/null", "-w", "%{http_code}", url], {
-    encoding: "utf8",
-  });
+  const result = spawnSync(
+    curlBin,
+    ["-fsS", "-o", nullDevice, "-w", "%{http_code}", url],
+    {
+      encoding: "utf8",
+    },
+  );
   if (result.status !== 0) {
     console.error(`  ✗ ${path} — curl failed (${result.stderr?.trim() || "unknown"})`);
     return false;
