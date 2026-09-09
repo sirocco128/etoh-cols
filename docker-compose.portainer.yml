@@ -200,6 +200,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-Admin1234}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
     volumes:
       - tarabiz_leads:/app/.data
     depends_on:
