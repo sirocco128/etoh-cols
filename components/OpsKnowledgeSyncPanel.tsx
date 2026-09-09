@@ -87,25 +87,23 @@ export function OpsKnowledgeSyncPanel({
         ? `อัปเดตคลังแล้วผ่าน ${src} · เขียน ${(data.written || []).join(", ") || "—"}`
         : `เปรียบเทียบแล้วผ่าน ${src} · เปลี่ยน ${data.changedCount} หัวข้อ`,
     );
-    setLogs((prev) => [
-      {
-        id: Date.now(),
-        createdAt: new Date().toISOString(),
-        actorEmail: null,
-        actorName: null,
-        mode,
-        status: "ok",
-        applied: !!data.applied,
-        changedCount: data.changedCount,
-        written: data.written || [],
-        changes: (data.changes || []).filter((c) => c.status !== "match"),
-        catalog: data.catalog,
-        summary: data.summary,
-        source: src,
-        errorMessage: null,
-      },
-      ...prev,
-    ].slice(0, 40));
+    const row: KnowledgeSyncLogRow = {
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      actorEmail: null,
+      actorName: null,
+      mode,
+      status: "ok",
+      applied: !!data.applied,
+      changedCount: data.changedCount,
+      written: data.written || [],
+      changes: (data.changes || []).filter((c) => c.status !== "match"),
+      catalog: data.catalog,
+      summary: data.summary,
+      source: src,
+      errorMessage: null,
+    };
+    setLogs((prev) => [row, ...prev].slice(0, 40));
   }
 
   function onDiff() {
