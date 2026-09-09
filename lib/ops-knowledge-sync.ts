@@ -78,8 +78,17 @@ function apiToken(): string {
 
 function trantechRoot(): string {
   const fromEnv = (process.env.TRANTECH_ROOT || "").trim();
-  if (fromEnv) return path.resolve(fromEnv);
-  return path.resolve("D:/trantech-ai-platform");
+  if (fromEnv) {
+    // Avoid Windows drive paths resolving under /app on Linux containers.
+    if (process.platform !== "win32" && /^[A-Za-z]:[\\/]/.test(fromEnv)) {
+      return "";
+    }
+    return path.resolve(fromEnv);
+  }
+  if (process.platform === "win32") {
+    return path.resolve("D:/trantech-ai-platform");
+  }
+  return "";
 }
 
 function toTaipActor(actor: OpsActor) {
@@ -122,6 +131,11 @@ async function callApi<T>(
 
 function runLocalCli(mode: "diff" | "sync" | "log", actor: OpsActor): unknown {
   const root = trantechRoot();
+  if (!root) {
+    throw new Error(
+      "ไม่มี TRANTECH_ROOT ที่ใช้ได้บนเครื่องนี้ — ตั้ง TRANTECH_INTERNAL_API_URL ให้ชี้ TranTech internal-api",
+    );
+  }
   const script = path.join(root, "scripts", "giftset-kb.mts");
   if (!fs.existsSync(script)) {
     throw new Error(`ไม่พบสคริปต์ซิงค์ที่ ${script}`);
@@ -312,7 +326,9 @@ export function knowledgeSyncConfigured(): {
   const root = trantechRoot();
   return {
     apiUrl: apiBase(),
-    trantechRoot: root,
-    localScriptExists: fs.existsSync(path.join(root, "scripts", "giftset-kb.mts")),
+    trantechRoot: root || "(ไม่ตั้งค่า — ใช้ API เท่านั้น)",
+    localScriptExists: Boolean(
+      root && fs.existsSync(path.join(root, "scripts", "giftset-kb.mts")),
+    ),
   };
 }
