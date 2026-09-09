@@ -114,6 +114,7 @@ async function callApi<T>(
     headers: {
       accept: "application/json",
       "content-type": "application/json",
+      "user-agent": "premium-giftset-web/ops-knowledge-sync",
       "x-internal-token": apiToken(),
       "x-actor": `b64:${Buffer.from(JSON.stringify(toTaipActor(actor))).toString("base64")}`,
     },
@@ -121,8 +122,13 @@ async function callApi<T>(
     signal: AbortSignal.timeout(60_000),
   });
   const body = (await res.json().catch(() => null)) as
-    | { ok?: boolean; data?: T; error?: string }
+    | { ok?: boolean; data?: T; error?: string; ftag?: string }
     | null;
+  if (body && typeof body.ftag === "string") {
+    throw new Error(
+      "TranTech API ปฏิเสธ request (scrape-guard) — ตรวจ User-Agent / token",
+    );
+  }
   if (!res.ok || !body?.ok) {
     throw new Error(body?.error || `TranTech API ${res.status}`);
   }
