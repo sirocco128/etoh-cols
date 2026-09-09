@@ -171,7 +171,12 @@ function buildContentSecurityPolicy() {
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  allowedDevOrigins: [
+    "127.0.0.1",
+    "localhost",
+    "192.168.1.35",
+    "100.71.141.126",
+  ],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns,
