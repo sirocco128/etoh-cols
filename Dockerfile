@@ -70,6 +70,7 @@ COPY --from=builder /app/scripts/validate-runtime.mjs ./scripts/validate-runtime
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 
 RUN mkdir -p /app/.data \
+  && sed -i 's/\r$//' /app/docker-entrypoint.sh \
   && chmod +x /app/docker-entrypoint.sh \
   && chown -R nextjs:nodejs /app
 
