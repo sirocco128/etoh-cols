@@ -8,6 +8,7 @@
 | ER diagrams | [04-ER-DIAGRAMS.md](./04-ER-DIAGRAMS.md) | SQLite / MySQL / Strapi |
 | Function matrix | [05-FUNCTION-MATRIX.md](./05-FUNCTION-MATRIX.md) | ทุก route ↔ role ↔ บทคู่มือ |
 | Export Word | [export/](./export/) | `.docx` ตามโครงเทมเพลต |
+| พรีเซ็นต์ผู้บริหาร | [../presentations/EXEC-WORK-MANUAL-BRIEFING.html](../presentations/EXEC-WORK-MANUAL-BRIEFING.html) | สไลด์มุมนำเสนอผู้บริหาร (ละเอียด) + [บันทึกพูด](../presentations/EXEC-WORK-MANUAL-BRIEFING.md) |
 
 **อ่านบนเว็บ (SPA):** พนักงาน Ops ที่ล็อกอินแล้วเปิด `/ops/manual` — ระบบกรองเอกสารตาม role / permission ของบัญชี (เซลล์ไม่เห็นเอกสารผู้ดูแลระบบ ฯลฯ)
 
