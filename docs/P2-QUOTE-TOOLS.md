@@ -5,15 +5,18 @@ Feature-flagged **Option C** stubs for runbook §34 (Quote Basket) and §35 (Pro
 ## Feature flag
 
 ```bash
-NEXT_PUBLIC_ENABLE_P2_QUOTE_TOOLS=false
+# Optional — when unset, code defaults to enabled (see lib/feature-flags.ts).
+NEXT_PUBLIC_ENABLE_P2_QUOTE_TOOLS=true
 ```
 
 | Value | Behavior |
 | --- | --- |
-| `false` (default) | `/quote-basket` shows Thai “ยังไม่พร้อม” + link to `/contact`. Nav link hidden. Product / customize pages stay as v1.1. |
-| `true` | Interactive stubs: localStorage basket, Add to Quote, Configurator form. Nav shows “ตะกร้าใบเสนอราคา”. |
+| unset / `true` (**code default**) | Interactive stubs: localStorage basket, Add to Quote, Configurator form. Nav shows “ตะกร้าใบเสนอราคา”. |
+| `false` / `0` / `off` | `/quote-basket` shows Thai “ยังไม่พร้อม” + link to `/contact`. Nav link hidden. Product / customize pages stay as v1.1. |
 
-Set in `.env.local` (or deploy env). Restart Next.js after changing `NEXT_PUBLIC_*`.
+Set in `.env.local` (or deploy env). Staging often sets `false` explicitly — see `.env.staging.example`. Restart Next.js after changing `NEXT_PUBLIC_*`.
+
+These remain **localStorage-only stubs**, not a server basket.
 
 ## What exists (stubs)
 

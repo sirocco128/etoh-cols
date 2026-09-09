@@ -1,6 +1,6 @@
 # Function Matrix — Premium Gift Set Web
 
-ตรวจครบจาก `app/**/page.tsx` และ `app/api/**/route.ts` ณ 2026-09-06  
+ตรวจครบจาก `app/**/page.tsx` และ `app/api/**/route.ts` ณ 2026-09-09  
 คอลัมน์คู่มือชี้ไปที่หัวข้อใน [02-USER-MANUAL.md](./02-USER-MANUAL.md)
 
 ## สัญลักษณ์ Role
@@ -41,70 +41,73 @@
 | 19 | `/issues` | แจ้งปัญหาหลังขาย | P | §5.10 |
 | 20 | `/book/[slug]` | จองนัดกับพนักงาน | P | §5.11 |
 | 21 | `/privacy` `/terms` | นโยบาย / ข้อกำหนด | P | §5.12 |
+| 22 | `/sop` | คู่มือ SOP (ปลดล็อกด้วยโทเค็น) | พนักงาน | — |
 
 ## 2. Ops — เข้าสู่ระบบ / ภาพรวม
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 22 | `/ops/login` | เข้าสู่ระบบ (รหัสผ่าน / Google) | ทั้งหมด | §3 |
-| 23 | `/ops` | Dashboard | S A AD V | §4 |
-| 24 | `/ops/board` | บอร์ดงาน / สถานะ | S A AD V | §5.13 |
-| 25 | `/ops/forbidden` | ไม่มีสิทธิ์ | — | §7 |
+| 23 | `/ops/login` | เข้าสู่ระบบ (รหัสผ่าน / Google) | ทั้งหมด | §3 |
+| 24 | `/ops` | Dashboard | S A AD V | §4 |
+| 25 | `/ops/board` | บอร์ดงาน / สถานะ | S A AD V | §5.13 |
+| 26 | `/ops/forbidden` | ไม่มีสิทธิ์ | — | §7 |
 
 ## 3. Ops — ขาย / CRM
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 26 | `/ops/quotes` `[requestId]` | คำขอใบเสนอราคา | S AD V | §5.14 |
-| 27 | `/ops/inquiries` | กล่องติดต่อ/ร้องเรียน | S AD V | §5.15 |
-| 28 | `/ops/customers` (+new/id/import) | CRM ลูกค้า / merge / export | S AD V | §5.16 |
-| 29 | `/ops/orders` `[orderId]` | ออเดอร์ + ลิงก์ลูกค้า | S A AD V | §5.17 |
-| 30 | `/ops/assistant` | ผู้ช่วยเซลล์ | S AD | §5.18 |
-| 31 | `/ops/line-lab` | ทดสอบ LINE bind | S AD | §5.18 |
-| 32 | `/ops/schedule` (+new/id/availability) | ปฏิทิน / นัดหมาย | S AD V | §5.19 |
+| 27 | `/ops/quotes` `[requestId]` | คำขอใบเสนอราคา | S AD V | §5.14 |
+| 28 | `/ops/inquiries` | กล่องติดต่อ/ร้องเรียน | S AD V | §5.15 |
+| 29 | `/ops/customers` (+new/id/import) | CRM ลูกค้า / merge / export | S AD V | §5.16 |
+| 30 | `/ops/orders` `[orderId]` | ออเดอร์ + ลิงก์ลูกค้า | S A AD V | §5.17 |
+| 31 | `/ops/assistant` | ผู้ช่วยเซลล์ | S AD | §5.18 |
+| 32 | `/ops/line-lab` | ทดสอบ LINE bind | S AD | §5.18 |
+| 33 | `/ops/schedule` (+new/id/availability) | ปฏิทิน / นัดหมาย | S AD V | §5.19 |
 
 ## 4. Ops — สินค้า / ราคา / แคตตาล็อก
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 33 | `/ops/pricing` `import` | เครื่องคิดราคา / Excel | S AD | §5.20 |
-| 34 | `/ops/products` (+new/id/ori/colors/groups/bundle) | SKU master A/B/C/D | AD (S อ่านตามสิทธิ์) | §5.21 |
-| 35 | `/ops/catalog-books` | สร้างอัลบั้มแคตตาล็อก | S AD | §5.22 |
-| 36 | `/ops/catalog-images` | ค้นหา/เก็บรูป 1688 | S AD | §5.22 |
+| 34 | `/ops/pricing` | เครื่องคิดราคาทีละชุด | S AD | §5.20 |
+| 35 | `/ops/price-sheet` | ชีตราคา 3 แท็บ (พรีวิว + สร้างใบเสนอราคา Ops) | S AD | §5.20 |
+| 36 | `/ops/pricing/import` | อัปเดตราคาจาก Excel → แคตตาล็อก | S AD | §5.20 |
+| 37 | `/ops/products` (+new/id/ori/colors/groups/bundle) | SKU master A/B/C/D | AD (S อ่านตามสิทธิ์) | §5.21 |
+| 38 | `/ops/catalog-books` | สร้างอัลบั้มแคตตาล็อก | S AD | §5.22 |
+| 39 | `/ops/catalog-images` | ค้นหา/เก็บรูป 1688 | S AD | §5.22 |
 
 ## 5. Ops — จัดซื้อ / คลัง
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 37 | `/ops/factories` | ทะเบียนโรงงาน | AD | §5.23 |
-| 38 | `/ops/factory-po` (+new/id/print) | ใบสั่งโรงงานจีน | AD | §5.24 |
-| 39 | `/ops/inbound` | รับสินค้าเข้า | AD | §5.25 |
-| 40 | `/ops/pay-factory` | จ่ายโรงงาน/ค่าขนส่ง | AD A | §5.26 |
-| 41 | `/ops/assets` | ล็อตสินทรัพย์คลัง | AD | §5.27 |
-| 42 | `/ops/claims` | เคลม | AD A | §5.28 |
-| 43 | `/ops/issues` | คิวปัญหาภายใน | S AD | §5.28 |
-| 44 | `/ops/holds` | Legal hold | AD | §5.29 |
+| 40 | `/ops/factories` | ทะเบียนโรงงาน | AD | §5.23 |
+| 41 | `/ops/factory-po` (+new/id/print) | ใบสั่งโรงงานจีน | AD | §5.24 |
+| 42 | `/ops/inbound` (+print) | รับสินค้าเข้า | AD | §5.25 |
+| 43 | `/ops/pay-factory` | จ่ายโรงงาน/ค่าขนส่ง | AD A | §5.26 |
+| 44 | `/ops/assets` | ล็อตสินทรัพย์คลัง | AD | §5.27 |
+| 45 | `/ops/claims` | เคลม | AD A | §5.28 |
+| 46 | `/ops/issues` | คิวปัญหาภายใน | S AD | §5.28 |
+| 47 | `/ops/holds` | Legal hold | AD | §5.29 |
 
 ## 6. Ops — การเงิน / วงจร
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 45 | `/ops/approvals` (+pay/rv) | อนุมัติสลิป | A AD | §5.30 |
-| 46 | `/ops/receipts` | ใบรับเงิน | A AD | §5.31 |
-| 47 | `/ops/qr-pay` | สร้าง PromptPay QR | S A AD | §5.31 |
-| 48 | `/ops/cycle` | ศูนย์ลิงก์วงจรปฏิบัติการ | S A AD | §5.32 |
-| 49 | `/ops/reports` | รายงานวงจรรายได้ | ตามสิทธิ์ | §6 |
-| 50 | `/ops/finance` (+coa/journals/ledger/TB/BS/CF/manual) | บัญชีแยกประเภท / งบ | A AD | §6 |
+| 48 | `/ops/approvals` (+pay/rv) | อนุมัติสลิป | A AD | §5.30 |
+| 49 | `/ops/receipts` (+print) | ใบรับเงิน | A AD S | §5.31 |
+| 50 | `/ops/qr-pay` | สร้าง PromptPay QR | S A AD | §5.31 |
+| 51 | `/ops/cycle` | ศูนย์ลิงก์วงจรปฏิบัติการ | S A AD | §5.32 |
+| 52 | `/ops/reports` | รายงานวงจรรายได้ | ตามสิทธิ์ | §6 |
+| 53 | `/ops/finance` (+coa/journals/ledger/TB/BS/CF/manual) | บัญชีแยกประเภท / งบ | A AD | §6 |
 
 ## 7. Ops — เนื้อหา / ระบบ
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 51 | `/ops/blog` (+new/id) | บทความ editorial | S AD | §5.33 |
-| 52 | `/ops/seo` | SEO override | S AD | §5.33 |
-| 53 | `/ops/audit` | Audit log / export | AD | §5.34 |
-| 54 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
-| 55 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
+| 54 | `/ops/blog` (+new/id) | บทความ editorial | S AD | §5.33 |
+| 55 | `/ops/seo` | SEO override | S AD | §5.33 |
+| 56 | `/ops/audit` | Audit log / export | AD | §5.34 |
+| 57 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
+| 58 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
 
 ## 8. API handlers
 
@@ -119,7 +122,19 @@
 | `/api/assistant/chat` | Buyer assistant | Rate-limit |
 | `/api/line/webhook` | LINE OA | Signature |
 | `/api/partner/v1/*` | REST คู่ค้า (quotes/orders อ่านอย่างเดียว) | API key + scope |
-| `/api/ops/*` | Ops assistants, SEO, FX, docs, catalog, Google OAuth | Session |
+| `/api/catalog-album-files/[fileId]` | ไฟล์อัลบั้มแคตตาล็อก | Public/signed |
+| `/api/sku-files/[fileId]` | ไฟล์แนบ SKU | Auth/scope |
+| `/api/sop/unlock` | ปลดล็อกคู่มือ SOP | Token |
+| `/api/sop/logout` | ออกจาก SOP | Session |
+| `/api/ops/auth/google` `callback` | Google OAuth Ops | Session |
+| `/api/ops/products/export-prices` | ส่งออก Excel ราคา | Session + catalog |
+| `/api/ops/assistant` | ผู้ช่วยเซลล์ | Session |
+| `/api/ops/fx-rates` | อัตราแลกเปลี่ยน | Session |
+| `/api/ops/documents` | อัปโหลดเอกสาร | Session |
+| `/api/ops/seo/draft` | ร่าง SEO | Session |
+| `/api/ops/line-lab` | ทดลอง LINE | Session |
+| `/api/ops/catalog-images/*` | ค้นหา/proxy/ไฟล์รูป | Session |
+| `/api/ops/catalog-albums/files` | อัปโหลดไฟล์อัลบั้ม | Session |
 
 ---
 

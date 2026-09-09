@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OpsPriceSheet } from "@/components/OpsPriceSheet";
+import { PriceRoundTripGuide } from "@/components/PriceRoundTripGuide";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { listOpsCatalog } from "@/lib/ops-pricing";
 import {
@@ -37,6 +38,7 @@ export default async function OpsPriceSheetPage() {
           </Link>
         </p>
       </div>
+      <PriceRoundTripGuide variant="price-sheet" />
       <div className="mt-6">
         <OpsPriceSheet
           canSeeCost={canSeeCost}

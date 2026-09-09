@@ -63,9 +63,18 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
     { href: "/ops/cycle", label: "วงจรปฏิบัติการ", group: "cycle" },
   );
 
+  if (actorMay(actor, "factory.write")) {
+    links.push({ href: "/ops/inbound", label: "รับสินค้าเข้า", group: "cycle" });
+  }
   if (actorMay(actor, "factory.read")) {
     links.push({ href: "/ops/factory-po", label: "ใบสั่งโรงงาน", group: "cycle" });
     links.push({ href: "/ops/factories", label: "ทะเบียนโรงงาน", group: "cycle" });
+  }
+  if (actorMay(actor, "finance.write")) {
+    links.push({ href: "/ops/pay-factory", label: "จ่ายโรงงาน", group: "cycle" });
+  }
+  if (actorMay(actor, "orders.write")) {
+    links.push({ href: "/ops/receipts", label: "ใบรับเงิน", group: "cycle" });
   }
   if (actorMay(actor, "customers.write")) {
     links.push({ href: "/ops/line-lab", label: "ทดลองไลน์", group: "sales" });

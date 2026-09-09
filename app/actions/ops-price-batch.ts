@@ -182,6 +182,7 @@ export async function applyPriceBatchAction(raw: {
     revalidatePath("/products");
     revalidatePath("/ops/pricing");
     revalidatePath("/ops/pricing/import");
+    revalidatePath("/ops/price-sheet");
     return { ok: true, ...result };
   } catch (err) {
     const error = err instanceof Error ? err.message : "อัปเดตไม่สำเร็จ";

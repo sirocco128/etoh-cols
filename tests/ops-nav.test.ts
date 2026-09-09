@@ -56,6 +56,12 @@ describe("ops nav", () => {
     assert.equal(isOpsNavActive("/ops/quotes", "/ops/reports"), false);
     assert.equal(admin.find((link) => link.href === "/ops/approvals")?.group, "cycle");
     assert.equal(admin.find((link) => link.href === "/ops/cycle")?.group, "cycle");
+    assert.equal(admin.find((link) => link.href === "/ops/inbound")?.label, "รับสินค้าเข้า");
+    assert.equal(admin.find((link) => link.href === "/ops/inbound")?.group, "cycle");
+    assert.equal(admin.find((link) => link.href === "/ops/pay-factory")?.label, "จ่ายโรงงาน");
+    assert.equal(admin.find((link) => link.href === "/ops/pay-factory")?.group, "cycle");
+    assert.equal(admin.find((link) => link.href === "/ops/receipts")?.label, "ใบรับเงิน");
+    assert.equal(admin.find((link) => link.href === "/ops/receipts")?.group, "cycle");
     assert.equal(admin.some((link) => link.href === "/ops/blog" && link.group === "content"), true);
     assert.equal(admin.find((link) => link.href === "/ops/blog")?.label, "บทความ");
     const viewer = buildOpsNavLinks({
@@ -70,6 +76,9 @@ describe("ops nav", () => {
     assert.equal(viewer.some((link) => link.href === "/ops/schedule"), true);
     assert.equal(viewer.some((link) => link.href === "/ops/pricing"), true);
     assert.equal(viewer.some((link) => link.href === "/ops/pricing/import"), true);
+    assert.equal(viewer.some((link) => link.href === "/ops/inbound"), false);
+    assert.equal(viewer.some((link) => link.href === "/ops/pay-factory"), false);
+    assert.equal(viewer.some((link) => link.href === "/ops/receipts"), false);
     assert.equal(viewer.some((link) => link.href === "/ops/holds"), false);
     assert.equal(viewer.some((link) => link.label === "เข้า Strapi"), false);
     assert.equal(viewer.some((link) => link.href === "/ops/catalog-books"), false);
@@ -83,6 +92,9 @@ describe("ops nav", () => {
     assert.equal(accountant.some((link) => link.href === "/ops/reports"), true);
     assert.equal(accountant.some((link) => link.href === "/ops/factory-po"), true);
     assert.equal(accountant.some((link) => link.href === "/ops/factories"), true);
+    assert.equal(accountant.some((link) => link.href === "/ops/inbound"), false);
+    assert.equal(accountant.some((link) => link.href === "/ops/pay-factory"), true);
+    assert.equal(accountant.some((link) => link.href === "/ops/receipts"), true);
     assert.equal(accountant.some((link) => link.href === "/ops/holds"), true);
     assert.equal(accountant.some((link) => link.href === "/ops/schedule"), true);
     assert.equal(admin.find((link) => link.href === "/ops/factories")?.label, "ทะเบียนโรงงาน");
@@ -101,6 +113,9 @@ describe("ops nav", () => {
     assert.equal(sales.some((link) => link.href === "/ops/reports"), true);
     assert.equal(sales.some((link) => link.href === "/ops/schedule"), true);
     assert.equal(sales.some((link) => link.href === "/ops/finance"), false);
+    assert.equal(sales.some((link) => link.href === "/ops/inbound"), false);
+    assert.equal(sales.some((link) => link.href === "/ops/pay-factory"), false);
+    assert.equal(sales.some((link) => link.href === "/ops/receipts"), true);
     assert.equal(isOpsNavActive("/ops/schedule/new", "/ops/schedule"), true);
     const salesNoReports = buildOpsNavLinks({
       email: "sales@local",
@@ -120,7 +135,7 @@ describe("ops nav", () => {
     const filtered = filterOpsNavGroups(grouped, "โรงงาน");
     assert.deepEqual(
       filtered.flatMap((group) => group.links.map((link) => link.label)),
-      ["รูปโรงงาน", "ใบสั่งโรงงาน", "ทะเบียนโรงงาน"],
+      ["รูปโรงงาน", "ใบสั่งโรงงาน", "ทะเบียนโรงงาน", "จ่ายโรงงาน"],
     );
     assert.equal(filterOpsNavGroups(grouped, "zzzz").length, 0);
   });
