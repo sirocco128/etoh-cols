@@ -9,6 +9,8 @@
 | Function matrix | [05-FUNCTION-MATRIX.md](./05-FUNCTION-MATRIX.md) | ทุก route ↔ role ↔ บทคู่มือ |
 | Export Word | [export/](./export/) | `.docx` ตามโครงเทมเพลต |
 
+**อ่านบนเว็บ (SPA):** พนักงาน Ops ที่ล็อกอินแล้วเปิด `/ops/manual` — ระบบกรองเอกสารตาม role / permission ของบัญชี (เซลล์ไม่เห็นเอกสารผู้ดูแลระบบ ฯลฯ)
+
 **เอกสารภายในที่เกี่ยวข้อง**
 
 - [../SOP-CYCLE.md](../SOP-CYCLE.md) — SOP ทั้งวงจร

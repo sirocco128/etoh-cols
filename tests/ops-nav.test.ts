@@ -7,11 +7,21 @@ import {
   groupOpsNavLinks,
   isOpsNavActive,
   parseCollapsedGroupIds,
+  parseOpsNavRailOpen,
   withActiveGroupExpanded,
 } from "../lib/ops-nav";
 import { OPS_PERMISSIONS, PERMISSION_GROUPS } from "../lib/ops-roles";
 
 describe("ops nav", () => {
+  it("parses desktop rail open/collapsed preference", () => {
+    assert.equal(parseOpsNavRailOpen(null), true);
+    assert.equal(parseOpsNavRailOpen("open"), true);
+    assert.equal(parseOpsNavRailOpen("1"), true);
+    assert.equal(parseOpsNavRailOpen("collapsed"), false);
+    assert.equal(parseOpsNavRailOpen("0"), false);
+    assert.equal(parseOpsNavRailOpen("false"), false);
+  });
+
   it("keeps overview exact so nested ops pages are not all marked active", () => {
     assert.equal(isOpsNavActive("/ops", "/ops"), true);
     assert.equal(isOpsNavActive("/ops/quotes", "/ops"), false);
@@ -34,6 +44,10 @@ describe("ops nav", () => {
     assert.equal(isOpsNavActive("/ops/board", "/ops/board"), true);
     assert.equal(isOpsNavActive("/ops", "/ops/board"), false);
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "system"), true);
+    assert.equal(admin.some((link) => link.href === "/ops/knowledge-sync" && link.group === "system"), true);
+    assert.equal(admin.find((link) => link.href === "/ops/knowledge-sync")?.label, "อัปเดตคลัง Terabis");
+    assert.equal(admin.some((link) => link.href === "/ops/manual" && link.group === "system"), true);
+    assert.equal(admin.find((link) => link.href === "/ops/manual")?.label, "คู่มือการทำงาน");
     assert.equal(admin.some((link) => link.href === "/ops/holds" && link.group === "cycle"), true);
     assert.equal(admin.find((link) => link.href === "/ops/holds")?.label, "พักเอกสาร");
     const strapi = admin.find((link) => link.label === "เข้า Strapi");
@@ -70,6 +84,7 @@ describe("ops nav", () => {
       role: "viewer",
     });
     assert.equal(viewer.some((link) => link.href === "/ops/users"), false);
+    assert.equal(viewer.some((link) => link.href === "/ops/knowledge-sync"), false);
     assert.equal(viewer.some((link) => link.href === "/ops/blog"), false);
     assert.equal(viewer.some((link) => link.href === "/ops/quotes"), true);
     assert.equal(viewer.some((link) => link.href === "/ops/inquiries"), true);

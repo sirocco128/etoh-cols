@@ -234,6 +234,11 @@ const nextConfig = {
   },
   // Help Next resolve packages when workspace path contains spaces (iCloud).
   outputFileTracingRoot: path.join(__dirname),
+  // Keep work-manual markdown available to the Node runtime (Ops /ops/manual).
+  outputFileTracingIncludes: {
+    "/ops/manual": ["./docs/**/*"],
+    "/api/ops/manual": ["./docs/**/*"],
+  },
 };
 
 export default nextConfig;

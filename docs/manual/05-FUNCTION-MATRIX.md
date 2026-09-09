@@ -106,8 +106,10 @@
 | 54 | `/ops/blog` (+new/id) | บทความ editorial | S AD | §5.33 |
 | 55 | `/ops/seo` | SEO override | S AD | §5.33 |
 | 56 | `/ops/audit` | Audit log / export | AD | §5.34 |
-| 57 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
-| 58 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
+| 57 | `/ops/knowledge-sync` | อัปเดตคลังความรู้ Terabis + log วิเคราะห์ | AD (admin/superadmin) | §5.34 |
+| 58 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
+| 59 | `/ops/manual` | คู่มือการทำงาน (SPA จาก `docs/**/*.md`) | ทั้งหมดที่ล็อกอิน (กรองเอกสารตามสิทธิ์) | ชุด manual |
+| 60 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
 
 ## 8. API handlers
 
@@ -126,6 +128,7 @@
 | `/api/sku-files/[fileId]` | ไฟล์แนบ SKU | Auth/scope |
 | `/api/sop/unlock` | ปลดล็อกคู่มือ SOP | Token |
 | `/api/sop/logout` | ออกจาก SOP | Session |
+| `/api/ops/manual` | โหลด TOC / เนื้อหาคู่มือ MD | Session Ops + กรองสิทธิ์ |
 | `/api/ops/auth/google` `callback` | Google OAuth Ops | Session |
 | `/api/ops/products/export-prices` | ส่งออก Excel ราคา | Session + catalog |
 | `/api/ops/assistant` | ผู้ช่วยเซลล์ | Session |

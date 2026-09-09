@@ -46,6 +46,8 @@ export const OPS_AUDIT_ACTION_LABELS: Record<string, string> = {
   "schedule.notify": "ส่งเมลแจ้งนัดหมาย",
   "schedule.availability": "แก้ชั่วโมงว่าง",
   "schedule.book": "จองนัดหมายสาธารณะ",
+  "knowledge.diff": "เทียบคลังความรู้ Terabis",
+  "knowledge.sync": "อัปเดตคลังความรู้ Terabis",
 };
 
 export function opsAuditActionLabel(action: string): string {
@@ -129,6 +131,10 @@ export function describeOpsAuditImpact(params: {
       return `ดึงไฟล์รายงาน ${report || "—"} ${filters ? `(${filters})` : ""}`.trim();
     case "assistant.ops":
       return "เรียกผู้ช่วยเซลล์ (ไม่ออกใบเสนอราคาและไม่เปิดต้นทุนโรงงาน)";
+    case "knowledge.diff":
+      return `เทียบคลัง Terabis — พบ ${text(detail.changedCount) || "0"} หัวข้อที่เปลี่ยน`;
+    case "knowledge.sync":
+      return `อัปเดตคลัง Terabis${text(detail.lastSyncAt) ? ` เวลา ${text(detail.lastSyncAt)}` : ""} — ไม่แตะราคา/ต้นทุนโรงงาน`;
     case "object.download":
       return `เปิดไฟล์ ${id || text(detail.key)}`;
     case "claim.create":

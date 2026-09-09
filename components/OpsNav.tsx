@@ -32,7 +32,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Menu, Search, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, PanelLeftClose, Search, X } from "lucide-react";
 import { opsLogoutAction } from "@/app/actions/ops";
 import { OpsDeskGuard } from "@/components/OpsDeskGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -42,7 +42,9 @@ import {
   groupOpsNavLinks,
   isOpsNavActive,
   OPS_NAV_COLLAPSE_STORAGE_KEY,
+  OPS_NAV_RAIL_STORAGE_KEY,
   parseCollapsedGroupIds,
+  parseOpsNavRailOpen,
   withActiveGroupExpanded,
   type OpsNavGroup,
   type OpsNavGroupId,
@@ -312,11 +314,31 @@ export function OpsNav({
 }) {
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
+  const [railHydrated, setRailHydrated] = useState(false);
   const searchId = useId();
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    try {
+      setRailOpen(parseOpsNavRailOpen(localStorage.getItem(OPS_NAV_RAIL_STORAGE_KEY)));
+    } catch {
+      setRailOpen(true);
+    }
+    setRailHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!railHydrated) return;
+    try {
+      localStorage.setItem(OPS_NAV_RAIL_STORAGE_KEY, railOpen ? "open" : "collapsed");
+    } catch {
+      /* private mode */
+    }
+  }, [railOpen, railHydrated]);
 
   useEffect(() => {
     if (!open) return;
@@ -332,6 +354,11 @@ export function OpsNav({
     };
   }, [open]);
 
+  function expandRail() {
+    setRailOpen(true);
+    setOpen(true);
+  }
+
   return (
     <div className="flex min-h-dvh">
       {open ? (
@@ -346,15 +373,27 @@ export function OpsNav({
       <aside
         id="ops-sidebar"
         className={cn(
-          "z-50 flex h-dvh max-h-dvh w-[16.5rem] shrink-0 flex-col overflow-hidden border-r border-white/10 bg-forest text-paper print:hidden",
+          "z-50 flex h-dvh max-h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-forest text-paper print:hidden",
           "pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)]",
-          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:transition-[transform] max-lg:duration-150 max-lg:ease-[cubic-bezier(0.2,0,0,1)]",
+          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-[16.5rem] max-lg:transition-[transform] max-lg:duration-150 max-lg:ease-[cubic-bezier(0.2,0,0,1)]",
           open ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
-          "lg:sticky lg:top-0 lg:z-20",
+          "lg:sticky lg:top-0 lg:z-20 lg:transition-[width] lg:duration-150 lg:ease-[cubic-bezier(0.2,0,0,1)]",
+          railOpen ? "lg:w-[16.5rem]" : "lg:w-14",
         )}
       >
-        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-3 lg:px-4">
-          <Link href="/ops" className="min-w-0 text-[0.95rem] font-semibold tracking-tight">
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-2 px-3 py-3",
+            railOpen ? "justify-between lg:px-4" : "justify-center lg:px-2",
+          )}
+        >
+          <Link
+            href="/ops"
+            className={cn(
+              "min-w-0 text-[0.95rem] font-semibold tracking-tight",
+              !railOpen && "lg:hidden",
+            )}
+          >
             คอนโซลปฏิบัติการ
           </Link>
           <button
@@ -365,13 +404,30 @@ export function OpsNav({
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
+          <button
+            type="button"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-paper/20 text-paper/85 hover:bg-paper/10 lg:inline-flex"
+            aria-label={railOpen ? "หดเมนูซ้าย" : "ขยายเมนูซ้าย"}
+            aria-expanded={railOpen}
+            aria-controls="ops-sidebar"
+            title={railOpen ? "หดเมนู" : "ขยายเมนู"}
+            onClick={() => setRailOpen((v) => !v)}
+          >
+            {railOpen ? (
+              <PanelLeftClose className="h-4 w-4" aria-hidden />
+            ) : (
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            )}
+          </button>
         </div>
-        <SidebarBody
-          links={links}
-          pathname={pathname}
-          searchId={searchId}
-          onNavigate={() => setOpen(false)}
-        />
+        <div className={cn("flex min-h-0 flex-1 flex-col", !railOpen && "lg:hidden")}>
+          <SidebarBody
+            links={links}
+            pathname={pathname}
+            searchId={searchId}
+            onNavigate={() => setOpen(false)}
+          />
+        </div>
       </aside>
 
       <OpsDeskGuard userLine={watermarkUser}>
@@ -379,15 +435,30 @@ export function OpsNav({
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-paper/30 px-3 py-1.5 text-sm lg:hidden"
-              aria-expanded={open}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-paper/30 px-3 py-1.5 text-sm",
+                railOpen ? "lg:hidden" : "lg:inline-flex",
+              )}
+              aria-expanded={open || railOpen}
               aria-controls="ops-sidebar"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+                  setRailOpen(true);
+                  return;
+                }
+                expandRail();
+              }}
             >
               <Menu className="h-4 w-4" aria-hidden />
               เมนู
             </button>
-            <Link href="/ops" className="truncate text-sm font-semibold tracking-tight lg:hidden">
+            <Link
+              href="/ops"
+              className={cn(
+                "truncate text-sm font-semibold tracking-tight",
+                railOpen ? "lg:hidden" : "lg:inline",
+              )}
+            >
               คอนโซลปฏิบัติการ
             </Link>
           </div>

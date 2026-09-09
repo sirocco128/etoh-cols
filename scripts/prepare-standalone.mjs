@@ -31,4 +31,9 @@ if (existsSync(publicSrc)) {
   cpSync(publicSrc, join(standaloneDir, "public"), { recursive: true });
 }
 
+const docsSrc = join(ROOT, "docs");
+if (existsSync(docsSrc)) {
+  cpSync(docsSrc, join(standaloneDir, "docs"), { recursive: true });
+}
+
 console.log("Standalone assets prepared under .next/standalone");

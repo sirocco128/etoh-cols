@@ -3,11 +3,14 @@
 แหล่งความจริง: `db/migrations/*.sql`, `db/mysql/sg_sku_master.sql`, `cms/src/api/**`  
 ความสัมพันธ์ส่วนใหญ่เป็น logical (application-enforced) — SQLite อาจไม่มี FK ครบทุกตาราง
 
+ใน Ops Work Manual บล็อก `mermaid` จะเรนเดอร์เป็นแผนภาพ SVG อัตโนมัติ (ธีม forest/brass)
+
 ---
 
 ## ER1. Sales / CRM / Orders / Payments (SQLite)
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e4efe9","primaryTextColor":"#14352a","primaryBorderColor":"#1e4a3a","lineColor":"#9a7b3c","secondaryColor":"#f0ebe3","tertiaryColor":"#d7e6de","background":"#f7f4ef","fontFamily":"Segoe UI, Sarabun, sans-serif","fontSize":"14px"}}}%%
 erDiagram
   customers ||--o{ customer_contacts : has
   customers ||--o{ quote_requests : has
@@ -92,6 +95,7 @@ erDiagram
 ## ER2. Factory / Warehouse / Claims (SQLite)
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e4efe9","primaryTextColor":"#14352a","primaryBorderColor":"#1e4a3a","lineColor":"#9a7b3c","secondaryColor":"#f0ebe3","tertiaryColor":"#d7e6de","background":"#f7f4ef","fontFamily":"Segoe UI, Sarabun, sans-serif","fontSize":"14px"}}}%%
 erDiagram
   factories ||--o{ factory_pos : supplies
   orders ||--o{ factory_pos : procures
@@ -158,6 +162,7 @@ erDiagram
 ## ER3. Finance / Staff / Schedule / Compliance (SQLite)
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e4efe9","primaryTextColor":"#14352a","primaryBorderColor":"#1e4a3a","lineColor":"#9a7b3c","secondaryColor":"#f0ebe3","tertiaryColor":"#d7e6de","background":"#f7f4ef","fontFamily":"Segoe UI, Sarabun, sans-serif","fontSize":"14px"}}}%%
 erDiagram
   ledger_accounts ||--o{ journal_lines : posted_to
   journal_entries ||--o{ journal_lines : contains
@@ -216,6 +221,7 @@ erDiagram
 ## ER4. Commercial Catalog (MySQL SmartGift)
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e4efe9","primaryTextColor":"#14352a","primaryBorderColor":"#1e4a3a","lineColor":"#9a7b3c","secondaryColor":"#f0ebe3","tertiaryColor":"#d7e6de","background":"#f7f4ef","fontFamily":"Segoe UI, Sarabun, sans-serif","fontSize":"14px"}}}%%
 erDiagram
   sg_ori_products ||--o{ sg_sku : derives
   sg_sku ||--o{ sg_sku_serial : stock
@@ -260,6 +266,7 @@ erDiagram
 ## ER5. Strapi CMS (PostgreSQL)
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#e4efe9","primaryTextColor":"#14352a","primaryBorderColor":"#1e4a3a","lineColor":"#9a7b3c","secondaryColor":"#f0ebe3","tertiaryColor":"#d7e6de","background":"#f7f4ef","fontFamily":"Segoe UI, Sarabun, sans-serif","fontSize":"14px"}}}%%
 erDiagram
   gift_set_category ||--o{ product : contains
   product ||--o| seo : has

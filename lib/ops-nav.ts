@@ -106,9 +106,17 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   if (actorMay(actor, "audit.read")) {
     links.push({ href: "/ops/audit", label: "บันทึกการใช้งาน", group: "system" });
   }
+  if (actor.role === "superadmin" || actor.role === "admin") {
+    links.push({
+      href: "/ops/knowledge-sync",
+      label: "อัปเดตคลัง Terabis",
+      group: "system",
+    });
+  }
   if (actorMay(actor, "users.read")) {
     links.push({ href: "/ops/users", label: "ผู้ใช้ / สิทธิ์", group: "system" });
   }
+  links.push({ href: "/ops/manual", label: "คู่มือการทำงาน", group: "system" });
   links.push({ href: "/", label: "เว็บสาธารณะ", group: "system" });
   return links;
 }
@@ -144,6 +152,16 @@ export function filterOpsNavGroups(
 }
 
 export const OPS_NAV_COLLAPSE_STORAGE_KEY = "smartgift:ops-nav-collapsed";
+
+/** Desktop left rail open/closed (full sidebar vs collapsed). */
+export const OPS_NAV_RAIL_STORAGE_KEY = "smartgift:ops-nav-rail";
+
+export function parseOpsNavRailOpen(raw: string | null): boolean {
+  if (raw == null) return true;
+  if (raw === "0" || raw === "false" || raw === "collapsed") return false;
+  if (raw === "1" || raw === "true" || raw === "open") return true;
+  return true;
+}
 
 export function groupHasActiveLink(group: OpsNavGroup, pathname: string): boolean {
   return group.links.some((link) => isOpsNavActive(pathname, link.href));
