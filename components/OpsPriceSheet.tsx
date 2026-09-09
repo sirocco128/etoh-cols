@@ -159,7 +159,10 @@ export function OpsPriceSheet({
     [useClientCompute, products, params],
   );
 
-  const rows = useClientCompute ? clientRows : (serverRows ?? []);
+  const rows = useMemo(
+    () => (useClientCompute ? clientRows : (serverRows ?? [])),
+    [useClientCompute, clientRows, serverRows],
+  );
   const grandTotal = useMemo(() => priceSheetGrandTotal(rows), [rows]);
   const inland = inlandDefaults();
 

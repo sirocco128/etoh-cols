@@ -57,7 +57,7 @@ function sheetXml(rows: XlsxSheet["rows"]): string {
 }
 
 function safeSheetName(name: string, used: Set<string>): string {
-  let base = name.replace(/[\\/*?:\[\]]/g, " ").trim().slice(0, 31) || "Sheet";
+  const base = name.replace(/[\\/*?:\[\]]/g, " ").trim().slice(0, 31) || "Sheet";
   let candidate = base;
   let i = 2;
   while (used.has(candidate.toLowerCase())) {
