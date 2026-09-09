@@ -641,6 +641,31 @@ html.dark .ops-shell .text-forest {
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Ops left rail: keep a visible thin scrollbar on short laptop screens */
+  .ops-sidebar-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.35) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ops-sidebar-scroll::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  .ops-sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ops-sidebar-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.35);
+  }
+
+  .ops-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgb(255 255 255 / 0.55);
+  }
+
   .touch-target {
     min-height: 2.75rem;
     min-width: 2.75rem;

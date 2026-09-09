@@ -56,6 +56,12 @@ type SkuRow = RowDataPacket & {
   factory_unit_usd: number | string | null;
   unit_landed_cost_thb: number | string | null;
   forced_min_qty: number | null;
+  pcs_per_ctn: number | string | null;
+  length_cm: number | string | null;
+  width_cm: number | string | null;
+  height_cm: number | string | null;
+  carton_kg: number | string | null;
+  dims_are_carton: number | null;
   on_hand_qty: number;
   tags: string | null;
 };
@@ -66,8 +72,24 @@ function money(value: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function packingFields(row: Record<string, unknown>) {
+  const pcs = money(row.pcs_per_ctn as number | string | null | undefined);
+  return {
+    pcsPerCtn: pcs != null && pcs > 0 ? Math.round(pcs) : null,
+    lengthCm: money(row.length_cm as number | string | null | undefined),
+    widthCm: money(row.width_cm as number | string | null | undefined),
+    heightCm: money(row.height_cm as number | string | null | undefined),
+    cartonKg: money(row.carton_kg as number | string | null | undefined),
+    dimsAreCarton:
+      row.dims_are_carton == null
+        ? true
+        : Number(row.dims_are_carton) !== 0,
+  };
+}
+
 function mapSku(row: SkuRow): SkuRecord {
   const stockClass = isStockClass(row.stock_class) ? row.stock_class : "B";
+  const packing = packingFields(row);
   return {
     productId: row.product_id,
     stockClass,
@@ -88,6 +110,7 @@ function mapSku(row: SkuRow): SkuRecord {
     factoryUnitUsd: money(row.factory_unit_usd),
     unitLandedCostThb: money(row.unit_landed_cost_thb),
     forcedMinQty: row.forced_min_qty == null ? null : Number(row.forced_min_qty),
+    ...packing,
     onHandQty: Number(row.on_hand_qty || 0),
     tags: row.tags
       ? row.tags
@@ -104,6 +127,8 @@ const SKU_SELECT = `
          s.name_th, s.name_en, s.sell_price_thb, s.is_bundle, s.clearance_reason,
          s.catalog_slug, s.image_url, s.factory_unit_cny, s.factory_unit_usd,
          s.unit_landed_cost_thb, s.forced_min_qty, s.on_hand_qty,
+         o.pcs_per_ctn, o.length_cm, o.width_cm, o.height_cm, o.carton_kg,
+         o.dims_are_carton,
          MAX(NULLIF(off.image_url, '')) AS offer_image_url,
          GROUP_CONCAT(DISTINCT t.tag ORDER BY t.tag SEPARATOR ',') AS tags
   FROM sg_sku s
@@ -166,6 +191,7 @@ export async function createColor(input: {
 }
 
 function mapOri(row: RowDataPacket): OriProduct {
+  const packing = packingFields(row);
   return {
     oriProductId: Number(row.ori_product_id),
     oriProductCode: String(row.ori_product_code),
@@ -176,6 +202,7 @@ function mapOri(row: RowDataPacket): OriProduct {
     colorHex: row.color_hex ? String(row.color_hex) : null,
     notes: row.notes ? String(row.notes) : null,
     factoryId: row.factory_id == null ? null : Number(row.factory_id),
+    ...packing,
     skuIds: row.sku_ids
       ? String(row.sku_ids)
           .split(",")
@@ -190,6 +217,8 @@ const ORI_SELECT = `
   SELECT o.ori_product_id, o.ori_product_code, o.ori_product_name_th,
          o.ori_product_name_eng, o.color_id, c.name_th AS color_name_th,
          c.hex AS color_hex, o.notes, o.factory_id,
+         o.pcs_per_ctn, o.length_cm, o.width_cm, o.height_cm, o.carton_kg,
+         o.dims_are_carton,
          (SELECT off.image_url FROM sg_offer off
            WHERE off.image_url IS NOT NULL AND off.image_url <> ''
              AND (off.offer_code = o.ori_product_code OR off.source_slug = o.ori_product_code)
@@ -426,6 +455,48 @@ export async function updateOriProduct(input: {
       factory_id: input.factoryId || null,
     },
   );
+}
+
+/** Persist factory carton packing onto ORI by factory code (Excel round-trip). */
+export async function updateOriPackingByCode(input: {
+  oriProductCode: string;
+  pcsPerCtn?: number | null;
+  lengthCm?: number | null;
+  widthCm?: number | null;
+  heightCm?: number | null;
+  cartonKg?: number | null;
+  dimsAreCarton?: boolean;
+}): Promise<boolean> {
+  await ensureSkuMasterSchema();
+  const code = normalizeOriCode(input.oriProductCode);
+  if (!code) return false;
+  const result = await smartgiftExec(
+    `UPDATE sg_ori_products
+     SET pcs_per_ctn = :pcs,
+         length_cm = :length_cm,
+         width_cm = :width_cm,
+         height_cm = :height_cm,
+         carton_kg = :carton_kg,
+         dims_are_carton = :dims_are_carton
+     WHERE ori_product_code = :code`,
+    {
+      code,
+      pcs:
+        input.pcsPerCtn != null && input.pcsPerCtn > 0
+          ? Math.round(input.pcsPerCtn)
+          : null,
+      length_cm:
+        input.lengthCm != null && input.lengthCm > 0 ? input.lengthCm : null,
+      width_cm:
+        input.widthCm != null && input.widthCm > 0 ? input.widthCm : null,
+      height_cm:
+        input.heightCm != null && input.heightCm > 0 ? input.heightCm : null,
+      carton_kg:
+        input.cartonKg != null && input.cartonKg > 0 ? input.cartonKg : null,
+      dims_are_carton: input.dimsAreCarton === false ? 0 : 1,
+    },
+  );
+  return Number(result.affectedRows || 0) > 0;
 }
 
 export async function createSkuForOri(input: {

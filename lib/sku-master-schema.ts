@@ -32,6 +32,12 @@ const DDL: string[] = [
     color_id INT UNSIGNED NULL,
     notes TEXT NULL,
     factory_id INT UNSIGNED NULL,
+    pcs_per_ctn INT UNSIGNED NULL,
+    length_cm DECIMAL(10,2) NULL,
+    width_cm DECIMAL(10,2) NULL,
+    height_cm DECIMAL(10,2) NULL,
+    carton_kg DECIMAL(10,3) NULL,
+    dims_are_carton TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (ori_product_id),
@@ -291,6 +297,36 @@ async function ensureSkuMasterColumns(): Promise<void> {
   if (!(await columnExists("sg_ori_products", "factory_id"))) {
     await smartgiftExec(
       `ALTER TABLE sg_ori_products ADD COLUMN factory_id INT UNSIGNED NULL AFTER notes`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "pcs_per_ctn"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN pcs_per_ctn INT UNSIGNED NULL AFTER factory_id`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "length_cm"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN length_cm DECIMAL(10,2) NULL AFTER pcs_per_ctn`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "width_cm"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN width_cm DECIMAL(10,2) NULL AFTER length_cm`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "height_cm"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN height_cm DECIMAL(10,2) NULL AFTER width_cm`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "carton_kg"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN carton_kg DECIMAL(10,3) NULL AFTER height_cm`,
+    );
+  }
+  if (!(await columnExists("sg_ori_products", "dims_are_carton"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_ori_products ADD COLUMN dims_are_carton TINYINT(1) NOT NULL DEFAULT 1 AFTER carton_kg`,
     );
   }
 }

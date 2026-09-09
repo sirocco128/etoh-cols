@@ -537,6 +537,27 @@ export const SOP_GUIDE_WORKFLOWS: SopWorkflow[] = [
         screenshot: "ops-pricing-import.png",
       },
       {
+        id: "ops-sku-price-excel-roundtrip",
+        title: "ดาวน์โหลด Excel → แก้ → อัปโหลด",
+        opsPath: "/ops/products",
+        role: "ผู้ดูแล / เซลล์",
+        purpose:
+          "รีเช็คราคาและมิติกล่องจาก SKU บน Excel แล้วอัปโหลดกลับเพื่ออัปเดตราคาเว็บ",
+        howTo: [
+          "เปิด /ops/products แล้วกดดาวน์โหลด Excel ราคา (ชีต import)",
+          "แก้คอลัมน์ sku (=รหัสโรงงาน เช่น TSQ01-2) และ rmb — อย่าใส่รหัสขาย A/B/C/D ใน sku",
+          "ตรวจ/ใส่ per ctn, length, width, height, weight ถ้าต้องการเก็บมิติ ORI",
+          "เปิด /ops/pricing/import อัปโหลดไฟล์เดิม → พรีวิว → เลือกแถว → ส่งอัปเดตขึ้นเว็บ",
+          "ดาวน์โหลดซ้ำเพื่อยืนยันว่ามิติและราคาถูกเก็บแล้ว",
+        ],
+        donts: [
+          "อย่าเปลี่ยนชื่อชีต import",
+          "อย่าใส่รหัสขาย A/B/C/D ในคอลัมน์ sku",
+          "อย่าส่งอัปเดตโดยไม่พรีวิวแถว unmatched",
+        ],
+        screenshot: "ops-sku-price-excel-roundtrip.png",
+      },
+      {
         id: "ops-products",
         title: "สินค้า A/B/C/D",
         opsPath: "/ops/products",

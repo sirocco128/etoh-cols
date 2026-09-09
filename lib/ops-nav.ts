@@ -54,8 +54,9 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
     links.push({ href: "/ops/schedule", label: "นัดหมาย", group: "sales" });
   }
   links.push(
-    { href: "/ops/pricing", label: "คิดราคา", group: "catalog" },
-    { href: "/ops/pricing/import", label: "อัปเดตราคา", group: "catalog" },
+    { href: "/ops/pricing", label: "คิดทีละชุด", group: "catalog" },
+    { href: "/ops/price-sheet", label: "ชีตราคา 3 แท็บ", group: "catalog" },
+    { href: "/ops/pricing/import", label: "อัปเดตจาก Excel", group: "catalog" },
     { href: "/ops/orders", label: "ออเดอร์", group: "sales" },
     { href: "/ops/customers", label: "ลูกค้า", group: "sales" },
     { href: "/ops/approvals", label: "อนุมัติยอด", group: "cycle" },
@@ -180,6 +181,9 @@ export function isOpsNavActive(pathname: string, href: string): boolean {
   }
   if (href === "/ops/pricing") {
     return pathname === "/ops/pricing";
+  }
+  if (href === "/ops/price-sheet") {
+    return pathname === "/ops/price-sheet" || pathname.startsWith("/ops/price-sheet/");
   }
   if (href === "/ops/reports") {
     return pathname === "/ops/reports" || pathname.startsWith("/ops/reports/");

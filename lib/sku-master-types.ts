@@ -43,6 +43,13 @@ export type OriProduct = {
   colorHex: string | null;
   notes: string | null;
   factoryId: number | null;
+  /** Factory carton packing — same units as Excel import columns. */
+  pcsPerCtn: number | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  heightCm: number | null;
+  cartonKg: number | null;
+  dimsAreCarton: boolean;
   skuIds?: string[];
   displayImageUrl?: string;
 };
@@ -73,6 +80,13 @@ export type SkuRecord = {
   factoryUnitUsd: number | null;
   unitLandedCostThb: number | null;
   forcedMinQty: number | null;
+  /** From linked ORI packing (Excel per ctn / L×W×H / carton kg). */
+  pcsPerCtn: number | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  heightCm: number | null;
+  cartonKg: number | null;
+  dimsAreCarton: boolean;
   onHandQty: number;
   tags: string[];
 };

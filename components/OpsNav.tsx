@@ -203,10 +203,21 @@ function SidebarBody({
     if (didHydrate.current) return;
     didHydrate.current = true;
     let stored: string[] = [];
+    let hadStored = false;
     try {
-      stored = parseCollapsedGroupIds(localStorage.getItem(OPS_NAV_COLLAPSE_STORAGE_KEY));
+      const raw = localStorage.getItem(OPS_NAV_COLLAPSE_STORAGE_KEY);
+      if (raw != null) {
+        hadStored = true;
+        stored = parseCollapsedGroupIds(raw);
+      }
     } catch {
       stored = [];
+    }
+    // Short laptop screens: collapse inactive stages by default (first visit only).
+    if (!hadStored && typeof window !== "undefined" && window.innerHeight < 820) {
+      stored = allGroups
+        .filter((group) => !groupHasActiveLink(group, pathname))
+        .map((group) => group.id);
     }
     setCollapsed(new Set(withActiveGroupExpanded(stored, allGroups, pathname)));
     setHydrated(true);
@@ -240,8 +251,8 @@ function SidebarBody({
   }
 
   return (
-    <>
-      <div className="px-3 pt-3">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 px-3 pt-3">
         <label htmlFor={searchId} className="sr-only">
           หาเมนู
         </label>
@@ -261,24 +272,30 @@ function SidebarBody({
           />
         </div>
       </div>
-      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-2 py-3" aria-label="เมนูปฏิบัติการ">
-        {groups.length ? (
-          groups.map((group) => (
-            <NavGroupCard
-              key={group.id}
-              group={group}
-              pathname={pathname}
-              open={searching || !collapsed.has(group.id)}
-              onToggle={() => toggleGroup(group.id)}
-              onNavigate={onNavigate}
-              headerId={`${groupHeaderId}-${group.id}`}
-            />
-          ))
-        ) : (
-          <p className="px-2 py-4 text-sm text-paper/55">ไม่มีเมนูที่ตรง — ลองคำอื่น</p>
-        )}
+      {/* min-h-0: flex child must shrink so overflow-y can scroll on short screens */}
+      <nav
+        className="ops-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        aria-label="เมนูปฏิบัติการ"
+      >
+        <div className="flex flex-col gap-2">
+          {groups.length ? (
+            groups.map((group) => (
+              <NavGroupCard
+                key={group.id}
+                group={group}
+                pathname={pathname}
+                open={searching || !collapsed.has(group.id)}
+                onToggle={() => toggleGroup(group.id)}
+                onNavigate={onNavigate}
+                headerId={`${groupHeaderId}-${group.id}`}
+              />
+            ))
+          ) : (
+            <p className="px-2 py-4 text-sm text-paper/55">ไม่มีเมนูที่ตรง — ลองคำอื่น</p>
+          )}
+        </div>
       </nav>
-    </>
+    </div>
   );
 }
 
@@ -329,14 +346,14 @@ export function OpsNav({
       <aside
         id="ops-sidebar"
         className={cn(
-          "z-50 flex w-[16.5rem] shrink-0 flex-col border-r border-white/10 bg-forest text-paper print:hidden",
+          "z-50 flex h-dvh max-h-dvh w-[16.5rem] shrink-0 flex-col overflow-hidden border-r border-white/10 bg-forest text-paper print:hidden",
           "pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)]",
           "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:transition-[transform] max-lg:duration-150 max-lg:ease-[cubic-bezier(0.2,0,0,1)]",
           open ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
-          "lg:sticky lg:top-0 lg:z-20 lg:h-dvh",
+          "lg:sticky lg:top-0 lg:z-20",
         )}
       >
-        <div className="flex items-center justify-between gap-2 px-3 py-3 lg:px-4">
+        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-3 lg:px-4">
           <Link href="/ops" className="min-w-0 text-[0.95rem] font-semibold tracking-tight">
             คอนโซลปฏิบัติการ
           </Link>

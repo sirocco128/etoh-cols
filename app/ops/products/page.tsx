@@ -35,6 +35,7 @@ import {
   SkuPriceLadderHeaders,
   SkuPriceStructureLegend,
 } from "@/components/SkuPriceStructure";
+import { PriceRoundTripGuide } from "@/components/PriceRoundTripGuide";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -125,12 +126,39 @@ export default async function OpsProductsPage({
           กลุ่ม
         </Link>
         <Link href="/ops/pricing" className="rounded border border-forest/30 px-3 py-1.5">
-          คิดราคา
+          คิดทีละชุด
         </Link>
-        <Link href="/ops/pricing/import" className="rounded border border-forest/30 px-3 py-1.5">
-          อัปเดตราคาจาก Excel
+        <Link href="/ops/price-sheet" className="rounded border border-forest/30 px-3 py-1.5">
+          ชีตราคา 3 แท็บ
         </Link>
       </div>
+
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <a
+          href={opsPageHref(
+            "/api/ops/products/export-prices",
+            {
+              class: stockClass || undefined,
+              tag: tag || undefined,
+              group: sp.group || undefined,
+              q: q || undefined,
+              profile: priceProfile === "corporate" ? "corporate" : undefined,
+            },
+            1,
+          )}
+          className="rounded bg-forest px-3 py-1.5 font-medium text-paper"
+        >
+          ดาวน์โหลด Excel (.xlsx)
+        </a>
+        <Link
+          href="/ops/pricing/import"
+          className="rounded border border-forest px-3 py-1.5 font-medium text-forest"
+        >
+          อัปเดตราคาจาก Excel →
+        </Link>
+      </div>
+
+      <PriceRoundTripGuide variant="products" />
 
       {error ? (
         <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
@@ -225,6 +253,33 @@ export default async function OpsProductsPage({
           ค้นหา
         </button>
       </form>
+
+      {rows.length > 0 &&
+      rows.every((row) => {
+        const prices = skuPriceStructure(row, priceProfile);
+        return prices.kind === "empty" || prices.steps.length === 0;
+      }) ? (
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          ยังไม่มีบันไดราคาในตาราง — ใส่ต้นทุนที่หน้ารหัส หรือ{" "}
+          <a
+            href={opsPageHref(
+              "/api/ops/products/export-prices",
+              {
+                class: stockClass || undefined,
+                tag: tag || undefined,
+                group: sp.group || undefined,
+                q: q || undefined,
+                profile: priceProfile === "corporate" ? "corporate" : undefined,
+              },
+              1,
+            )}
+            className="font-medium underline-offset-2 hover:underline"
+          >
+            ดาวน์โหลด Excel
+          </a>{" "}
+          แล้วอัปที่อัปเดตราคาจาก Excel
+        </p>
+      ) : null}
 
       {rows.length === 0 && !error ? (
         <p className="mt-6 rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">

@@ -18,6 +18,8 @@ describe("ops nav", () => {
     assert.equal(isOpsNavActive("/ops/quotes/RFQ-1", "/ops/quotes"), true);
     assert.equal(isOpsNavActive("/ops/pricing/import", "/ops/pricing"), false);
     assert.equal(isOpsNavActive("/ops/pricing/import", "/ops/pricing/import"), true);
+    assert.equal(isOpsNavActive("/ops/price-sheet", "/ops/price-sheet"), true);
+    assert.equal(isOpsNavActive("/ops/price-sheet", "/ops/pricing"), false);
   });
 
   it("groups links by work stage instead of dumping extras into more", () => {
@@ -41,9 +43,11 @@ describe("ops nav", () => {
     assert.equal(admin.find((link) => link.href === "/ops/products")?.label, "สินค้า A/B/C/D");
     assert.equal(admin.find((link) => link.href === "/ops/catalog-books")?.label, "สร้างสมุด");
     assert.equal(admin.find((link) => link.href === "/ops/orders")?.label, "ออเดอร์");
-    assert.equal(admin.find((link) => link.href === "/ops/pricing")?.label, "คิดราคา");
+    assert.equal(admin.find((link) => link.href === "/ops/pricing")?.label, "คิดทีละชุด");
     assert.equal(admin.find((link) => link.href === "/ops/pricing")?.group, "catalog");
-    assert.equal(admin.find((link) => link.href === "/ops/pricing/import")?.label, "อัปเดตราคา");
+    assert.equal(admin.find((link) => link.href === "/ops/price-sheet")?.label, "ชีตราคา 3 แท็บ");
+    assert.equal(admin.find((link) => link.href === "/ops/price-sheet")?.group, "catalog");
+    assert.equal(admin.find((link) => link.href === "/ops/pricing/import")?.label, "อัปเดตจาก Excel");
     assert.equal(admin.find((link) => link.href === "/ops/pricing/import")?.group, "catalog");
     assert.equal(admin.find((link) => link.href === "/ops/reports")?.label, "รายงาน");
     assert.equal(admin.find((link) => link.href === "/ops/reports")?.group, "finance");

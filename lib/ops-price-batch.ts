@@ -37,6 +37,7 @@ import {
   listCatalogOfferHits,
   type CatalogOfferHit,
 } from "@/lib/smartgift-price-write";
+import { updateOriPackingByCode } from "@/lib/sku-master-repository";
 import { actorMay, type OpsActor } from "@/lib/ops-roles";
 import {
   DEFAULT_PACKAGING_MAX_THB,
@@ -701,6 +702,12 @@ export async function applyPriceBatch(params: {
   }
   const wanted = new Set(params.codes.map((c) => normalizeCode(c)));
   const catalog = await loadCatalogIndex();
+  const productsByCode = new Map(
+    (stored.payload.products || []).map((product) => [
+      normalizeCode(product.code),
+      product,
+    ]),
+  );
   let updated = 0;
   let skipped = 0;
   for (const row of stored.payload.rows) {
@@ -728,6 +735,18 @@ export async function applyPriceBatch(params: {
         unitPrice: tier.sellThb,
       })),
     });
+    const factory = productsByCode.get(normalizeCode(row.code));
+    if (factory) {
+      await updateOriPackingByCode({
+        oriProductCode: factory.code,
+        pcsPerCtn: factory.upc,
+        lengthCm: factory.lengthCm,
+        widthCm: factory.widthCm,
+        heightCm: factory.heightCm,
+        cartonKg: factory.cartonKg,
+        dimsAreCarton: factory.dimsAreCarton,
+      }).catch(() => false);
+    }
     updated += 1;
   }
   if (updated > 0) {

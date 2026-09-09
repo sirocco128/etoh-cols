@@ -24,7 +24,7 @@ export default async function OpsPricingPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-forest">เครื่องคิดราคา</h1>
+      <h1 className="text-2xl font-bold text-forest">คิดราคาทีละชุด</h1>
       <p className="mt-1 text-sm text-ink/70">
         ใช้สูตรเดียวกับราคาบนเว็บสาธารณะ — ต้นทุนโรงงาน × ค่าพรีเมียมออเดอร์เล็ก ×
         markup ตามช่วง + ค่าขนส่งจีนตามตารางรถ/เรือ ไม่ใช่ใบยืนยันสั่งซื้อ
@@ -32,12 +32,24 @@ export default async function OpsPricingPage({
           ? ""
           : " บัญชีเซลล์เห็นเฉพาะราคาขาย ไม่เปิดต้นทุนโรงงาน"}
       </p>
-      <p className="mt-3 text-sm">
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <Link
+          href="/ops/price-sheet"
+          className="text-forest underline-offset-2 hover:underline"
+        >
+          ชีตราคา 3 แท็บ (หลายรายการ + พรีวิว) →
+        </Link>
+        <Link
+          href="/ops/products"
+          className="text-forest underline-offset-2 hover:underline"
+        >
+          ดาวน์โหลด Excel จากรหัสขาย →
+        </Link>
         <Link
           href="/ops/pricing/import"
           className="text-forest underline-offset-2 hover:underline"
         >
-          นำเข้า Excel เพื่อพรีวิวทั้งตาราง แล้วอัปเดตราคาขาย →
+          อัปเดตราคาจาก Excel ขึ้นเว็บ →
         </Link>
       </p>
       <div className="mt-6">
