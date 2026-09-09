@@ -10,11 +10,7 @@ npm-debug.log*
 .env.*
 !.env.example
 coverage
-# Keep markdown out of the image by default, but Ops /ops/manual reads docs/**/*.md at runtime.
-*.md
-!README.md
-!docs/
-!docs/**/*.md
+# Do not exclude docs/ or *.md — /ops/manual reads docs/**/*.md from disk at runtime.
 agent-transcripts
 attachments
 workspace.code-workspace

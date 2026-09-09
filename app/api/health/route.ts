@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { NextResponse } from "next/server";
 import { pingDb } from "@/lib/database";
 import { pingClamd } from "@/lib/object-scan";
@@ -10,11 +12,17 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function manualDocsStatus(): "ok" | "missing" {
+  const sample = resolve(process.cwd(), "docs", "manual", "02-USER-MANUAL.md");
+  return existsSync(sample) ? "ok" : "missing";
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const deep = url.searchParams.get("deep") === "1";
   const storage = process.env.LEAD_STORAGE_MODE || "sqlite";
   const timestamp = new Date().toISOString();
+  const manualDocs = manualDocsStatus();
 
   if (!deep) {
     return NextResponse.json(
@@ -23,6 +31,7 @@ export async function GET(request: Request) {
         service: "premium-giftset-web",
         storage,
         database: "not-checked",
+        manualDocs,
         timestamp,
       },
       {
@@ -56,6 +65,8 @@ export async function GET(request: Request) {
         objects,
         replica,
         clamav,
+        manualDocs,
+        cwd: process.cwd(),
         timestamp,
       },
       {
