@@ -4,7 +4,7 @@
  */
 import { spawnSync } from "node:child_process";
 
-const BASE = process.env.STAGING_URL || "http://127.0.0.1:3001";
+const BASE = process.env.STAGING_URL || "http://127.0.0.1:3011";
 const paths = ["/api/health", "/api/health?deep=1", "/"];
 
 console.log(`staging:smoke — ${BASE}`);

@@ -20,7 +20,8 @@ services:
     container_name: giftset-staging-postgres
     restart: unless-stopped
     ports:
-      - "5433:5432"
+      # Avoid 5433 — often taken by other local Postgres stacks (e.g. genesis-biz).
+      - "5439:5432"
     environment:
       POSTGRES_DB: giftset_staging
       POSTGRES_USER: giftset
@@ -40,8 +41,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - "9010:9000"
-      - "9011:9001"
+      - "9020:9000"
+      - "9021:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
@@ -78,8 +79,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - "9012:9000"
-      - "9013:9001"
+      - "9022:9000"
+      - "9023:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-terabis}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-terabisMinioDev1}
@@ -113,7 +114,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_SITE_URL: ${STAGING_PUBLIC_SITE_URL:-http://localhost:3001}
+        NEXT_PUBLIC_SITE_URL: ${STAGING_PUBLIC_SITE_URL:-http://localhost:3011}
         NEXT_PUBLIC_ALLOW_INDEXING: "false"
         CMS_MODE: ${STAGING_CMS_MODE:-mock}
         STRAPI_URL: ${STAGING_STRAPI_URL:-http://host.docker.internal:1337}
@@ -121,7 +122,8 @@ services:
     container_name: giftset-staging-web
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      # Avoid 3001 — often taken by other local Node apps on this workstation.
+      - "3011:3000"
     env_file:
       - path: .env.staging
         required: false

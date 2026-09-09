@@ -10,8 +10,8 @@ Related: [P1-OPS-001](./P1-ISSUES.md#p1-ops-001--staging) · [SPRINT2-MIGRATION.
 
 | Component | Port | Notes |
 | --- | --- | --- |
-| Next.js (`web`) | **3001** | Docker image from root `Dockerfile` |
-| Postgres | **5433** | `giftset_staging` DB — separate from dev `5432` |
+| Next.js (`web`) | **3011** | Docker image from root `Dockerfile` (was 3001; remapped to avoid local port clashes) |
+| Postgres | **5439** | `giftset_staging` DB — separate from other local Postgres (was 5433) |
 | Strapi | 1337 (host) | Optional — run from `./cms` against staging Postgres or dev Postgres |
 
 Rules enforced:
@@ -32,7 +32,7 @@ docker compose -f docker-compose.staging.yml up -d --build
 npm run staging:smoke
 ```
 
-Open [http://localhost:3001](http://localhost:3001)
+Open [http://localhost:3011](http://localhost:3011)
 
 Stop:
 
@@ -79,7 +79,7 @@ Option A — **same machine, host Strapi** (default):
 
 ```bash
 docker compose -f docker-compose.staging.yml up -d postgres
-# Point cms/.env DATABASE_* to localhost:5433 / giftset_staging
+# Point cms/.env DATABASE_* to localhost:5439 / giftset_staging
 npm run cms:bootstrap
 cd cms && npm run develop
 ```
@@ -117,8 +117,8 @@ GitLab: manual job **`staging-deploy`** (see `.gitlab-ci.yml`) — runs prefligh
 ## Health checks
 
 ```bash
-curl -fsS http://127.0.0.1:3001/api/health
-curl -fsS 'http://127.0.0.1:3001/api/health?deep=1'
+curl -fsS http://127.0.0.1:3011/api/health
+curl -fsS 'http://127.0.0.1:3011/api/health?deep=1'
 ```
 
 Expected: `status: ok`, `database: ok` on deep check after migrations.
@@ -129,7 +129,7 @@ Expected: `status: ok`, `database: ok` on deep check after migrations.
 
 | Symptom | Fix |
 | --- | --- |
-| Port 3001 in use | Change host port in `docker-compose.staging.yml` |
+| Port 3011 in use | Change host port in `docker-compose.staging.yml` |
 | Strapi 400 from web container | Use `populate=*` (fixed in v1.1.x); check token |
 | Empty catalog on staging | Publish content in Strapi or set `STRAPI_FALLBACK_TO_MOCK=true` |
 | `apply-intake` refuses | Fields must be `status: APPROVED` with non-empty values |
