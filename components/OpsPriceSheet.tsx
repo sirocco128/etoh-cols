@@ -66,6 +66,22 @@ function money(n: number): string {
   return formatThb(n);
 }
 
+function calcGpPerSetThb(sellThb: number, landedCostThb: number): number {
+  return Math.round(sellThb - landedCostThb);
+}
+
+function calcGpPercent(sellThb: number, landedCostThb: number): number {
+  if (!(sellThb > 0)) return 0;
+  return Math.round(((sellThb - landedCostThb) / sellThb) * 1000) / 10;
+}
+
+function formatGpPercent(value: number): string {
+  return `${value.toLocaleString("th-TH", {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
 function sourceLabel(source: PriceSheetComputedRow["source"]): string {
   if (source === "landed") return "ลงเรือ";
   if (source === "unit_landed") return "SKU ลงเรือ";
@@ -698,10 +714,10 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                 </div>
               ) : (
                 <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-[960px] w-full text-sm">
+                  <table className="min-w-[1180px] w-full text-sm">
                     <thead>
                       <tr className="bg-forest text-left text-paper">
-                        <th className="px-2 py-2">สินค้า</th>
+                        <th className="px-2 py-2">สินค้า / ชุด</th>
                         <th className="px-2 py-2">qty</th>
                         {canSeeCost ? (
                           <th className="px-2 py-2">โรงงาน CNY</th>
@@ -711,7 +727,12 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                         {canSeeCost ? (
                           <th className="px-2 py-2">Markup</th>
                         ) : null}
-                        <th className="px-2 py-2">ขาย/ชิ้น</th>
+                        <th className="px-2 py-2">ขาย/ชุด</th>
+                        {canSeeCost ? <th className="px-2 py-2">GP/ชุด</th> : null}
+                        {canSeeCost ? <th className="px-2 py-2">GP%</th> : null}
+                        {canSeeCost ? (
+                          <th className="px-2 py-2">GP การขายนี้</th>
+                        ) : null}
                         <th className="px-2 py-2">แหล่ง</th>
                         <th className="px-2 py-2" />
                       </tr>
@@ -804,7 +825,7 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                                 {row && row.markup > 0 ? row.markup.toFixed(2) : "—"}
                               </td>
                             ) : null}
-                            <td className="px-2 py-2 font-semibold text-forest">
+                            <td className="px-2 py-2 font-semibold text-forest tabular-nums">
                               {row?.error ? (
                                 <span className="text-xs font-normal text-amber-800">
                                   {row.error}
@@ -815,6 +836,37 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                                 "…"
                               )}
                             </td>
+                            {canSeeCost ? (
+                              <td className="px-2 py-2 font-medium text-forest tabular-nums">
+                                {row && !row.error && row.landedCostThb > 0
+                                  ? money(
+                                      calcGpPerSetThb(
+                                        row.sellThb,
+                                        row.landedCostThb,
+                                      ),
+                                    )
+                                  : "—"}
+                              </td>
+                            ) : null}
+                            {canSeeCost ? (
+                              <td className="px-2 py-2 tabular-nums">
+                                {row && !row.error && row.landedCostThb > 0
+                                  ? formatGpPercent(
+                                      calcGpPercent(
+                                        row.sellThb,
+                                        row.landedCostThb,
+                                      ),
+                                    )
+                                  : "—"}
+                              </td>
+                            ) : null}
+                            {canSeeCost ? (
+                              <td className="px-2 py-2 font-semibold text-forest tabular-nums">
+                                {row && !row.error
+                                  ? money(row.packageProfitThb)
+                                  : "—"}
+                              </td>
+                            ) : null}
                             <td className="px-2 py-2 text-xs text-ink/60">
                               {row ? sourceLabel(row.source) : "…"}
                               {row?.meetsFloor === false ? (
@@ -975,42 +1027,109 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                 <tr className="bg-forest text-left text-paper">
                   <th className="px-3 py-2">#</th>
                   <th className="px-3 py-2">รหัส</th>
-                  <th className="px-3 py-2">สินค้า</th>
+                  <th className="px-3 py-2">ชุดที่จำหน่าย</th>
                   <th className="px-3 py-2">จำนวน</th>
                   <th className="px-3 py-2">ราคา/ชุด</th>
-                  <th className="px-3 py-2">รวม</th>
+                  <th className="px-3 py-2">รวมขาย</th>
+                  {canSeeCost ? <th className="px-3 py-2">ทุน/ชุด</th> : null}
+                  {canSeeCost ? <th className="px-3 py-2">GP/ชุด</th> : null}
+                  {canSeeCost ? <th className="px-3 py-2">GP%</th> : null}
+                  {canSeeCost ? (
+                    <th className="px-3 py-2">GP การขายนี้</th>
+                  ) : null}
                   <th className="px-3 py-2">สถานะ</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => (
-                  <tr key={row.id} className="border-b border-forest/10">
-                    <td className="px-3 py-2">{i + 1}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{row.id}</td>
-                    <td className="px-3 py-2">{row.name}</td>
-                    <td className="px-3 py-2">
-                      {row.qty.toLocaleString("th-TH")}
-                    </td>
-                    <td className="px-3 py-2 font-semibold text-forest">
-                      {money(row.sellThb)}
-                    </td>
-                    <td className="px-3 py-2">
-                      {money(row.sellThb * row.qty)}
-                    </td>
-                    <td className="px-3 py-2">
-                      {row.meetsFloor ? "ผ่านพื้น" : "ต่ำกว่าพื้น"}
-                    </td>
-                  </tr>
-                ))}
+                {rows.map((row, i) => {
+                  const unitGp =
+                    row.landedCostThb > 0
+                      ? calcGpPerSetThb(row.sellThb, row.landedCostThb)
+                      : null;
+                  const unitPct =
+                    row.landedCostThb > 0
+                      ? calcGpPercent(row.sellThb, row.landedCostThb)
+                      : null;
+                  return (
+                    <tr key={row.id} className="border-b border-forest/10">
+                      <td className="px-3 py-2">{i + 1}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{row.id}</td>
+                      <td className="px-3 py-2">{row.name}</td>
+                      <td className="px-3 py-2 tabular-nums">
+                        {row.qty.toLocaleString("th-TH")}
+                      </td>
+                      <td className="px-3 py-2 font-semibold text-forest tabular-nums">
+                        {money(row.sellThb)}
+                      </td>
+                      <td className="px-3 py-2 tabular-nums">
+                        {money(row.sellThb * row.qty)}
+                      </td>
+                      {canSeeCost ? (
+                        <td className="px-3 py-2 tabular-nums">
+                          {row.landedCostThb > 0
+                            ? money(row.landedCostThb)
+                            : "—"}
+                        </td>
+                      ) : null}
+                      {canSeeCost ? (
+                        <td className="px-3 py-2 font-medium text-forest tabular-nums">
+                          {unitGp != null ? money(unitGp) : "—"}
+                        </td>
+                      ) : null}
+                      {canSeeCost ? (
+                        <td className="px-3 py-2 tabular-nums">
+                          {unitPct != null ? formatGpPercent(unitPct) : "—"}
+                        </td>
+                      ) : null}
+                      {canSeeCost ? (
+                        <td className="px-3 py-2 font-semibold text-forest tabular-nums">
+                          {money(row.packageProfitThb)}
+                        </td>
+                      ) : null}
+                      <td className="px-3 py-2">
+                        {row.meetsFloor ? "ผ่านพื้น" : "ต่ำกว่าพื้น"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr className="bg-forest-mist/40 font-semibold text-forest">
                   <td className="px-3 py-3" colSpan={5}>
-                    รวม Final ทั้งใบ
+                    รวม Final ทั้งใบ · ทุกชุด
                   </td>
-                  <td className="px-3 py-3" colSpan={2}>
+                  <td className="px-3 py-3 tabular-nums">
                     {money(grandTotal)}
                   </td>
+                  {canSeeCost ? (
+                    <>
+                      <td className="px-3 py-3" />
+                      <td className="px-3 py-3" />
+                      <td className="px-3 py-3 tabular-nums">
+                        {formatGpPercent(
+                          grandTotal > 0
+                            ? Math.round(
+                                (rows.reduce(
+                                  (sum, row) => sum + row.packageProfitThb,
+                                  0,
+                                ) /
+                                  grandTotal) *
+                                  1000,
+                              ) / 10
+                            : 0,
+                        )}
+                      </td>
+                      <td className="px-3 py-3 tabular-nums">
+                        {money(
+                          rows.reduce(
+                            (sum, row) => sum + row.packageProfitThb,
+                            0,
+                          ),
+                        )}
+                      </td>
+                    </>
+                  ) : null}
+                  <td className="px-3 py-3" />
                 </tr>
               </tfoot>
             </table>

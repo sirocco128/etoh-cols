@@ -139,6 +139,24 @@ describe("captureFirstPartyAttribution", () => {
 });
 
 describe("formatCampaignSourceLabel", () => {
+  it("labels smg-ui briefs as SmartGift web", () => {
+    assert.equal(
+      formatCampaignSourceLabel({ utmSource: "smg-ui" }),
+      "SmartGift เว็บ",
+    );
+    assert.equal(
+      formatCampaignSourceLabel({
+        utmSource: "smg-ui",
+        utmMedium: "brief",
+      }),
+      "SmartGift เว็บ · brief",
+    );
+    assert.equal(
+      formatCampaignSourceLabel({ detail: "[smg-ui brief]\nqty=10" }),
+      "SmartGift เว็บ",
+    );
+  });
+
   it("joins source medium campaign or falls back to referrer then landing", () => {
     assert.equal(
       formatCampaignSourceLabel({

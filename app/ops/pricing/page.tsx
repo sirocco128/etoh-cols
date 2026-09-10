@@ -26,11 +26,8 @@ export default async function OpsPricingPage({
     <div>
       <h1 className="text-2xl font-bold text-forest">คิดราคาทีละชุด</h1>
       <p className="mt-1 text-sm text-ink/70">
-        ใช้สูตรเดียวกับราคาบนเว็บสาธารณะ — ต้นทุนโรงงาน × ค่าพรีเมียมออเดอร์เล็ก ×
-        markup ตามช่วง + ค่าขนส่งจีนตามตารางรถ/เรือ ไม่ใช่ใบยืนยันสั่งซื้อ
-        {canSeeCost
-          ? ""
-          : " บัญชีเซลล์เห็นเฉพาะราคาขาย ไม่เปิดต้นทุนโรงงาน"}
+        ใส่รหัสหรือชื่อชุด → กดดูราคา → เลือกจำนวนเพื่อรีเช็คสูตร
+        {canSeeCost ? "" : " · เซลล์เห็นเฉพาะราคาขาย"}
       </p>
       <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <Link

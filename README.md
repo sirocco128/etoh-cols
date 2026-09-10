@@ -165,6 +165,7 @@ npm run db:migrate
 | [docs/UAT-AUTO-RESULTS.md](docs/UAT-AUTO-RESULTS.md) | Automated route crawl results |
 | [docs/OPS-CONSOLE.md](docs/OPS-CONSOLE.md) | ลูกค้า + ใบเสนอราคา (local ops) |
 | [docs/PARTNER-API.md](docs/PARTNER-API.md) | REST คู่ค้า (API key, quotes/orders) |
+| [docs/PUBLIC-SMG-BFF.md](docs/PUBLIC-SMG-BFF.md) | smg-ui brief + catalog BFF (CORS → tarabiz) |
 | [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + Gitea NAS + GitLab |
 | [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md) | NAS Docker Compose + Cloudflare `tarabiz.next-dev.net` |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
@@ -178,6 +179,17 @@ Read-only quotes/orders for CRM, n8n, or ERP. API key auth, not `/ops` cookies. 
 npm run db:migrate
 npm run partner:key -- --name n8n
 curl -H "Authorization: Bearer sgp_…" http://localhost:3000/api/partner/v1/quotes
+```
+
+## Public SMG BFF (smg-ui)
+
+Browser CORS adapters on `https://tarabiz.next-dev.net` — brief → `/ops/quotes`, catalog read without Partner API key. Ops UI unchanged. See [docs/PUBLIC-SMG-BFF.md](docs/PUBLIC-SMG-BFF.md).
+
+```bash
+# smg-ui
+VITE_BRIEF_ENDPOINT=https://tarabiz.next-dev.net/api/public/brief
+# this host
+PUBLIC_SMG_ORIGINS=https://your-smg-ui.example,http://localhost:8080
 ```
 
 ## Retry worker

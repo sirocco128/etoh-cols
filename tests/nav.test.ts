@@ -54,11 +54,14 @@ describe("nav helpers (UX)", () => {
     assert.equal(quoteShortcutHref(true), "/quote-basket");
   });
 
-  it("groups returning-buyer hub and ops console as top-bar utilities", () => {
+  it("keeps returning-buyer hub on the top bar without a staff door", () => {
+    assert.equal(UTILITY_NAV_LINKS.length, 1);
     assert.equal(UTILITY_NAV_LINKS[0]?.href, "/account");
     assert.equal(UTILITY_NAV_LINKS[0]?.label, "ลูกค้าที่สั่งแล้ว");
-    assert.equal(UTILITY_NAV_LINKS[1]?.href, "/ops");
-    assert.equal(UTILITY_NAV_LINKS[1]?.label, "พนักงาน");
+    assert.equal(
+      UTILITY_NAV_LINKS.some((l) => l.href === "/ops" || l.href === "/ops/login"),
+      false,
+    );
     assert.equal(
       withOptionalBasketLink(false).some((l) => l.href === "/ops"),
       false,

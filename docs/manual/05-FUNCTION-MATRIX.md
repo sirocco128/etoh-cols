@@ -123,7 +123,10 @@
 | `/api/mockup/generate` | AI mockup | Rate-limit |
 | `/api/assistant/chat` | Buyer assistant | Rate-limit |
 | `/api/line/webhook` | LINE OA | Signature |
-| `/api/partner/v1/*` | REST คู่ค้า (quotes/orders อ่านอย่างเดียว) | API key + scope |
+| `/api/partner/v1/*` | REST คู่ค้า (quotes/orders/catalog อ่านอย่างเดียว) | API key + scope |
+| `/api/public` | Discovery BFF สำหรับ smg-ui | CORS `PUBLIC_SMG_ORIGINS` |
+| `/api/public/brief` | smartgift-brief/1 → RFQ → `/ops/quotes` | CORS + rate-limit |
+| `/api/public/catalog/*` | products / promotions / retail (สาธารณะ) | CORS + rate-limit |
 | `/api/catalog-album-files/[fileId]` | ไฟล์อัลบั้มแคตตาล็อก | Public/signed |
 | `/api/sku-files/[fileId]` | ไฟล์แนบ SKU | Auth/scope |
 | `/api/sop/unlock` | ปลดล็อกคู่มือ SOP | Token |

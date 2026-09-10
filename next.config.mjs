@@ -156,9 +156,10 @@ function buildContentSecurityPolicy() {
     ],
   };
 
-  if (isSecureProduction) {
-    directives["upgrade-insecure-requests"] = [];
-  }
+  // Do not emit upgrade-insecure-requests here.
+  // The public site is already HTTPS via Cloudflare; emitting this on the
+  // origin breaks LAN HTTP access (e.g. http://192.168.1.30:33100) because
+  // browsers upgrade CSS/JS to https://<lan-ip> which has no TLS.
 
   return Object.entries(directives)
     .map(([key, values]) =>

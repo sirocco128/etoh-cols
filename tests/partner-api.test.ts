@@ -22,7 +22,17 @@ import {
   parsePartnerToken,
   verifyDbPartnerToken,
 } from "../lib/partner-api-keys";
+import {
+  parseCatalogLimit,
+  scrubPublicCatalogText,
+  serializePartnerCatalogProduct,
+  serializePartnerCatalogPromotion,
+  serializePartnerCatalogRetail,
+  toAbsoluteMediaUrl,
+} from "../lib/partner-catalog-api";
 import { shouldSkipScrapeGuard } from "../lib/scrape-guard";
+import type { Product } from "../lib/data";
+import type { SkuRecord } from "../lib/sku-master-types";
 
 function resolveProjectRoot(): string {
   if (
@@ -95,17 +105,135 @@ describe("partner-api contract", () => {
   it("skips scrape-guard so machine clients can call it", () => {
     assert.equal(shouldSkipScrapeGuard("/api/partner/v1/quotes"), true);
     assert.equal(shouldSkipScrapeGuard("/api/partner/v1"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/partner/v1/products"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/partner/v1/promotions"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/partner/v1/retail"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/public/brief"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/public/catalog/products"), true);
   });
 
   it("parses scopes and minted token format", () => {
     assert.deepEqual(parsePartnerScopes("quotes:read"), ["quotes:read"]);
-    assert.deepEqual(parsePartnerScopes(""), ["quotes:read", "orders:read"]);
+    assert.deepEqual(parsePartnerScopes(""), [
+      "quotes:read",
+      "orders:read",
+      "catalog:read",
+    ]);
     assert.deepEqual(parsePartnerScopes('["quotes:read"]'), ["quotes:read"]);
+    assert.deepEqual(parsePartnerScopes("catalog:read"), ["catalog:read"]);
     const parsed = parsePartnerToken(
       `sgp_aabbccdd.${"ab".repeat(16)}`,
     );
     assert.equal(parsed?.keyId, "aabbccdd");
     assert.equal(hashPartnerSecret("aabbccdd", "secret").length, 64);
+  });
+
+  it("catalog product serializer hides factory, MOQ, and prices", () => {
+    const product = {
+      name: "ชุดของขวัญ (P-02)",
+      slug: "demo-set",
+      description:
+        "สัมผัสพรีเมียมจากซัพพลายเออร์ P-02 — รหัส TSQ01-2 — ราคาตามจำนวน ไม่ใช่ราคาชำระบนเว็บ",
+      material: "ชุดของขวัญ",
+      minOrder: 50,
+      priceRange: "890–1,180 บาท",
+      priceMin: 890,
+      priceMax: 1180,
+      currency: "THB",
+      images: ["/images/product-tumbler.jpg"],
+      categorySlug: "novelty-self-care",
+      categoryName: "Wellness",
+      productId: "TSQ01-2",
+      leadDays: 21,
+      components: [{ name: "แก้ว", qty: 1, sku: "FACTORY-X" }],
+      seo: {
+        seoTitle: "demo",
+        metaDescription: "demo",
+        canonicalPath: "/products/demo-set",
+      },
+    } satisfies Product;
+
+    const row = serializePartnerCatalogProduct(
+      product,
+      "https://catalog.example",
+    );
+    const json = JSON.stringify(row);
+    assert.equal(row.offerCode, "TSQ01-2");
+    assert.equal(row.slug, "demo-set");
+    assert.equal(row.images[0], "https://catalog.example/images/product-tumbler.jpg");
+    assert.equal(row.components[0]?.name, "แก้ว");
+    assert.equal("sku" in (row.components[0] || {}), false);
+    assert.equal("minOrder" in row, false);
+    assert.equal("priceMin" in row, false);
+    assert.equal("priceMax" in row, false);
+    assert.equal("priceRange" in row, false);
+    assert.equal(row.name.includes("P-02"), false);
+    assert.equal(row.description.includes("รหัส"), false);
+    assert.equal(row.description.includes("P-02"), false);
+    assert.equal(row.description.includes("890"), false);
+    assert.equal(json.includes("FACTORY-X"), false);
+    assert.match(scrubPublicCatalogText(product.description), /สัมผัสพรีเมียม/);
+    assert.equal(parseCatalogLimit("999"), 500);
+    assert.equal(parseCatalogLimit(null), 100);
+    assert.equal(
+      toAbsoluteMediaUrl("/api/sku-files/9", "https://catalog.example"),
+      "https://catalog.example/api/sku-files/9",
+    );
+  });
+
+  it("catalog promotion and retail serializers expose images and retail price only", () => {
+    const sku = {
+      productId: "C00001",
+      stockClass: "C",
+      runningNo: 1,
+      oriProductId: 9,
+      oriProductCode: "FACTORY-ORI",
+      oriProductNameTh: "hidden",
+      colorNameTh: "ดำ",
+      nameTh: "เคลียร์แก้ว",
+      nameEn: null,
+      sellPriceThb: 199,
+      isBundle: false,
+      clearanceReason: "กล่องบุบ",
+      catalogSlug: "clearance-tumbler",
+      imageUrl: "/api/sku-files/1",
+      displayImageUrl: "/api/sku-files/1",
+      factoryUnitCny: 12,
+      factoryUnitUsd: null,
+      unitLandedCostThb: 80,
+      forcedMinQty: 30,
+      pcsPerCtn: null,
+      lengthCm: null,
+      widthCm: null,
+      heightCm: null,
+      cartonKg: null,
+      dimsAreCarton: true,
+      onHandQty: 4,
+      tags: ["promo"],
+    } satisfies SkuRecord;
+
+    const promo = serializePartnerCatalogPromotion(sku, [
+      "https://catalog.example/api/sku-files/1",
+      "https://catalog.example/api/sku-files/2",
+    ]);
+    const promoJson = JSON.stringify(promo);
+    assert.equal(promo.images.length, 2);
+    assert.equal(promo.clearanceReason, "กล่องบุบ");
+    assert.deepEqual(promo.tags, ["promo"]);
+    assert.equal(promoJson.includes("FACTORY-ORI"), false);
+    assert.equal(promoJson.includes("factoryUnit"), false);
+    assert.equal(promoJson.includes("forcedMinQty"), false);
+
+    const retail = serializePartnerCatalogRetail(sku, [
+      "https://catalog.example/api/sku-files/1",
+    ]);
+    const retailJson = JSON.stringify(retail);
+    assert.equal(retail.sellPriceThb, 199);
+    assert.equal(retail.currency, "THB");
+    assert.equal(retail.images.length, 1);
+    assert.equal(retailJson.includes("FACTORY-ORI"), false);
+    assert.equal(retailJson.includes("12"), false);
+    assert.equal(retailJson.includes("forcedMinQty"), false);
   });
 
   it("omits secrets from quote and order payloads", () => {

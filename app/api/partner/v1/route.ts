@@ -14,7 +14,8 @@ export async function GET(request: Request) {
   if (!auth.ok) return auth.response;
   if (
     !auth.principal.scopes.includes("quotes:read") &&
-    !auth.principal.scopes.includes("orders:read")
+    !auth.principal.scopes.includes("orders:read") &&
+    !auth.principal.scopes.includes("catalog:read")
   ) {
     return partnerError(403, "forbidden");
   }
@@ -45,6 +46,24 @@ export async function GET(request: Request) {
         method: "GET",
         path: "/api/partner/v1/orders/{orderId}",
         scope: "orders:read",
+      },
+      {
+        method: "GET",
+        path: "/api/partner/v1/products",
+        scope: "catalog:read",
+        query: ["q", "category", "limit"],
+      },
+      {
+        method: "GET",
+        path: "/api/partner/v1/promotions",
+        scope: "catalog:read",
+        query: ["limit"],
+      },
+      {
+        method: "GET",
+        path: "/api/partner/v1/retail",
+        scope: "catalog:read",
+        query: ["q", "limit"],
       },
     ],
   });

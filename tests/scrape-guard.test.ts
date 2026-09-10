@@ -25,6 +25,7 @@ describe("scrape-guard", () => {
     assert.equal(shouldSkipScrapeGuard("/api/health"), true);
     assert.equal(shouldSkipScrapeGuard("/api/health?deep=1"), true);
     assert.equal(shouldSkipScrapeGuard("/api/partner/v1/quotes"), true);
+    assert.equal(shouldSkipScrapeGuard("/api/public/brief"), true);
     assert.equal(shouldSkipScrapeGuard("/robots.txt"), true);
     assert.equal(shouldSkipScrapeGuard("/sitemap.xml"), true);
     assert.equal(shouldSkipScrapeGuard("/_next/static/chunk.js"), true);

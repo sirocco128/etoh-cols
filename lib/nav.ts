@@ -1,8 +1,6 @@
 import {
   ACCOUNT_HUB_NAV_HINT,
   ACCOUNT_HUB_TITLE,
-  OPS_CONSOLE_NAV_HINT,
-  OPS_CONSOLE_NAV_LABEL,
 } from "./ux-copy";
 
 /** Shared primary navigation (desktop + mobile). */
@@ -13,8 +11,8 @@ export type NavLinkItem = {
 };
 
 /**
- * Returning-buyer + staff doors — sit together on the storefront top bar,
- * not in the marketing nav (so the quote CTA stays scannable).
+ * Returning-buyer door on the storefront top bar.
+ * Staff console stays off marketing chrome — bookmark `/ops/login` directly.
  */
 export const UTILITY_NAV_LINKS: NavLinkItem[] = [
   {
@@ -22,12 +20,10 @@ export const UTILITY_NAV_LINKS: NavLinkItem[] = [
     label: ACCOUNT_HUB_TITLE,
     hint: ACCOUNT_HUB_NAV_HINT,
   },
-  {
-    href: "/ops",
-    label: OPS_CONSOLE_NAV_LABEL,
-    hint: OPS_CONSOLE_NAV_HINT,
-  },
 ];
+
+/** Staff entry (not shown in public nav/footer). */
+export const STAFF_LOGIN_HREF = "/ops/login";
 
 /** First-time buyer destinations — keep short so the quote CTA stays in view. */
 export const PRIMARY_NAV_LINKS: NavLinkItem[] = [

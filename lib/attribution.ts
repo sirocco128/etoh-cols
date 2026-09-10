@@ -259,6 +259,26 @@ export function isInternalTrafficHost(
   }
 }
 
+/** Leads from smg-ui / smartgift.next-dev.net public brief. */
+export function isSmartgiftWebLead(input: {
+  utmSource?: string | null;
+  landingPath?: string | null;
+  detail?: string | null;
+}): boolean {
+  const source = (input.utmSource || "").trim().toLowerCase();
+  if (
+    source === "smg-ui" ||
+    source === "smartgift" ||
+    source.includes("smartgift")
+  ) {
+    return true;
+  }
+  const landing = (input.landingPath || "").toLowerCase();
+  if (landing.includes("smartgift.next-dev.net")) return true;
+  const detail = (input.detail || "").toLowerCase();
+  return detail.includes("[smg-ui brief]");
+}
+
 export function formatCampaignSourceLabel(input: {
   utmSource?: string | null;
   utmMedium?: string | null;
@@ -266,7 +286,17 @@ export function formatCampaignSourceLabel(input: {
   referrer?: string | null;
   landingPath?: string | null;
   pageOrigin?: string;
+  detail?: string | null;
 }): string {
+  if (isSmartgiftWebLead(input)) {
+    const medium = (input.utmMedium || "").trim();
+    const campaign = (input.utmCampaign || "").trim();
+    const extras = [medium, campaign].filter(Boolean);
+    return extras.length
+      ? `SmartGift เว็บ · ${extras.join(" · ")}`
+      : "SmartGift เว็บ";
+  }
+
   const parts = [input.utmSource, input.utmMedium, input.utmCampaign]
     .map((value) => (value || "").trim())
     .filter(Boolean);

@@ -74,6 +74,7 @@ const SKIP_PATH_PREFIXES = [
   "/api/jobs",
   "/api/revalidate",
   "/api/partner",
+  "/api/public",
   "/robots.txt",
   "/sitemap.xml",
 ];

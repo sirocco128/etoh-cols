@@ -42,7 +42,7 @@ function GoogleMark() {
 
 export function OpsLoginForm({ googleError }: { googleError?: string }) {
   const [state, action, pending] = useActionState(opsLoginAction, initial);
-  const [username, setUsername] = useState("superadmin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const oauthMessage =
     googleError && isGoogleLoginError(googleError)
@@ -71,7 +71,7 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
             type="text"
             name="email"
             autoComplete="username"
-            placeholder="superadmin"
+            placeholder="อีเมลพนักงาน หรือชื่อผู้ใช้"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             className="mt-1 w-full rounded border border-forest/20 bg-paper px-3 py-2"
@@ -121,8 +121,10 @@ export function OpsLoginForm({ googleError }: { googleError?: string }) {
       </a>
 
       <p className="mt-4 text-xs text-ink/55">
-        กดปุ่มรายชื่อและรหัสผ่านเพื่อเลือกบัญชี — แล้วค่อยเข้าสู่ระบบ
+        ใส่บัญชีพนักงานที่ได้รับสิทธิ์แล้วกดเข้าสู่ระบบ
         เข้าด้วย Google ได้เฉพาะอีเมลที่อยู่ในรายชื่อพนักงาน
+        หน้านี้ไม่แสดงบนเมนูลูกค้า — บุ๊กมาร์ก{" "}
+        <code className="rounded bg-forest/5 px-1">/ops/login</code> ไว้ใช้เอง
       </p>
     </>
   );

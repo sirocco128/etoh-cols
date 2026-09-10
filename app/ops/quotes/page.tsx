@@ -15,7 +15,10 @@ import {
   LEAD_STATUS_LABELS,
   type LeadStatus,
 } from "@/lib/quote-types";
-import { formatCampaignSourceLabel } from "@/lib/attribution";
+import {
+  formatCampaignSourceLabel,
+  isSmartgiftWebLead,
+} from "@/lib/attribution";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,13 +66,28 @@ export default async function OpsQuotesPage({
     offset: pageWindow.offset,
   });
   const filterParams = { q, status: leadStatus === "all" ? undefined : leadStatus };
+  const newCount =
+    leadStatus === "new" ? total : countQuoteRequests({ q, leadStatus: "new" });
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-forest">ใบเสนอราคา</h1>
-          <p className="mt-1 text-sm text-ink/70">พบ {total} รายการ</p>
+          <p className="mt-1 text-sm text-ink/70">
+            พบ {total} รายการ
+            {newCount > 0 && leadStatus !== "new" ? (
+              <>
+                {" · "}
+                <Link
+                  href="/ops/quotes?status=new"
+                  className="font-medium text-brass hover:underline"
+                >
+                  ใหม่ {newCount} รายการ
+                </Link>
+              </>
+            ) : null}
+          </p>
         </div>
       </div>
 
@@ -102,36 +120,60 @@ export default async function OpsQuotesPage({
 
       {quotes.length === 0 ? (
         <p className="mt-6 rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">
-          ยังไม่มีคำขอ —{" "}
-          <Link href="/contact" className="text-forest underline-offset-2 hover:underline">
-            ขอใบเสนอราคา
-          </Link>
+          ยังไม่มีคำขอ
+          {leadStatus === "new"
+            ? " สถานะใหม่ — เมื่อลูกค้าส่งจาก SmartGift หรือแบบฟอร์ม จะขึ้นที่นี่"
+            : null}
         </p>
       ) : (
         <>
           <ul className="mt-6 space-y-3 md:hidden">
-            {quotes.map((row) => (
-              <li key={row.requestId} className="rounded-xl border border-forest/10 p-4">
-                <Link
-                  href={`/ops/quotes/${row.requestId}`}
-                  className="font-mono text-xs text-forest underline-offset-2 hover:underline"
+            {quotes.map((row) => {
+              const fromSmg = isSmartgiftWebLead(row);
+              const isNew = row.leadStatus === "new";
+              return (
+                <li
+                  key={row.requestId}
+                  className={`rounded-xl border p-4 ${
+                    isNew
+                      ? "border-brass/40 bg-brass/5"
+                      : "border-forest/10"
+                  }`}
                 >
-                  {row.requestId}
-                </Link>
-                <p className="mt-1 font-medium">{row.company}</p>
-                <p className="text-xs text-ink/65">
-                  {row.name} · {row.email}
-                </p>
-                <p className="mt-2 text-sm text-ink/75">
-                  {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus} · จำนวน {row.quantity}
-                </p>
-                <p className="mt-1 text-xs text-ink/55">
-                  {formatCampaignSourceLabel(row)}
-                  {" · "}
-                  {formatWhen(row.createdAt)}
-                </p>
-              </li>
-            ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/ops/quotes/${row.requestId}`}
+                      className="font-mono text-xs text-forest underline-offset-2 hover:underline"
+                    >
+                      {row.requestId}
+                    </Link>
+                    {fromSmg ? (
+                      <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[11px] font-medium text-forest">
+                        SmartGift เว็บ
+                      </span>
+                    ) : null}
+                    {isNew ? (
+                      <span className="rounded-full bg-brass/20 px-2 py-0.5 text-[11px] font-semibold text-forest">
+                        ใหม่
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 font-medium">{row.company}</p>
+                  <p className="text-xs text-ink/65">
+                    {row.name} · {row.email}
+                  </p>
+                  <p className="mt-2 text-sm text-ink/75">
+                    {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus} · จำนวน{" "}
+                    {row.quantity}
+                  </p>
+                  <p className="mt-1 text-xs text-ink/55">
+                    {formatCampaignSourceLabel(row)}
+                    {" · "}
+                    {formatWhen(row.createdAt)}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="mt-6 hidden overflow-x-auto md:block">
@@ -147,37 +189,57 @@ export default async function OpsQuotesPage({
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((row) => (
-                  <tr
-                    key={row.requestId}
-                    className="border-b border-forest/10 hover:bg-paper/80"
-                  >
-                    <td className="px-2 py-2.5">
-                      <Link
-                        href={`/ops/quotes/${row.requestId}`}
-                        className="font-mono text-xs text-forest underline-offset-2 hover:underline"
-                      >
-                        {row.requestId}
-                      </Link>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <div className="font-medium">{row.company}</div>
-                      <div className="text-xs text-ink/65">
-                        {row.name} · {row.email}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5">{row.quantity}</td>
-                    <td className="px-2 py-2.5">
-                      {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus}
-                    </td>
-                    <td className="px-2 py-2.5 text-xs text-ink/70">
-                      {formatCampaignSourceLabel(row)}
-                    </td>
-                    <td className="px-2 py-2.5 text-xs text-ink/70">
-                      {formatWhen(row.createdAt)}
-                    </td>
-                  </tr>
-                ))}
+                {quotes.map((row) => {
+                  const fromSmg = isSmartgiftWebLead(row);
+                  const isNew = row.leadStatus === "new";
+                  return (
+                    <tr
+                      key={row.requestId}
+                      className={`border-b border-forest/10 hover:bg-paper/80 ${
+                        isNew ? "bg-brass/5" : ""
+                      }`}
+                    >
+                      <td className="px-2 py-2.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Link
+                            href={`/ops/quotes/${row.requestId}`}
+                            className="font-mono text-xs text-forest underline-offset-2 hover:underline"
+                          >
+                            {row.requestId}
+                          </Link>
+                          {isNew ? (
+                            <span className="rounded-full bg-brass/20 px-1.5 py-0.5 text-[10px] font-semibold text-forest">
+                              ใหม่
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-2 py-2.5">
+                        <div className="font-medium">{row.company}</div>
+                        <div className="text-xs text-ink/65">
+                          {row.name} · {row.email}
+                        </div>
+                      </td>
+                      <td className="px-2 py-2.5">{row.quantity}</td>
+                      <td className="px-2 py-2.5">
+                        {LEAD_STATUS_LABELS[row.leadStatus] || row.leadStatus}
+                      </td>
+                      <td className="px-2 py-2.5 text-xs text-ink/70">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {fromSmg ? (
+                            <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[11px] font-medium text-forest">
+                              SmartGift เว็บ
+                            </span>
+                          ) : null}
+                          <span>{formatCampaignSourceLabel(row)}</span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2.5 text-xs text-ink/70">
+                        {formatWhen(row.createdAt)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

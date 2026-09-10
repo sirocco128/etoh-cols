@@ -4,7 +4,7 @@
  * Prints the secret token once — store it in the partner system, not in git.
  *
  *   npm run partner:key -- --name n8n
- *   npm run partner:key -- --name crm --scopes quotes:read,orders:read
+ *   npm run partner:key -- --name crm --scopes quotes:read,orders:read,catalog:read
  *
  * Hash must match lib/partner-api-keys.ts hashPartnerSecret().
  */
@@ -51,18 +51,20 @@ function argValue(flag, fallback = "") {
 }
 
 const name = argValue("--name", "partner").trim();
-const scopesRaw = argValue("--scopes", "quotes:read,orders:read");
-const allowed = new Set(["quotes:read", "orders:read"]);
+const scopesRaw = argValue("--scopes", "quotes:read,orders:read,catalog:read");
+const allowed = new Set(["quotes:read", "orders:read", "catalog:read"]);
 const scopes = scopesRaw
   .split(/[,\s]+/)
   .map((part) => part.trim())
   .filter((part) => allowed.has(part));
 if (!name) {
-  console.error("Usage: npm run partner:key -- --name n8n [--scopes quotes:read,orders:read]");
+  console.error(
+    "Usage: npm run partner:key -- --name n8n [--scopes quotes:read,orders:read,catalog:read]",
+  );
   process.exit(1);
 }
 if (!scopes.length) {
-  console.error("No valid scopes. Allowed: quotes:read, orders:read");
+  console.error("No valid scopes. Allowed: quotes:read, orders:read, catalog:read");
   process.exit(1);
 }
 

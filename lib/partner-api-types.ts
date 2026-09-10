@@ -1,4 +1,8 @@
-export const PARTNER_SCOPES = ["quotes:read", "orders:read"] as const;
+export const PARTNER_SCOPES = [
+  "quotes:read",
+  "orders:read",
+  "catalog:read",
+] as const;
 
 export type PartnerScope = (typeof PARTNER_SCOPES)[number];
 
@@ -7,6 +11,48 @@ export type PartnerPrincipal = {
   name: string;
   source: "env" | "db";
   scopes: PartnerScope[];
+};
+
+/** Public catalog browse — no factory codes, MOQ, or prices. */
+export type PartnerCatalogProduct = {
+  offerCode: string;
+  slug: string;
+  name: string;
+  description: string;
+  material: string;
+  categorySlug: string;
+  categoryName: string | null;
+  images: string[];
+  leadDays: number | null;
+  components: Array<{ name: string; qty: number }>;
+};
+
+/** Clearance or promo-tagged SKU for web carousel (images loop). */
+export type PartnerCatalogPromotion = {
+  productId: string;
+  slug: string;
+  nameTh: string;
+  nameEn: string | null;
+  stockClass: string;
+  isBundle: boolean;
+  colorNameTh: string | null;
+  clearanceReason: string | null;
+  tags: string[];
+  images: string[];
+};
+
+/** Retail SKU with sell price and product photos. */
+export type PartnerCatalogRetail = {
+  productId: string;
+  slug: string;
+  nameTh: string;
+  nameEn: string | null;
+  stockClass: string;
+  isBundle: boolean;
+  colorNameTh: string | null;
+  sellPriceThb: number;
+  currency: "THB";
+  images: string[];
 };
 
 export type PartnerQuote = {
