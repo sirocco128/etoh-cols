@@ -23,10 +23,13 @@ export function DocumentToolbar({
   backHref,
   backLabel,
   fileName,
+  emphasizePrint = false,
 }: {
   backHref: string;
   backLabel: string;
   fileName: string;
+  /** Larger primary print button (packing slips) */
+  emphasizePrint?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -109,15 +112,23 @@ export function DocumentToolbar({
         <button
           type="button"
           onClick={() => window.print()}
-          className="rounded bg-forest px-3 py-1.5 text-sm text-paper"
+          className={
+            emphasizePrint
+              ? "min-h-12 rounded-lg bg-forest px-5 py-3 text-base font-semibold text-paper shadow-sm hover:opacity-95"
+              : "rounded bg-forest px-3 py-1.5 text-sm text-paper"
+          }
         >
-          พิมพ์
+          {emphasizePrint ? "พิมพ์ใบปะหน้า" : "พิมพ์"}
         </button>
         <button
           type="button"
           onClick={() => void savePdf()}
           disabled={busy}
-          className="rounded border border-forest/30 bg-white px-3 py-1.5 text-sm text-forest disabled:opacity-60"
+          className={
+            emphasizePrint
+              ? "min-h-12 rounded-lg border border-forest/30 bg-white px-4 py-3 text-sm font-medium text-forest disabled:opacity-60"
+              : "rounded border border-forest/30 bg-white px-3 py-1.5 text-sm text-forest disabled:opacity-60"
+          }
         >
           {busy ? "กำลังสร้าง PDF…" : "บันทึก PDF"}
         </button>

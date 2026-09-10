@@ -45,9 +45,10 @@ export async function adjustStockAction(
   const actor = await requireOpsActor("stock.write");
   if (!actor) return { ok: false, error: "ไม่มีสิทธิ์ปรับสต็อก" };
   const meta = await requestMeta();
+  const productKey = text(formData, "productKey");
   try {
     const bal = adjustStock({
-      productKey: text(formData, "productKey"),
+      productKey,
       qtyDelta: intVal(formData, "qtyDelta"),
       locationCodeOrId: text(formData, "locationCode") || undefined,
       memo: text(formData, "memo") || undefined,
@@ -68,6 +69,9 @@ export async function adjustStockAction(
   revalidatePath("/ops/stock");
   revalidatePath("/ops/stock/movements");
   revalidatePath("/ops/stock/adjust");
+  if (productKey) {
+    revalidatePath(`/ops/stock/${encodeURIComponent(productKey)}`);
+  }
   redirect("/ops/stock/adjust?ok=1");
 }
 

@@ -1,13 +1,35 @@
 import Link from "next/link";
+import { WmsNav } from "@/components/WmsNav";
 import { requireOpsPage } from "@/lib/ops-auth";
+import {
+  formatWmsDelta,
+  wmsDeltaClass,
+  wmsMovementLabel,
+} from "@/lib/wms-labels";
 import { listMovements } from "@/lib/wms-repository";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export default async function StockMovementsPage() {
+type SearchParams = Promise<{ q?: string }>;
+
+export default async function StockMovementsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   await requireOpsPage("stock.read");
-  const rows = listMovements({ limit: 200 });
+  const sp = await searchParams;
+  const q = (sp.q || "").trim().toUpperCase();
+  let rows = listMovements({ limit: 200 });
+  if (q) {
+    rows = rows.filter(
+      (r) =>
+        r.productKey.includes(q) ||
+        (r.orderId || "").toUpperCase().includes(q) ||
+        (r.receiptId || "").toUpperCase().includes(q),
+    );
+  }
 
   return (
     <div>
@@ -17,7 +39,27 @@ export default async function StockMovementsPage() {
         </Link>
       </p>
       <h1 className="mt-3 text-2xl font-bold text-forest">เคลื่อนไหวสต็อก</h1>
-      <p className="mt-1 text-sm text-ink/70">ประวัติรับ / จอง / ตัด / ปรับ / โอน / ตรวจนับ</p>
+      <p className="mt-1 text-sm text-ink/70">
+        ประวัติรับ / จอง / ตัด / ปรับ / โอน / ตรวจนับ
+      </p>
+      <WmsNav pathname="/ops/stock/movements" />
+
+      <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
+        <label className="block text-sm">
+          <span className="font-medium">ค้นหา SKU / ออเดอร์ / ใบรับ</span>
+          <input
+            name="q"
+            defaultValue={sp.q || ""}
+            className="mt-1 block w-64 rounded border border-forest/20 px-3 py-2 font-mono"
+          />
+        </label>
+        <button
+          type="submit"
+          className="rounded bg-forest px-3 py-2 text-sm text-paper"
+        >
+          ค้นหา
+        </button>
+      </form>
 
       <div className="mt-6 overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-left text-sm">
@@ -38,10 +80,25 @@ export default async function StockMovementsPage() {
                 <td className="px-2 py-2 text-xs text-ink/70">
                   {row.createdAt.slice(0, 19).replace("T", " ")}
                 </td>
-                <td className="px-2 py-2 font-mono text-xs">{row.kind}</td>
-                <td className="px-2 py-2 font-mono text-xs">{row.productKey}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{row.qtyDelta}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{row.qtyReservedDelta}</td>
+                <td className="px-2 py-2">{wmsMovementLabel(row.kind)}</td>
+                <td className="px-2 py-2 font-mono text-xs">
+                  <Link
+                    href={`/ops/stock/${encodeURIComponent(row.productKey)}`}
+                    className="text-forest underline-offset-2 hover:underline"
+                  >
+                    {row.productKey}
+                  </Link>
+                </td>
+                <td
+                  className={`px-2 py-2 text-right tabular-nums ${wmsDeltaClass(row.qtyDelta)}`}
+                >
+                  {formatWmsDelta(row.qtyDelta)}
+                </td>
+                <td
+                  className={`px-2 py-2 text-right tabular-nums ${wmsDeltaClass(row.qtyReservedDelta)}`}
+                >
+                  {formatWmsDelta(row.qtyReservedDelta)}
+                </td>
                 <td className="px-2 py-2 text-xs text-ink/70">
                   {[row.receiptId, row.orderId, row.reservationId, row.memo]
                     .filter(Boolean)

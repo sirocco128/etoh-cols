@@ -2,6 +2,7 @@ import { getDb } from "@/lib/database";
 import {
   DEFAULT_LOCATION_CODE,
   QC_LOCATION_CODE,
+  XDOCK_LOCATION_CODE,
   type WmsBalance,
   type WmsCycleCount,
   type WmsLocation,
@@ -184,11 +185,27 @@ export function getLocationById(id: number): WmsLocation | null {
   return row ? mapLoc(row) : null;
 }
 
-export function ensureDefaultLocations(): { defaultId: number; qcId: number } {
+export function ensureDefaultLocations(): {
+  defaultId: number;
+  qcId: number;
+  xdockId: number;
+} {
   const def = getLocationByCode(DEFAULT_LOCATION_CODE);
   const qc = getLocationByCode(QC_LOCATION_CODE);
-  if (!def || !qc) throw new Error("wms_locations_missing");
-  return { defaultId: def.id, qcId: qc.id };
+  let xdock = getLocationByCode(XDOCK_LOCATION_CODE);
+  if (!xdock) {
+    const now = new Date().toISOString();
+    getDb()
+      .prepare(
+        `INSERT OR IGNORE INTO wms_locations (
+          location_code, warehouse_code, name, kind, status, created_at
+        ) VALUES (?, 'WH-MAIN', 'จุดแพ็ก Cross-Dock', 'staging', 'active', ?)`,
+      )
+      .run(XDOCK_LOCATION_CODE, now);
+    xdock = getLocationByCode(XDOCK_LOCATION_CODE);
+  }
+  if (!def || !qc || !xdock) throw new Error("wms_locations_missing");
+  return { defaultId: def.id, qcId: qc.id, xdockId: xdock.id };
 }
 
 export function getBalance(
@@ -556,12 +573,58 @@ export function listCycleCounts(limit = 50): WmsCycleCount[] {
   }));
 }
 
+export function listOpenReservations(limit = 100): WmsReservation[] {
+  const cap = Math.min(Math.max(limit, 1), 500);
+  return (
+    getDb()
+      .prepare(
+        `SELECT * FROM wms_reservations
+         WHERE status = 'open'
+         ORDER BY created_at ASC
+         LIMIT ?`,
+      )
+      .all(cap) as ResRow[]
+  ).map(mapRes);
+}
+
+export function listOpenReservationsForProduct(
+  productKey: string,
+): WmsReservation[] {
+  return (
+    getDb()
+      .prepare(
+        `SELECT * FROM wms_reservations
+         WHERE status = 'open' AND product_key = ?
+         ORDER BY created_at ASC`,
+      )
+      .all(productKey) as ResRow[]
+  ).map(mapRes);
+}
+
+export function listQcBalances(limit = 100): WmsBalance[] {
+  const cap = Math.min(Math.max(limit, 1), 500);
+  return (
+    getDb()
+      .prepare(
+        `SELECT b.*, l.location_code, l.name AS location_name, l.warehouse_code
+         FROM wms_balances b
+         JOIN wms_locations l ON l.id = b.location_id
+         WHERE l.kind = 'qc' AND b.qty_on_hand > 0
+         ORDER BY b.qty_on_hand DESC
+         LIMIT ?`,
+      )
+      .all(cap) as BalRow[]
+  ).map(mapBal);
+}
+
 export function stockDashboard(): {
   skuCount: number;
   onHandUnits: number;
   reservedUnits: number;
   availableUnits: number;
   openReservations: number;
+  qcUnits: number;
+  lowStockSkus: number;
 } {
   const bal = getDb()
     .prepare(
@@ -577,11 +640,32 @@ export function stockDashboard(): {
       `SELECT COUNT(*) AS n FROM wms_reservations WHERE status = 'open'`,
     )
     .get() as { n: number };
+  const qc = getDb()
+    .prepare(
+      `SELECT COALESCE(SUM(b.qty_on_hand), 0) AS qty
+       FROM wms_balances b
+       JOIN wms_locations l ON l.id = b.location_id
+       WHERE l.kind = 'qc'`,
+    )
+    .get() as { qty: number };
+  const low = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS n FROM (
+         SELECT product_key
+         FROM wms_balances
+         GROUP BY product_key
+         HAVING SUM(qty_on_hand - qty_reserved) > 0
+            AND SUM(qty_on_hand - qty_reserved) <= 5
+       )`,
+    )
+    .get() as { n: number };
   return {
     skuCount: Number(bal.sku_count) || 0,
     onHandUnits: Number(bal.on_hand) || 0,
     reservedUnits: Number(bal.reserved) || 0,
     availableUnits: Math.max(0, (Number(bal.on_hand) || 0) - (Number(bal.reserved) || 0)),
     openReservations: Number(openRes.n) || 0,
+    qcUnits: Number(qc.qty) || 0,
+    lowStockSkus: Number(low.n) || 0,
   };
 }

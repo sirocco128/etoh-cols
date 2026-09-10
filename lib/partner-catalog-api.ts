@@ -174,6 +174,7 @@ export function serializePartnerCatalogPromotion(
     colorNameTh: sku.colorNameTh,
     clearanceReason: sku.clearanceReason,
     tags: [...sku.tags],
+    onHandQty: Math.max(0, Math.floor(sku.onHandQty || 0)),
     images,
   };
 }
@@ -196,6 +197,7 @@ export function serializePartnerCatalogRetail(
     colorNameTh: sku.colorNameTh,
     sellPriceThb: sell,
     currency: "THB",
+    onHandQty: Math.max(0, Math.floor(sku.onHandQty || 0)),
     images,
   };
 }

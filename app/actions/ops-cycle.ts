@@ -93,6 +93,7 @@ export async function receiveGoodsAction(
       trackingTh: text(formData, "trackingTh"),
       productKey: text(formData, "productKey") || undefined,
       locationCode: text(formData, "locationCode") || undefined,
+      receiveMode: (text(formData, "receiveMode") as "stock" | "cross_dock") || undefined,
       actor: actor.email,
     });
   } catch (error) {
@@ -108,6 +109,7 @@ export async function receiveGoodsAction(
     ...meta,
   });
   revalidatePath("/ops/inbound");
+  revalidatePath("/ops/stock");
   revalidatePath("/ops/cycle");
   revalidatePath("/ops/assets");
   revalidatePath("/ops/claims");
@@ -115,7 +117,16 @@ export async function receiveGoodsAction(
   revalidatePath(`/ops/factory-po/${receipt.poId}`);
   const autoClaim = getClaimByReceiptId(receipt.receiptId);
   const claimQ = autoClaim ? `&claim=${encodeURIComponent(autoClaim.claimId)}` : "";
-  redirect(`/ops/inbound?ok=${encodeURIComponent(receipt.receiptId)}${claimQ}`);
+  const orderQ = receipt.orderId
+    ? `&orderId=${encodeURIComponent(receipt.orderId)}`
+    : "";
+  const modeQ =
+    text(formData, "receiveMode") === "stock"
+      ? "&mode=stock"
+      : "&mode=cross_dock";
+  redirect(
+    `/ops/inbound?ok=${encodeURIComponent(receipt.receiptId)}${claimQ}${orderQ}${modeQ}`,
+  );
 }
 
 export async function payFactoryAction(

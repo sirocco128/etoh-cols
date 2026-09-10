@@ -237,7 +237,9 @@ export async function updateOrderFulfillmentAction(
     ...meta,
     });
     revalidatePath(`/ops/orders/${orderId}`);
+    revalidatePath(`/ops/orders/${orderId}/pack`);
     revalidatePath("/ops/orders");
+    revalidatePath("/ops/stock");
     return { ok: true };
   } catch (error) {
     const code = error instanceof Error ? error.message : "";

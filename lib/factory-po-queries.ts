@@ -50,5 +50,6 @@ export function draftFromOrder(orderId: string): FactoryPoDraft | null {
     shipToAddress: order.shipToAddress,
     shipToProvince: order.shipToProvince,
     destinationMode: "warehouse",
+    receiveMode: "cross_dock",
   };
 }

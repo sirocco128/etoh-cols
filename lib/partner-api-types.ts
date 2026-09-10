@@ -38,6 +38,8 @@ export type PartnerCatalogPromotion = {
   colorNameTh: string | null;
   clearanceReason: string | null;
   tags: string[];
+  /** Physical on-hand from SKU master (mirrored from WMS). */
+  onHandQty: number;
   images: string[];
 };
 
@@ -52,6 +54,8 @@ export type PartnerCatalogRetail = {
   colorNameTh: string | null;
   sellPriceThb: number;
   currency: "THB";
+  /** Physical on-hand from SKU master (mirrored from WMS). */
+  onHandQty: number;
   images: string[];
 };
 

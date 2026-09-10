@@ -48,13 +48,23 @@ type FactoryPoRow = {
   notes: string | null;
   destination_mode?: string | null;
   received_qty?: number | null;
+  receive_mode?: string | null;
+  asn_eta?: string | null;
+  asn_qty?: number | null;
+  asn_container?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type InsertFactoryPoParams = Omit<
   FactoryPoRecord,
-  "id" | "destinationMode" | "receivedQty"
+  | "id"
+  | "destinationMode"
+  | "receivedQty"
+  | "receiveMode"
+  | "asnEta"
+  | "asnQty"
+  | "asnContainer"
 >;
 
 function mapPo(row: FactoryPoRow): FactoryPoRecord {
@@ -100,6 +110,13 @@ function mapPo(row: FactoryPoRow): FactoryPoRecord {
     trackingTh: row.tracking_th,
     notes: row.notes,
     destinationMode: row.destination_mode === "ship_to" ? "ship_to" : "warehouse",
+    receiveMode: row.receive_mode === "stock" ? "stock" : "cross_dock",
+    asnEta: row.asn_eta ?? null,
+    asnQty:
+      row.asn_qty == null || !Number.isFinite(Number(row.asn_qty))
+        ? null
+        : Math.floor(Number(row.asn_qty)),
+    asnContainer: row.asn_container ?? null,
     receivedQty: row.received_qty ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -226,6 +243,30 @@ export function updateFactoryPo(params: InsertFactoryPoParams): FactoryPoRecord 
   const row = getFactoryPoByPoId(params.poId);
   if (!row) throw new Error("factory_po_not_found");
   return row;
+}
+
+export function patchFactoryPoAsn(params: {
+  poId: string;
+  receiveMode: "stock" | "cross_dock";
+  asnEta: string | null;
+  asnQty: number | null;
+  asnContainer: string | null;
+  at: string;
+}): void {
+  getDb()
+    .prepare(
+      `UPDATE factory_pos
+       SET receive_mode = ?, asn_eta = ?, asn_qty = ?, asn_container = ?, updated_at = ?
+       WHERE po_id = ?`,
+    )
+    .run(
+      params.receiveMode,
+      params.asnEta,
+      params.asnQty,
+      params.asnContainer,
+      params.at,
+      params.poId,
+    );
 }
 
 export function getFactoryPoByPoId(poId: string): FactoryPoRecord | null {

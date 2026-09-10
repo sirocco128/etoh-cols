@@ -24,6 +24,34 @@ export function getWmsStoreMode(): WmsStoreMode {
   return raw === "mysql" ? "mysql" : "sqlite";
 }
 
+/** Resolve WMS product_key → sg_sku.product_id rows (exact / slug / ORI code). */
+export async function resolveSkuProductIdsForKey(
+  productKey: string,
+): Promise<string[]> {
+  if (!isSmartgiftMysqlEnabled()) return [];
+  const key = String(productKey || "")
+    .trim()
+    .toUpperCase();
+  if (!key) return [];
+  try {
+    const rows = await smartgiftQuery<RowDataPacket[]>(
+      `SELECT DISTINCT s.product_id AS product_id
+       FROM sg_sku s
+       LEFT JOIN sg_ori_products o ON o.ori_product_id = s.ori_product_id
+       WHERE UPPER(s.product_id) = ?
+          OR UPPER(COALESCE(s.catalog_slug, '')) = ?
+          OR UPPER(COALESCE(o.ori_product_code, '')) = ?
+       LIMIT 20`,
+      [key, key, key],
+    );
+    return rows
+      .map((r) => String(r.product_id || "").trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 /** Best-effort mirror physical on-hand into MySQL sg_sku when enabled. */
 export async function mirrorSkuOnHandQty(productKey: string): Promise<void> {
   if (!isSmartgiftMysqlEnabled()) return;
@@ -33,10 +61,14 @@ export async function mirrorSkuOnHandQty(productKey: string): Promise<void> {
   if (!key) return;
   try {
     const qty = sumOnHand(key);
-    await smartgiftExec(
-      `UPDATE sg_sku SET on_hand_qty = GREATEST(?, 0) WHERE product_id = ?`,
-      [qty, key],
-    );
+    const ids = await resolveSkuProductIdsForKey(key);
+    const targets = ids.length > 0 ? ids : [key];
+    for (const productId of targets) {
+      await smartgiftExec(
+        `UPDATE sg_sku SET on_hand_qty = GREATEST(?, 0) WHERE product_id = ?`,
+        [qty, productId],
+      );
+    }
   } catch {
     // SKU master optional; do not fail WMS mutation.
   }

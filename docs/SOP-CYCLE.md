@@ -404,7 +404,7 @@ stateDiagram-v2
 4. เมื่อสถานะออเดอร์เป็น `out_for_delivery` / `delivered` → ตัด on-hand และ consume reservation
 5. ยกเลิกใบรับ (void) ได้ถ้ายังไม่จ่ายโรงงานเกินยอดรับใหม่ — กลับสต็อก + ledger
 
-MySQL: apply `db/mysql/wms_core.sql` แล้วตั้ง `WMS_STORE=mysql` หลัง `syncSqliteBalancesToMysql()` — `sg_sku.on_hand_qty` mirror เมื่อ `SMARTGIFT_MYSQL_ENABLED=1` (on_hand = physical; available = on_hand − reserved)
+MySQL: apply `db/mysql/wms_core.sql` (`node scripts/apply-wms-mysql.mjs`) แล้ว `node scripts/sync-wms-mysql.mjs` และตั้ง `WMS_STORE=mysql` — รายละเอียดใน [WMS.md](./WMS.md)
 
 ---
 

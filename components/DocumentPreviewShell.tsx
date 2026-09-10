@@ -5,16 +5,23 @@ export function DocumentPreviewShell({
   backHref,
   backLabel,
   fileName,
+  emphasizePrint = false,
   children,
 }: {
   backHref: string;
   backLabel: string;
   fileName: string;
+  emphasizePrint?: boolean;
   children: ReactNode;
 }) {
   return (
     <div>
-      <DocumentToolbar backHref={backHref} backLabel={backLabel} fileName={fileName} />
+      <DocumentToolbar
+        backHref={backHref}
+        backLabel={backLabel}
+        fileName={fileName}
+        emphasizePrint={emphasizePrint}
+      />
       <div className="mt-4 overflow-x-auto print:mt-0 print:overflow-visible">
         <div className="flex justify-center bg-ink/[0.06] py-6 print:bg-transparent print:py-0">
           <div className="shadow-xl print:shadow-none">

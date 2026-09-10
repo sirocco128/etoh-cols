@@ -34,7 +34,7 @@ export function OpsCycleForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-forest px-4 py-2 text-sm text-paper disabled:opacity-60"
+        className="min-h-11 rounded-lg bg-forest px-5 py-2.5 text-sm font-medium text-paper disabled:opacity-60"
       >
         {pending ? "กำลังบันทึก…" : submitLabel}
       </button>

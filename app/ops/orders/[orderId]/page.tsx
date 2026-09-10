@@ -5,6 +5,7 @@ import { CopyCustomerOrderLink } from "@/components/CopyCustomerOrderLink";
 import {
   ConfirmPaymentForm,
   OrderFulfillmentForm,
+  ShipConfirmForm,
 } from "@/components/OrderOpsForms";
 import { OrderStatusTimeline } from "@/components/OrderStatusTimeline";
 import { PromptPayPanel } from "@/components/PromptPayPanel";
@@ -33,6 +34,11 @@ import { CreateFactoryPoPanel } from "@/components/CreateFactoryPoPanel";
 import { listFactoriesForPoForm } from "@/lib/factory-registry-service";
 import { EntityTagForm } from "@/components/EntityTagForm";
 import { listDistinctOpsTags } from "@/lib/ops-tag-links";
+import {
+  listOpenReservationsForOrder,
+  listReservationsForOrder,
+  sumAvailable,
+} from "@/lib/wms-repository";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,6 +70,14 @@ export default async function OpsOrderDetailPage({
   const factoryPos = canFactory ? listPosForOrder(order.orderId) : [];
   const factoryDraft = canFactoryWrite ? draftFromOrder(order.orderId) : null;
   const tagSuggestions = listDistinctOpsTags();
+  const openReservations = listOpenReservationsForOrder(order.orderId);
+  const allReservations = listReservationsForOrder(order.orderId);
+  const canStockRead = actorMay(actor, "stock.read");
+  const stockReadyToShip =
+    order.paymentStatus === "paid" &&
+    openReservations.length > 0 &&
+    (order.fulfillmentStatus === "warehouse" ||
+      order.fulfillmentStatus === "inbound");
 
   return (
     <div>
@@ -219,16 +233,106 @@ export default async function OpsOrderDetailPage({
           <div className="mt-3">
             <OrderStatusTimeline current={order.fulfillmentStatus} />
           </div>
+          {stockReadyToShip ? (
+            <div className="mt-4 rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-4 text-amber-950">
+              <p className="text-base font-semibold">พร้อมส่ง — ทำทีละขั้น</p>
+              <p className="mt-1 text-sm">
+                มีการจองสต็อกค้าง {openReservations.length} รายการ · ชำระครบแล้ว
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <Link
+                  href={`/ops/orders/${encodeURIComponent(order.orderId)}/pack`}
+                  className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forest px-4 py-3 text-base font-semibold text-paper"
+                >
+                  1. พิมพ์ใบปะหน้าแพ็ก
+                </Link>
+                <ShipConfirmForm
+                  orderId={order.orderId}
+                  enabled={stockReadyToShip}
+                  readOnly={!canWrite}
+                />
+              </div>
+            </div>
+          ) : openReservations.length > 0 ? (
+            <p className="mt-4 text-sm">
+              <Link
+                href={`/ops/orders/${encodeURIComponent(order.orderId)}/pack`}
+                className="text-forest underline-offset-2 hover:underline"
+              >
+                พิมพ์ใบปะหน้าแพ็ก
+              </Link>
+              <span className="text-ink/60">
+                {" "}
+                — รอชำระครบก่อนยืนยันส่ง
+              </span>
+            </p>
+          ) : null}
           <div className="mt-4">
             <OrderFulfillmentForm
               orderId={order.orderId}
               current={order.fulfillmentStatus}
               readOnly={!canWrite}
+              collapsed={stockReadyToShip}
             />
           </div>
         </div>
 
-        {due && currentDueAmount(order) > 0 ? (
+        {canStockRead ? (
+          <div className="rounded border border-forest/15 bg-paper p-4">
+            <h2 className="text-lg font-semibold text-forest">สต็อกที่จอง</h2>
+            {openReservations.length === 0 && allReservations.length === 0 ? (
+              <p className="mt-3 text-sm text-ink/60">
+                ยังไม่มีการจอง — รับเข้าคลังด้วยรหัสสินค้าแล้วระบบจะจองให้อัตโนมัติ
+              </p>
+            ) : (
+              <ul className="mt-3 divide-y divide-forest/10 text-sm">
+                {(openReservations.length > 0
+                  ? openReservations
+                  : allReservations.slice(0, 8)
+                ).map((r) => {
+                  const available = sumAvailable(r.productKey);
+                  return (
+                    <li
+                      key={r.reservationId}
+                      className="flex flex-wrap items-center justify-between gap-2 py-3"
+                    >
+                      <div>
+                        <Link
+                          href={`/ops/stock/${encodeURIComponent(r.productKey)}`}
+                          className="font-mono text-forest underline-offset-2 hover:underline"
+                        >
+                          {r.productKey}
+                        </Link>
+                        <p className="text-xs text-ink/60">
+                          {r.status === "open"
+                            ? "จองค้าง"
+                            : r.status === "consumed"
+                              ? "ตัดส่งแล้ว"
+                              : "ปล่อยจองแล้ว"}{" "}
+                          · {r.reservationId}
+                        </p>
+                      </div>
+                      <div className="text-right tabular-nums">
+                        <p className="font-medium">{r.qty} ชิ้น</p>
+                        <p className="text-xs text-ink/60">
+                          พร้อมขายรวม {available}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <p className="mt-3 text-xs text-ink/55">
+              <Link
+                href="/ops/stock"
+                className="text-forest underline-offset-2 hover:underline"
+              >
+                ไปหน้าคลัง
+              </Link>
+            </p>
+          </div>
+        ) : due && currentDueAmount(order) > 0 ? (
           <Suspense fallback={<PromptPayQrFallback />}>
             <OrderPromptPayPanel
               due={due}
@@ -242,6 +346,18 @@ export default async function OpsOrderDetailPage({
           </p>
         )}
       </div>
+
+      {canStockRead && due && currentDueAmount(order) > 0 ? (
+        <div className="mt-8">
+          <Suspense fallback={<PromptPayQrFallback />}>
+            <OrderPromptPayPanel
+              due={due}
+              orderId={order.orderId}
+              token={order.accessToken}
+            />
+          </Suspense>
+        </div>
+      ) : null}
 
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">

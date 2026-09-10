@@ -3,6 +3,7 @@ import { FACTORY_MARKET_FX_USD_THB, SMARTGIFT_FX_CNY_THB } from "@/lib/alibaba/r
 import {
   getFactoryPoByPoId,
   insertFactoryPo,
+  patchFactoryPoAsn,
   updateFactoryPo,
 } from "@/lib/factory-po-repository";
 import {
@@ -75,6 +76,10 @@ export type SaveFactoryPoInput = {
   trackingTh?: string | null;
   notes?: string | null;
   destinationMode?: string | null;
+  receiveMode?: string | null;
+  asnEta?: string | null;
+  asnQty?: number | null;
+  asnContainer?: string | null;
   actor?: string | null;
 };
 
@@ -181,6 +186,25 @@ export function saveFactoryPo(input: SaveFactoryPoInput): FactoryPoRecord {
     poId: saved.poId,
     receivedQty: existing?.receivedQty ?? 0,
     destinationMode,
+    at: now,
+  });
+  const resolvedReceiveMode =
+    input.receiveMode === "stock" || input.receiveMode === "cross_dock"
+      ? input.receiveMode
+      : existing?.receiveMode === "stock"
+        ? "stock"
+        : "cross_dock";
+  const asnQtyNum =
+    input.asnQty == null || String(input.asnQty).trim() === ""
+      ? (existing?.asnQty ?? null)
+      : Math.max(0, Math.floor(Number(input.asnQty)));
+  patchFactoryPoAsn({
+    poId: saved.poId,
+    receiveMode: resolvedReceiveMode,
+    asnEta: blankToNull(input.asnEta) ?? existing?.asnEta ?? null,
+    asnQty: Number.isFinite(asnQtyNum as number) ? asnQtyNum : existing?.asnQty ?? null,
+    asnContainer:
+      blankToNull(input.asnContainer) ?? existing?.asnContainer ?? null,
     at: now,
   });
   const withDest = getFactoryPoByPoId(saved.poId) ?? saved;

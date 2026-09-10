@@ -87,6 +87,15 @@ export async function saveFactoryPoAction(
       trackingTh: text(formData, "trackingTh"),
       notes: text(formData, "notes"),
       destinationMode: text(formData, "destinationMode") || "warehouse",
+      receiveMode: text(formData, "receiveMode") || "cross_dock",
+      asnEta: text(formData, "asnEta"),
+      asnQty: (() => {
+        const raw = text(formData, "asnQty");
+        if (!raw) return null;
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : null;
+      })(),
+      asnContainer: text(formData, "asnContainer"),
       actor: actor.email,
     });
   } catch (error) {

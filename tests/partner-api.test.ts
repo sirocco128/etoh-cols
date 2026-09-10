@@ -217,6 +217,7 @@ describe("partner-api contract", () => {
       "https://catalog.example/api/sku-files/2",
     ]);
     const promoJson = JSON.stringify(promo);
+    assert.equal(promo.onHandQty, 4);
     assert.equal(promo.images.length, 2);
     assert.equal(promo.clearanceReason, "กล่องบุบ");
     assert.deepEqual(promo.tags, ["promo"]);
@@ -229,6 +230,7 @@ describe("partner-api contract", () => {
     ]);
     const retailJson = JSON.stringify(retail);
     assert.equal(retail.sellPriceThb, 199);
+    assert.equal(retail.onHandQty, 4);
     assert.equal(retail.currency, "THB");
     assert.equal(retail.images.length, 1);
     assert.equal(retailJson.includes("FACTORY-ORI"), false);

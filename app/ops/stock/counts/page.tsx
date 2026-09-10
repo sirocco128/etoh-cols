@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { OpsCycleForm } from "@/components/OpsCycleForm";
+import { WmsGuardedForm } from "@/components/WmsGuardedForm";
+import { WmsNav } from "@/components/WmsNav";
+import { WmsSkuKeyField } from "@/components/WmsSkuKeyField";
 import { cycleCountAction } from "@/app/actions/ops-stock";
 import { requireOpsPage } from "@/lib/ops-auth";
-import { listCycleCounts, listLocations } from "@/lib/wms-repository";
+import { getWmsSkuKeyOptions } from "@/lib/wms-sku-options";
+import { listBalances, listCycleCounts, listLocations } from "@/lib/wms-repository";
+import { wmsDeltaClass, formatWmsDelta } from "@/lib/wms-labels";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type SearchParams = Promise<{ ok?: string }>;
+type SearchParams = Promise<{ ok?: string; productKey?: string }>;
 
 export default async function StockCountsPage({
   searchParams,
@@ -18,6 +22,13 @@ export default async function StockCountsPage({
   const sp = await searchParams;
   const locations = listLocations();
   const rows = listCycleCounts(40);
+  const skuOptions = await getWmsSkuKeyOptions();
+  const defaultKey = (sp.productKey || "").trim().toUpperCase();
+  const balanceHints = listBalances({ limit: 500 }).map((b) => ({
+    productKey: b.productKey,
+    locationCode: b.locationCode || "BIN-DEFAULT",
+    qtyOnHand: b.qtyOnHand,
+  }));
 
   return (
     <div>
@@ -28,8 +39,9 @@ export default async function StockCountsPage({
       </p>
       <h1 className="mt-3 text-2xl font-bold text-forest">ตรวจนับสต็อก</h1>
       <p className="mt-1 text-sm text-ink/70">
-        นับจริงแล้วระบบจะปรับยอดตามส่วนต่างอัตโนมัติ
+        นับจริงแล้วระบบจะปรับยอดตามส่วนต่างอัตโนมัติ — ส่วนต่างใหญ่จะมีหน้าต่างยืนยัน
       </p>
+      <WmsNav pathname="/ops/stock/counts" />
       {sp.ok ? (
         <p className="mt-4 rounded-lg bg-forest/10 px-3 py-2 text-sm text-forest">
           บันทึกการนับ {sp.ok} แล้ว
@@ -37,15 +49,20 @@ export default async function StockCountsPage({
       ) : null}
 
       <div className="mt-6 rounded-xl border border-forest/15 bg-paper p-5">
-        <OpsCycleForm action={cycleCountAction} submitLabel="บันทึกการนับ">
+        <WmsGuardedForm
+          action={cycleCountAction}
+          submitLabel="บันทึกการนับ"
+          mode="cycle"
+          balanceHints={balanceHints}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium">รหัสสินค้า</span>
-              <input name="productKey" required className="mt-1 w-full rounded border border-forest/20 px-3 py-2 font-mono" />
-            </label>
+            <WmsSkuKeyField options={skuOptions} defaultValue={defaultKey} />
             <label className="block text-sm">
               <span className="font-medium">ที่เก็บ</span>
-              <select name="locationCode" className="mt-1 w-full rounded border border-forest/20 px-3 py-2">
+              <select
+                name="locationCode"
+                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+              >
                 {locations.map((loc) => (
                   <option key={loc.locationCode} value={loc.locationCode}>
                     {loc.locationCode} · {loc.name}
@@ -55,14 +72,23 @@ export default async function StockCountsPage({
             </label>
             <label className="block text-sm">
               <span className="font-medium">จำนวนที่นับได้</span>
-              <input name="qtyCounted" type="number" min={0} required className="mt-1 w-full rounded border border-forest/20 px-3 py-2" />
+              <input
+                name="qtyCounted"
+                type="number"
+                min={0}
+                required
+                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+              />
             </label>
             <label className="block text-sm">
               <span className="font-medium">หมายเหตุ</span>
-              <input name="memo" className="mt-1 w-full rounded border border-forest/20 px-3 py-2" />
+              <input
+                name="memo"
+                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+              />
             </label>
           </div>
-        </OpsCycleForm>
+        </WmsGuardedForm>
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-forest">ประวัติการนับ</h2>
@@ -82,10 +108,25 @@ export default async function StockCountsPage({
             {rows.map((row) => (
               <tr key={row.countId} className="border-b border-forest/10">
                 <td className="px-2 py-2 font-mono text-xs">{row.countId}</td>
-                <td className="px-2 py-2 font-mono text-xs">{row.productKey}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{row.qtySystem}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{row.qtyCounted}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{row.qtyVariance}</td>
+                <td className="px-2 py-2 font-mono text-xs">
+                  <Link
+                    href={`/ops/stock/${encodeURIComponent(row.productKey)}`}
+                    className="text-forest underline-offset-2 hover:underline"
+                  >
+                    {row.productKey}
+                  </Link>
+                </td>
+                <td className="px-2 py-2 text-right tabular-nums">
+                  {row.qtySystem}
+                </td>
+                <td className="px-2 py-2 text-right tabular-nums">
+                  {row.qtyCounted}
+                </td>
+                <td
+                  className={`px-2 py-2 text-right tabular-nums ${wmsDeltaClass(row.qtyVariance)}`}
+                >
+                  {formatWmsDelta(row.qtyVariance)}
+                </td>
                 <td className="px-2 py-2 text-xs text-ink/70">
                   {row.createdAt.slice(0, 16).replace("T", " ")}
                 </td>

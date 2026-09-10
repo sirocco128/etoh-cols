@@ -58,8 +58,8 @@ For another frontend BFF. Image paths are absolute (`NEXT_PUBLIC_SITE_URL`).
 | Path | Purpose | `limit` |
 |------|---------|---------|
 | `/products` | All gift-set offers — **no** factory/ORI codes, MOQ, or prices | default 100, max 500 |
-| `/promotions` | Clearance (`stock_class=C`) ∪ tag `promo`; each row has `images[]` for carousel loop | default 100, max 500 |
-| `/retail` | SKUs with `sell_price_thb > 0` plus `images[]` | default 100, max 500 |
+| `/promotions` | Clearance (`stock_class=C`) ∪ tag `promo`; `images[]` + `onHandQty` | default 100, max 500 |
+| `/retail` | SKUs with `sell_price_thb > 0`; `images[]` + `onHandQty` | default 100, max 500 |
 
 ## Never returned
 

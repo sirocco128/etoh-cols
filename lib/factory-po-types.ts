@@ -116,6 +116,14 @@ export type FactoryPoRecord = {
   trackingTh: string | null;
   notes: string | null;
   destinationMode: "warehouse" | "ship_to";
+  /** stock = putaway · cross_dock = receive to BIN-XDOCK and pack */
+  receiveMode: "stock" | "cross_dock";
+  /** ETA Thailand (ISO date or datetime string) */
+  asnEta: string | null;
+  /** Expected qty from ASN */
+  asnQty: number | null;
+  /** Container / master B/L / overseas tracking note */
+  asnContainer: string | null;
   receivedQty: number;
   createdAt: string;
   updatedAt: string;
@@ -134,6 +142,7 @@ export type FactoryPoDraft = {
   shipToAddress: string | null;
   shipToProvince: string | null;
   destinationMode: "warehouse" | "ship_to";
+  receiveMode?: "stock" | "cross_dock";
 };
 
 export type FactoryPoMoneyInput = {

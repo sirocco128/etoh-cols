@@ -575,6 +575,22 @@ export function FactoryPoForm({
               <option value="ship_to">ไม่เข้าคลัง — ส่งตรงลูกค้า</option>
             </select>
           </label>
+          <label className="block text-sm sm:col-span-2">
+            <span className="font-medium">โหมดรับเข้าคลัง</span>
+            <select
+              name="receiveMode"
+              defaultValue={po?.receiveMode || defaults?.receiveMode || "cross_dock"}
+              className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+            >
+              <option value="cross_dock">
+                Cross-dock — รับแล้วแพ็กส่ง (อย่าขึ้นชั้น)
+              </option>
+              <option value="stock">เก็บเข้าชั้นวาง</option>
+            </select>
+            <span className="mt-1 block text-xs text-ink/55">
+              ของสั่งผลิตตามออเดอร์แนะนำ Cross-dock
+            </span>
+          </label>
           <label className="block text-sm">
             <span className="font-medium">ผู้รับ</span>
             <input
@@ -613,6 +629,35 @@ export function FactoryPoForm({
             <input
               name="trackingCn"
               defaultValue={po?.trackingCn || ""}
+              className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">เลขตู้ / B/L (ASN)</span>
+            <input
+              name="asnContainer"
+              defaultValue={po?.asnContainer || ""}
+              placeholder="ตู้ / master B/L"
+              className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">ETA ถึงไทย (ASN)</span>
+            <input
+              type="date"
+              name="asnEta"
+              defaultValue={(po?.asnEta || "").slice(0, 10)}
+              className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">จำนวนตาม ASN</span>
+            <input
+              name="asnQty"
+              type="number"
+              min={0}
+              defaultValue={po?.asnQty ?? ""}
+              placeholder="ว่าง = ใช้จำนวนในใบสั่ง"
               className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
             />
           </label>

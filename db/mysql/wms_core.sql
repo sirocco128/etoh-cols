@@ -77,4 +77,5 @@ VALUES ('WH-MAIN', 'คลังหลัก Terabis', 'active');
 INSERT IGNORE INTO wms_location (location_code, warehouse_code, name, kind, status)
 VALUES
   ('BIN-DEFAULT', 'WH-MAIN', 'ชั้นวางหลัก', 'bin', 'active'),
-  ('BIN-QC', 'WH-MAIN', 'กักกัน QC', 'qc', 'active');
+  ('BIN-QC', 'WH-MAIN', 'กักกัน QC', 'qc', 'active'),
+  ('BIN-XDOCK', 'WH-MAIN', 'จุดแพ็ก Cross-Dock', 'staging', 'active');

@@ -788,6 +788,7 @@ components:
         - colorNameTh
         - clearanceReason
         - tags
+        - onHandQty
         - images
       properties:
         productId: { type: string, example: C00001 }
@@ -801,6 +802,10 @@ components:
         tags:
           type: array
           items: { type: string }
+        onHandQty:
+          type: integer
+          minimum: 0
+          description: Physical stock mirrored from WMS into sg_sku.on_hand_qty
         images:
           type: array
           items: { type: string, format: uri }
@@ -818,6 +823,7 @@ components:
         - colorNameTh
         - sellPriceThb
         - currency
+        - onHandQty
         - images
       properties:
         productId: { type: string }
@@ -831,6 +837,10 @@ components:
         currency:
           type: string
           enum: [THB]
+        onHandQty:
+          type: integer
+          minimum: 0
+          description: Physical stock mirrored from WMS into sg_sku.on_hand_qty
         images:
           type: array
           items: { type: string, format: uri }

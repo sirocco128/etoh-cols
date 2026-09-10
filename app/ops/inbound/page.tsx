@@ -1,18 +1,22 @@
 import Link from "next/link";
+import { InboundScanForm } from "@/components/InboundScanForm";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
-import { receiveGoodsAction } from "@/app/actions/ops-cycle";
+import { WmsNav } from "@/components/WmsNav";
 import { voidGoodsReceiptAction } from "@/app/actions/ops-stock";
 import { listPos } from "@/lib/factory-po-queries";
 import { requireOpsPage } from "@/lib/ops-auth";
 import {
   factoryPayableSnapshot,
+  getGoodsReceipt,
   listGoodsReceipts,
 } from "@/lib/ops-cycle-service";
-import {
-  DESTINATION_LABELS,
-  DESTINATIONS,
-} from "@/lib/ops-cycle-types";
+import { DESTINATION_LABELS } from "@/lib/ops-cycle-types";
+import { getWmsSkuKeyOptions } from "@/lib/wms-sku-options";
 import { listLocations } from "@/lib/wms-repository";
+import {
+  DEFAULT_LOCATION_CODE,
+  XDOCK_LOCATION_CODE,
+} from "@/lib/wms-types";
 import { formatThaiDateTime, formatThb } from "@/lib/th-billing";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +27,8 @@ type SearchParams = Promise<{
   poId?: string;
   claim?: string;
   voided?: string;
+  orderId?: string;
+  mode?: string;
 }>;
 
 export default async function InboundPage({
@@ -40,6 +46,25 @@ export default async function InboundPage({
   const snap = selectedPoId ? factoryPayableSnapshot(selectedPoId) : null;
   const receipts = listGoodsReceipts({ limit: 40 });
   const locations = listLocations().filter((l) => l.kind !== "qc");
+  const skuOptions = await getWmsSkuKeyOptions();
+  const isCrossDock =
+    !selectedPo || selectedPo.receiveMode !== "stock";
+  const defaultLocation = isCrossDock
+    ? XDOCK_LOCATION_CODE
+    : DEFAULT_LOCATION_CODE;
+  const remainingQty = selectedPo
+    ? Math.max(0, selectedPo.quantity - selectedPo.receivedQty)
+    : 0;
+  const asnQty = selectedPo?.asnQty ?? null;
+  const asnMismatch =
+    asnQty != null && asnQty > 0 && remainingQty > 0 && asnQty !== remainingQty;
+
+  const okReceipt = sp.ok ? getGoodsReceipt(sp.ok) : null;
+  const successOrderId =
+    (sp.orderId || okReceipt?.orderId || "").trim() || null;
+  const successCrossDock =
+    sp.mode === "cross_dock" ||
+    (selectedPo?.receiveMode === "cross_dock" && Boolean(sp.ok));
 
   return (
     <div>
@@ -54,30 +79,62 @@ export default async function InboundPage({
       </p>
       <h1 className="mt-3 text-2xl font-bold text-forest">รับสินค้าเข้า</h1>
       <p className="mt-1 text-sm text-ink/70">
-        รับตามใบสั่งโรงงาน — เข้าคลังไทยจะอัปเดตสต็อก WMS อัตโนมัติ
+        สแกนหนึ่งจอ — เลือกใบสั่ง · สแกน SKU · จำนวน · บันทึก
       </p>
+      <WmsNav pathname="/ops/inbound" />
+
       {sp.ok ? (
-        <p className="mt-4 rounded-lg bg-forest/10 px-3 py-2 text-sm text-forest">
-          บันทึกใบรับ {sp.ok} แล้ว
-          {" · "}
-          <Link
-            href={`/ops/inbound/${encodeURIComponent(sp.ok)}/print`}
-            className="underline-offset-2 hover:underline"
-          >
-            พรีวิว / PDF
-          </Link>
+        <div className="mt-4 rounded-xl border border-forest/25 bg-forest/10 px-4 py-3 text-sm text-forest">
+          <p className="font-medium">บันทึกใบรับ {sp.ok} แล้ว</p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link
+              href={`/ops/inbound/${encodeURIComponent(sp.ok)}/print`}
+              className="underline-offset-2 hover:underline"
+            >
+              พรีวิวใบรับ
+            </Link>
+            {successOrderId && successCrossDock ? (
+              <>
+                <Link
+                  href={`/ops/orders/${encodeURIComponent(successOrderId)}/pack`}
+                  className="rounded-lg bg-forest px-3 py-1.5 font-medium text-paper"
+                >
+                  พิมพ์ใบปะหน้าแพ็ก
+                </Link>
+                <Link
+                  href={`/ops/orders/${encodeURIComponent(successOrderId)}`}
+                  className="font-medium underline-offset-2 hover:underline"
+                >
+                  ไปยืนยันส่งออเดอร์
+                </Link>
+              </>
+            ) : successOrderId ? (
+              <Link
+                href={`/ops/orders/${encodeURIComponent(successOrderId)}`}
+                className="underline-offset-2 hover:underline"
+              >
+                เปิดออเดอร์
+              </Link>
+            ) : null}
+            <Link
+              href="/ops/stock"
+              className="underline-offset-2 hover:underline"
+            >
+              ดูคิวคลัง
+            </Link>
+          </div>
           {sp.claim ? (
-            <>
-              {" · เปิดเคลมของเสีย "}
+            <p className="mt-2">
+              เปิดเคลมของเสีย{" "}
               <Link
                 href={`/ops/claims?ok=${encodeURIComponent(sp.claim)}`}
                 className="font-mono underline-offset-2 hover:underline"
               >
                 {sp.claim}
               </Link>
-            </>
+            </p>
           ) : null}
-        </p>
+        </div>
       ) : null}
       {sp.voided ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -85,108 +142,51 @@ export default async function InboundPage({
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-xl border border-forest/15 bg-paper p-5">
-        <OpsCycleForm action={receiveGoodsAction} submitLabel="บันทึกการรับ">
-          <label className="block text-sm">
-            <span className="font-medium">ใบสั่งโรงงาน</span>
-            <select
-              name="poId"
-              defaultValue={selectedPoId}
-              className="mt-1 w-full rounded border border-forest/20 px-3 py-2 font-mono"
-            >
-              {pos.length === 0 ? (
-                <option value="">ยังไม่มีใบสั่งที่รับได้</option>
-              ) : null}
-              {pos.map((po) => (
-                <option key={po.poId} value={po.poId}>
-                  {po.poId} · {po.productName} · ค้างรับ{" "}
-                  {Math.max(0, po.quantity - po.receivedQty)} ชิ้น
-                </option>
-              ))}
-            </select>
-          </label>
-          {snap ? (
-            <p className="text-xs text-ink/60">
-              สั่ง {snap.orderedQty} · รับแล้ว {snap.receivedQty} · ค้าง{" "}
-              {snap.remainingQty} · ต้นทุนต่อชิ้น {formatThb(snap.unitThb)} ·{" "}
-              {DESTINATION_LABELS[snap.destination]}
-            </p>
+      {selectedPo?.asnContainer || selectedPo?.asnEta || asnQty != null ? (
+        <p className="mt-4 rounded-lg border border-forest/15 bg-paper px-3 py-2 text-sm text-ink/80">
+          ของระหว่างทาง
+          {selectedPo?.asnContainer
+            ? ` · ตู้/B/L ${selectedPo.asnContainer}`
+            : ""}
+          {selectedPo?.asnEta
+            ? ` · ETA ${(selectedPo.asnEta || "").slice(0, 10)}`
+            : ""}
+          {asnQty != null ? ` · ตาม ASN ${asnQty} ชิ้น` : ""}
+          {asnMismatch ? (
+            <span className="mt-1 block text-amber-800">
+              จำนวนตาม ASN ไม่ตรงค้างรับในใบสั่ง ({remainingQty}) — ตรวจก่อนบันทึก
+            </span>
           ) : null}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="font-medium">รหัสสินค้าในคลัง (บังคับเมื่อเข้าคลัง)</span>
-              <input
-                name="productKey"
-                defaultValue={selectedPo?.sourceOfferId || ""}
-                placeholder="เช่น TSQ01-2"
-                className="mt-1 w-full rounded border border-forest/20 px-3 py-2 font-mono"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium">ที่เก็บ</span>
-              <select
-                name="locationCode"
-                defaultValue="BIN-DEFAULT"
-                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-              >
-                {locations.map((loc) => (
-                  <option key={loc.locationCode} value={loc.locationCode}>
-                    {loc.locationCode} · {loc.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="block text-sm">
-              <span className="font-medium">จำนวนที่รับดี</span>
-              <input
-                name="qtyReceived"
-                type="number"
-                min={1}
-                required
-                defaultValue={snap?.remainingQty || ""}
-                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium">เสีย / ไม่ผ่าน QC</span>
-              <input
-                name="qtyDamaged"
-                type="number"
-                min={0}
-                defaultValue={0}
-                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium">ปลายทาง</span>
-              <select
-                name="destination"
-                defaultValue={snap?.destination || "warehouse"}
-                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-              >
-                {DESTINATIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {DESTINATION_LABELS[d]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="block text-sm">
-            <span className="font-medium">เลขติดตามไทย</span>
-            <input name="trackingTh" className="mt-1 w-full rounded border border-forest/20 px-3 py-2" />
-          </label>
-          <label className="block text-sm">
-            <span className="font-medium">บันทึก QC</span>
-            <textarea
-              name="qcNotes"
-              rows={2}
-              className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
-            />
-          </label>
-        </OpsCycleForm>
+        </p>
+      ) : null}
+
+      <div className="mt-6">
+        <InboundScanForm
+          pos={pos.map((po) => ({
+            poId: po.poId,
+            productName: po.productName,
+            remainingQty: Math.max(0, po.quantity - po.receivedQty),
+            receiveMode: po.receiveMode,
+            sourceOfferId: po.sourceOfferId,
+          }))}
+          selectedPoId={selectedPoId}
+          selectedProductName={selectedPo?.productName || null}
+          snapLine={
+            snap
+              ? `สั่ง ${snap.orderedQty} · รับแล้ว ${snap.receivedQty} · ค้าง ${snap.remainingQty} · ต้นทุนต่อชิ้น ${formatThb(snap.unitThb)} · ${DESTINATION_LABELS[snap.destination]}`
+              : null
+          }
+          isCrossDock={isCrossDock}
+          defaultLocation={defaultLocation}
+          defaultDestination={snap?.destination || "warehouse"}
+          defaultQty={snap?.remainingQty || ""}
+          skuOptions={skuOptions}
+          locations={locations.map((l) => ({
+            locationCode: l.locationCode,
+            name: l.name,
+          }))}
+          skuDefault={selectedPo?.sourceOfferId || ""}
+        />
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-forest">ใบรับล่าสุด</h2>
@@ -239,7 +239,7 @@ export default async function InboundPage({
             {receipts.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-2 py-6 text-ink/55">
-                  ยังไม่มีใบรับสินค้า
+                  ยังไม่มีใบรับ — เมื่อมีใบสั่งสถานะ shipped / inbound ให้รับที่ฟอร์มด้านบน
                 </td>
               </tr>
             ) : null}

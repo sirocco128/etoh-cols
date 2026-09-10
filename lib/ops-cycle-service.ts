@@ -75,7 +75,7 @@ import {
   voidReceiveFromStock,
 } from "@/lib/wms-service";
 import { deleteJournalBySourceKey } from "@/lib/ledger-repository";
-import { DEFAULT_LOCATION_CODE } from "@/lib/wms-types";
+import { DEFAULT_LOCATION_CODE, XDOCK_LOCATION_CODE } from "@/lib/wms-types";
 
 function createPrefixedId(prefix: string, now = new Date()): string {
   const suffix = randomBytes(4).toString("hex").toUpperCase();
@@ -167,6 +167,7 @@ export function receiveGoods(input: {
   trackingTh?: string | null;
   productKey?: string | null;
   locationCode?: string | null;
+  receiveMode?: "stock" | "cross_dock" | null;
   actor?: string | null;
 }): GoodsReceiptRecord {
   const po = getFactoryPo(input.poId);
@@ -195,8 +196,16 @@ export function receiveGoods(input: {
   let locationId: number | null = null;
   if (destination === "warehouse") {
     ensureDefaultLocations();
+    const receiveMode =
+      input.receiveMode === "stock" || input.receiveMode === "cross_dock"
+        ? input.receiveMode
+        : po.receiveMode === "stock"
+          ? "stock"
+          : "cross_dock";
+    const defaultLoc =
+      receiveMode === "cross_dock" ? XDOCK_LOCATION_CODE : DEFAULT_LOCATION_CODE;
     const loc = getLocationByCode(
-      (input.locationCode || DEFAULT_LOCATION_CODE).trim() || DEFAULT_LOCATION_CODE,
+      (input.locationCode || defaultLoc).trim() || defaultLoc,
     );
     if (!loc) throw new Error("location_not_found");
     locationId = loc.id;

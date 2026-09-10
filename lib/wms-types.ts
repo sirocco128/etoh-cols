@@ -97,3 +97,12 @@ export type WmsCycleCount = {
 
 export const DEFAULT_LOCATION_CODE = "BIN-DEFAULT";
 export const QC_LOCATION_CODE = "BIN-QC";
+export const XDOCK_LOCATION_CODE = "BIN-XDOCK";
+
+export const RECEIVE_MODES = ["cross_dock", "stock"] as const;
+export type ReceiveMode = (typeof RECEIVE_MODES)[number];
+
+export const RECEIVE_MODE_LABELS: Record<ReceiveMode, string> = {
+  cross_dock: "Cross-dock — รับแล้วแพ็กส่ง (อย่าขึ้นชั้น)",
+  stock: "เก็บเข้าชั้นวาง",
+};
