@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { receiveGoodsAction } from "@/app/actions/ops-cycle";
+import { voidGoodsReceiptAction } from "@/app/actions/ops-stock";
 import { listPos } from "@/lib/factory-po-queries";
 import { requireOpsPage } from "@/lib/ops-auth";
 import {
@@ -11,12 +12,18 @@ import {
   DESTINATION_LABELS,
   DESTINATIONS,
 } from "@/lib/ops-cycle-types";
+import { listLocations } from "@/lib/wms-repository";
 import { formatThaiDateTime, formatThb } from "@/lib/th-billing";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type SearchParams = Promise<{ ok?: string; poId?: string; claim?: string }>;
+type SearchParams = Promise<{
+  ok?: string;
+  poId?: string;
+  claim?: string;
+  voided?: string;
+}>;
 
 export default async function InboundPage({
   searchParams,
@@ -29,19 +36,25 @@ export default async function InboundPage({
     (po) => po.status !== "cancelled" && po.status !== "draft",
   );
   const selectedPoId = (sp.poId || pos[0]?.poId || "").trim();
+  const selectedPo = pos.find((p) => p.poId === selectedPoId) || null;
   const snap = selectedPoId ? factoryPayableSnapshot(selectedPoId) : null;
   const receipts = listGoodsReceipts({ limit: 40 });
+  const locations = listLocations().filter((l) => l.kind !== "qc");
 
   return (
     <div>
       <p className="text-sm">
+        <Link href="/ops/stock" className="text-forest underline-offset-2 hover:underline">
+          ← คลังสินค้า
+        </Link>
+        {" · "}
         <Link href="/ops/cycle" className="text-forest underline-offset-2 hover:underline">
-          ← วงจรปฏิบัติการ
+          วงจรปฏิบัติการ
         </Link>
       </p>
       <h1 className="mt-3 text-2xl font-bold text-forest">รับสินค้าเข้า</h1>
       <p className="mt-1 text-sm text-ink/70">
-        รับตามใบสั่งโรงงาน — เข้าคลังไทย หรือไม่เข้าคลังส่งตรงลูกค้า
+        รับตามใบสั่งโรงงาน — เข้าคลังไทยจะอัปเดตสต็อก WMS อัตโนมัติ
       </p>
       {sp.ok ? (
         <p className="mt-4 rounded-lg bg-forest/10 px-3 py-2 text-sm text-forest">
@@ -66,6 +79,11 @@ export default async function InboundPage({
           ) : null}
         </p>
       ) : null}
+      {sp.voided ? (
+        <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          ยกเลิกใบรับ {sp.voided} แล้ว
+        </p>
+      ) : null}
 
       <div className="mt-6 rounded-xl border border-forest/15 bg-paper p-5">
         <OpsCycleForm action={receiveGoodsAction} submitLabel="บันทึกการรับ">
@@ -81,7 +99,8 @@ export default async function InboundPage({
               ) : null}
               {pos.map((po) => (
                 <option key={po.poId} value={po.poId}>
-                  {po.poId} · {po.productName} · ค้างรับ {Math.max(0, po.quantity - po.receivedQty)} ชิ้น
+                  {po.poId} · {po.productName} · ค้างรับ{" "}
+                  {Math.max(0, po.quantity - po.receivedQty)} ชิ้น
                 </option>
               ))}
             </select>
@@ -93,6 +112,31 @@ export default async function InboundPage({
               {DESTINATION_LABELS[snap.destination]}
             </p>
           ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="font-medium">รหัสสินค้าในคลัง (บังคับเมื่อเข้าคลัง)</span>
+              <input
+                name="productKey"
+                defaultValue={selectedPo?.sourceOfferId || ""}
+                placeholder="เช่น TSQ01-2"
+                className="mt-1 w-full rounded border border-forest/20 px-3 py-2 font-mono"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium">ที่เก็บ</span>
+              <select
+                name="locationCode"
+                defaultValue="BIN-DEFAULT"
+                className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+              >
+                {locations.map((loc) => (
+                  <option key={loc.locationCode} value={loc.locationCode}>
+                    {loc.locationCode} · {loc.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block text-sm">
               <span className="font-medium">จำนวนที่รับดี</span>
@@ -147,10 +191,11 @@ export default async function InboundPage({
 
       <h2 className="mt-10 text-lg font-semibold text-forest">ใบรับล่าสุด</h2>
       <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-forest/15 text-forest">
               <th className="px-2 py-2">ใบรับ</th>
+              <th className="px-2 py-2">SKU</th>
               <th className="px-2 py-2">PO</th>
               <th className="px-2 py-2">ปลายทาง</th>
               <th className="px-2 py-2 text-right">จำนวน</th>
@@ -163,6 +208,7 @@ export default async function InboundPage({
             {receipts.map((row) => (
               <tr key={row.receiptId} className="border-b border-forest/10">
                 <td className="px-2 py-2 font-mono text-xs">{row.receiptId}</td>
+                <td className="px-2 py-2 font-mono text-xs">{row.productKey || "—"}</td>
                 <td className="px-2 py-2 font-mono text-xs">
                   <Link href={`/ops/factory-po/${row.poId}`} className="underline-offset-2 hover:underline">
                     {row.poId}
@@ -172,22 +218,27 @@ export default async function InboundPage({
                 <td className="px-2 py-2 text-right">{row.qtyReceived}</td>
                 <td className="px-2 py-2 text-right">{formatThb(row.amountThb)}</td>
                 <td className="px-2 py-2 text-ink/70">{formatThaiDateTime(row.receivedAt)}</td>
-                <td className="px-2 py-2">
+                <td className="space-y-1 px-2 py-2">
                   <Link
                     href={`/ops/inbound/${encodeURIComponent(row.receiptId)}/print`}
-                    className="text-forest underline-offset-2 hover:underline"
+                    className="block text-forest underline-offset-2 hover:underline"
                   >
-                    พรีวิว / PDF
+                    พรีวิว
                   </Link>
+                  {row.status === "posted" ? (
+                    <OpsCycleForm action={voidGoodsReceiptAction} submitLabel="ยกเลิกใบรับ">
+                      <input type="hidden" name="receiptId" value={row.receiptId} />
+                    </OpsCycleForm>
+                  ) : null}
                   {row.qtyDamaged > 0 ? (
-                    <span className="ml-2 text-xs text-ink/60">เสีย {row.qtyDamaged}</span>
+                    <span className="text-xs text-ink/60">เสีย {row.qtyDamaged}</span>
                   ) : null}
                 </td>
               </tr>
             ))}
             {receipts.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-2 py-6 text-ink/55">
+                <td colSpan={8} className="px-2 py-6 text-ink/55">
                   ยังไม่มีใบรับสินค้า
                 </td>
               </tr>

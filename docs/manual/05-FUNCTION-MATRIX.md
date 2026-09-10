@@ -11,6 +11,7 @@
 | S | Sales |
 | A | Accountant |
 | AD | Admin |
+| WA | Warehouse admin |
 | V | Viewer |
 | CMS | Strapi editor (นอก Ops) |
 
@@ -81,35 +82,39 @@
 |---|-------|----------|------|-------|
 | 40 | `/ops/factories` | ทะเบียนโรงงาน | AD | §5.23 |
 | 41 | `/ops/factory-po` (+new/id/print) | ใบสั่งโรงงานจีน | AD | §5.24 |
-| 42 | `/ops/inbound` (+print) | รับสินค้าเข้า | AD | §5.25 |
+| 42 | `/ops/inbound` (+print) | รับสินค้าเข้า + product key / void | AD WA | §5.25 |
 | 43 | `/ops/pay-factory` | จ่ายโรงงาน/ค่าขนส่ง | AD A | §5.26 |
-| 44 | `/ops/assets` | ล็อตสินทรัพย์คลัง | AD | §5.27 |
-| 45 | `/ops/claims` | เคลม | AD A | §5.28 |
-| 46 | `/ops/issues` | คิวปัญหาภายใน | S AD | §5.28 |
-| 47 | `/ops/holds` | Legal hold | AD | §5.29 |
+| 44 | `/ops/stock` | คงเหลือคลัง · dashboard | AD WA | §5.27 |
+| 44a | `/ops/stock/movements` | ประวัติเคลื่อนไหวสต็อก | AD WA | §5.27 |
+| 44b | `/ops/stock/adjust` | ปรับยอด / โอนที่เก็บ | AD WA | §5.27 |
+| 44c | `/ops/stock/counts` | ตรวจนับ (cycle count) | AD WA | §5.27 |
+| 45 | `/ops/assets` | ล็อตสินทรัพย์คลัง | AD WA | §5.27 |
+| 46 | `/ops/claims` | เคลม | AD A | §5.28 |
+| 47 | `/ops/issues` | คิวปัญหาภายใน | S AD | §5.28 |
+| 48 | `/ops/holds` | Legal hold | AD | §5.29 |
 
 ## 6. Ops — การเงิน / วงจร
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 48 | `/ops/approvals` (+pay/rv) | อนุมัติสลิป | A AD | §5.30 |
-| 49 | `/ops/receipts` (+print) | ใบรับเงิน | A AD S | §5.31 |
-| 50 | `/ops/qr-pay` | สร้าง PromptPay QR | S A AD | §5.31 |
-| 51 | `/ops/cycle` | ศูนย์ลิงก์วงจรปฏิบัติการ | S A AD | §5.32 |
-| 52 | `/ops/reports` | รายงานวงจรรายได้ | ตามสิทธิ์ | §6 |
-| 53 | `/ops/finance` (+coa/journals/ledger/TB/BS/CF/manual) | บัญชีแยกประเภท / งบ | A AD | §6 |
+| 49 | `/ops/approvals` (+pay/rv) | อนุมัติสลิป | A AD | §5.30 |
+| 50 | `/ops/receipts` (+print) | ใบรับเงิน | A AD S | §5.31 |
+| 51 | `/ops/qr-pay` | สร้าง PromptPay QR | S A AD | §5.31 |
+| 52 | `/ops/cycle` | ศูนย์ลิงก์วงจรปฏิบัติการ | S A AD | §5.32 |
+| 53 | `/ops/reports` | รายงานวงจรรายได้ | ตามสิทธิ์ | §6 |
+| 54 | `/ops/finance` (+coa/journals/ledger/TB/BS/CF/manual) | บัญชีแยกประเภท / งบ | A AD | §6 |
 
 ## 7. Ops — เนื้อหา / ระบบ
 
 | # | Route | ฟังก์ชัน | Role | คู่มือ |
 |---|-------|----------|------|-------|
-| 54 | `/ops/blog` (+new/id) | บทความ editorial | S AD | §5.33 |
-| 55 | `/ops/seo` | SEO override | S AD | §5.33 |
-| 56 | `/ops/audit` | Audit log / export | AD | §5.34 |
-| 57 | `/ops/knowledge-sync` | อัปเดตคลังความรู้ Terabis + log วิเคราะห์ | AD (admin/superadmin) | §5.34 |
-| 58 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
-| 59 | `/ops/manual` | คู่มือการทำงาน (SPA จาก `docs/**/*.md`) | ทั้งหมดที่ล็อกอิน (กรองเอกสารตามสิทธิ์) | ชุด manual |
-| 60 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
+| 55 | `/ops/blog` (+new/id) | บทความ editorial | S AD | §5.33 |
+| 56 | `/ops/seo` | SEO override | S AD | §5.33 |
+| 57 | `/ops/audit` | Audit log / export | AD | §5.34 |
+| 58 | `/ops/knowledge-sync` | อัปเดตคลังความรู้ Terabis + log วิเคราะห์ | AD (admin/superadmin) | §5.34 |
+| 59 | `/ops/users` `[id]` | RBAC พนักงาน | AD | §5.35 |
+| 60 | `/ops/manual` | คู่มือการทำงาน (SPA จาก `docs/**/*.md`) | ทั้งหมดที่ล็อกอิน (กรองเอกสารตามสิทธิ์) | ชุด manual |
+| 61 | Strapi admin | CMS เผยแพร่ | CMS | §5.36 |
 
 ## 8. API handlers
 

@@ -84,7 +84,7 @@ flowchart TD
 | เซลล์ | ติดต่อ ร่างราคา เปิดออเดอร์ รับสลิปเข้าระบบ | ไม่เห็นต้นทุนโรงงาน กำไรขั้นต้น ไม่เปิดใบสั่งโรงงาน |
 | ผู้ดูแล | ใบสั่งโรงงาน จ่ายโรงงาน งบผู้บริหาร จัดการผู้ใช้ | — |
 | บัญชี | อนุมัติหรือปฏิเสธสลิปที่ `/ops/approvals` | ไม่ยืนยันเงินจาก OCR อัตโนมัติ |
-| คลัง | รับของตาม PO ลงล็อต เปิดเคลมของเสีย | จ่ายโรงงานเกินยอดที่รับไม่ได้ |
+| คลัง | รับของตาม PO ลงสต็อก/ล็อต · จองออเดอร์ · ตัดตอนส่ง · ปรับ/โอน/ตรวจนับ · เปิดเคลมของเสีย | จ่ายโรงงานเกินยอดที่รับไม่ได้ · ไม่ตัดสต็อกติดลบ |
 
 ```mermaid
 flowchart LR
@@ -386,9 +386,25 @@ stateDiagram-v2
 | ใบรับเงิน / QR | `/ops/cycle` `/ops/receipts` `/ops/qr-pay` |
 | ใบสั่งโรงงาน | `/ops/factory-po` |
 | รับสินค้าเข้า | `/ops/inbound` |
+| คลัง / คงเหลือ | `/ops/stock` |
+| เคลื่อนไหวสต็อก | `/ops/stock/movements` |
+| ปรับ / โอนสต็อก | `/ops/stock/adjust` |
+| ตรวจนับสต็อก | `/ops/stock/counts` |
 | จ่ายโรงงาน | `/ops/pay-factory` |
 | งบผู้บริหาร | `/ops/finance` |
 | แคตตาล็อกสาธารณะ | Strapi จากเมนู Ops |
+
+### คลังสินค้า (WMS)
+
+แหล่งความจริงรอบแรกอยู่ที่ **SQLite** (`wms_balances` / `wms_movements` / `wms_reservations`) หลังรับเข้าคลัง:
+
+1. กรอก **product key** (หรือใช้ `sourceOfferId` จาก PO) + ที่เก็บ (`BIN-DEFAULT` / `BIN-QC`)
+2. ระบบเพิ่ม `qty_on_hand` และจองสต็อกให้ออเดอร์อัตโนมัติเมื่อของพอ
+3. ของเสียเข้า location QC แยกจากชั้นวางขาย
+4. เมื่อสถานะออเดอร์เป็น `out_for_delivery` / `delivered` → ตัด on-hand และ consume reservation
+5. ยกเลิกใบรับ (void) ได้ถ้ายังไม่จ่ายโรงงานเกินยอดรับใหม่ — กลับสต็อก + ledger
+
+MySQL: apply `db/mysql/wms_core.sql` แล้วตั้ง `WMS_STORE=mysql` หลัง `syncSqliteBalancesToMysql()` — `sg_sku.on_hand_qty` mirror เมื่อ `SMARTGIFT_MYSQL_ENABLED=1` (on_hand = physical; available = on_hand − reserved)
 
 ---
 

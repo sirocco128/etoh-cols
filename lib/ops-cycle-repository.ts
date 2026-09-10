@@ -34,6 +34,8 @@ type GrRow = {
   qc_notes: string | null;
   tracking_th: string | null;
   status: string;
+  product_key?: string | null;
+  location_id?: number | null;
   received_at: string;
   created_by: string | null;
   created_at: string;
@@ -85,6 +87,8 @@ function mapGr(row: GrRow): GoodsReceiptRecord {
     qcNotes: row.qc_notes,
     trackingTh: row.tracking_th,
     status: row.status as GoodsReceiptRecord["status"],
+    productKey: row.product_key ?? null,
+    locationId: row.location_id ?? null,
     receivedAt: row.received_at,
     createdBy: row.created_by,
     createdAt: row.created_at,
@@ -132,8 +136,8 @@ export function insertGoodsReceipt(row: Omit<GoodsReceiptRecord, "id">): GoodsRe
       `INSERT INTO goods_receipts (
         receipt_id, po_id, order_id, destination, qty_ordered, qty_received,
         qty_damaged, qty_short, unit_thb, amount_thb, qc_notes, tracking_th,
-        status, received_at, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        status, product_key, location_id, received_at, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       row.receiptId,
@@ -149,6 +153,8 @@ export function insertGoodsReceipt(row: Omit<GoodsReceiptRecord, "id">): GoodsRe
       row.qcNotes,
       row.trackingTh,
       row.status,
+      row.productKey,
+      row.locationId,
       row.receivedAt,
       row.createdBy,
       row.createdAt,
@@ -161,6 +167,15 @@ export function getGoodsReceipt(receiptId: string): GoodsReceiptRecord | null {
     .prepare(`SELECT * FROM goods_receipts WHERE receipt_id = ?`)
     .get(receiptId) as GrRow | undefined;
   return row ? mapGr(row) : null;
+}
+
+export function setGoodsReceiptStatus(params: {
+  receiptId: string;
+  status: "posted" | "void";
+}): void {
+  getDb()
+    .prepare(`UPDATE goods_receipts SET status = ? WHERE receipt_id = ?`)
+    .run(params.status, params.receiptId);
 }
 
 export function listGoodsReceipts(params?: { poId?: string; limit?: number }): GoodsReceiptRecord[] {

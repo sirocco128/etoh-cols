@@ -100,6 +100,8 @@ export type GoodsReceiptRecord = {
   qcNotes: string | null;
   trackingTh: string | null;
   status: "posted" | "void";
+  productKey: string | null;
+  locationId: number | null;
   receivedAt: string;
   createdBy: string | null;
   createdAt: string;

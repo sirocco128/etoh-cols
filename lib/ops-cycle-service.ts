@@ -25,6 +25,7 @@ import {
   setCashReceiptAccessToken,
   setCashReceiptRejectReason,
   setCashReceiptTags,
+  setGoodsReceiptStatus,
   sumReceivedAmount,
   sumReceivedQty,
   sumSupplierPaid,
@@ -61,6 +62,20 @@ import { costFromPo } from "@/lib/po-cost";
 import { buildPromptPayPayload, getPromptPayConfig } from "@/lib/promptpay";
 import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { roundSatang } from "@/lib/th-billing";
+import {
+  getLocationByCode,
+  ensureDefaultLocations,
+} from "@/lib/wms-repository";
+import {
+  moveDamagedToQc,
+  receiveToStock,
+  reserveForOrder,
+  resolveProductKey,
+  shipFromStock,
+  voidReceiveFromStock,
+} from "@/lib/wms-service";
+import { deleteJournalBySourceKey } from "@/lib/ledger-repository";
+import { DEFAULT_LOCATION_CODE } from "@/lib/wms-types";
 
 function createPrefixedId(prefix: string, now = new Date()): string {
   const suffix = randomBytes(4).toString("hex").toUpperCase();
@@ -150,6 +165,8 @@ export function receiveGoods(input: {
   destination?: string | null;
   qcNotes?: string | null;
   trackingTh?: string | null;
+  productKey?: string | null;
+  locationCode?: string | null;
   actor?: string | null;
 }): GoodsReceiptRecord {
   const po = getFactoryPo(input.poId);
@@ -168,6 +185,23 @@ export function receiveGoods(input: {
 
   const destRaw = input.destination || po.destinationMode;
   const destination: DestinationMode = isDestination(destRaw) ? destRaw : "warehouse";
+  const productKey =
+    resolveProductKey(input.productKey) ||
+    resolveProductKey(po.sourceOfferId);
+  if (destination === "warehouse" && !productKey) {
+    throw new Error("product_key_required");
+  }
+
+  let locationId: number | null = null;
+  if (destination === "warehouse") {
+    ensureDefaultLocations();
+    const loc = getLocationByCode(
+      (input.locationCode || DEFAULT_LOCATION_CODE).trim() || DEFAULT_LOCATION_CODE,
+    );
+    if (!loc) throw new Error("location_not_found");
+    locationId = loc.id;
+  }
+
   const snapshot = factoryPayableSnapshot(po.poId);
   const unitThb = snapshot?.unitThb ?? 0;
   const amountThb = roundSatang(unitThb * qtyReceived);
@@ -188,6 +222,8 @@ export function receiveGoods(input: {
     qcNotes: blankToNull(input.qcNotes),
     trackingTh: blankToNull(input.trackingTh) ?? po.trackingTh,
     status: "posted",
+    productKey,
+    locationId,
     receivedAt: now,
     createdBy: input.actor ?? null,
     createdAt: now,
@@ -203,7 +239,63 @@ export function receiveGoods(input: {
     at: now,
   });
 
-  if (destination === "warehouse") {
+  if (destination === "warehouse" && productKey) {
+    const stock = receiveToStock({
+      productKey,
+      qty: qtyReceived,
+      locationCodeOrId: locationId,
+      receiptId: receipt.receiptId,
+      poId: po.poId,
+      orderId: po.orderId,
+      actor: input.actor,
+      at: now,
+    });
+    if (qtyDamaged > 0) {
+      moveDamagedToQc({
+        productKey,
+        qty: qtyDamaged,
+        receiptId: receipt.receiptId,
+        poId: po.poId,
+        orderId: po.orderId,
+        actor: input.actor,
+        at: now,
+      });
+    }
+    try {
+      reserveForOrder({
+        orderId: po.orderId,
+        productKey,
+        qty: qtyReceived,
+        locationCodeOrId: locationId,
+        actor: input.actor,
+        at: now,
+      });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      if (code !== "insufficient_stock") throw error;
+    }
+    insertAsset({
+      assetCode: createPrefixedId("AST", new Date(now)),
+      kind: "inventory_lot",
+      name: po.productName,
+      qty: qtyReceived,
+      unit: "ชิ้น",
+      valueThb: amountThb,
+      location: stock.balance.locationCode || "warehouse",
+      poId: po.poId,
+      orderId: po.orderId,
+      receiptId: receipt.receiptId,
+      status: "active",
+      notes: `รับเข้าคลัง · ${productKey}`,
+      createdAt: now,
+      updatedAt: now,
+    });
+    tryAdvanceOrder({
+      orderId: po.orderId,
+      status: "warehouse",
+      actor: input.actor,
+    });
+  } else if (destination === "warehouse") {
     insertAsset({
       assetCode: createPrefixedId("AST", new Date(now)),
       kind: "inventory_lot",
@@ -258,7 +350,7 @@ export function receiveGoods(input: {
     message:
       destination === "ship_to"
         ? `รับสินค้าส่งตรงลูกค้า ${qtyReceived} ชิ้น · ${receipt.receiptId}`
-        : `รับเข้าคลัง ${qtyReceived} ชิ้น · ${receipt.receiptId}`,
+        : `รับเข้าคลัง ${qtyReceived} ชิ้น · ${receipt.receiptId}${productKey ? ` · ${productKey}` : ""}`,
     actor: input.actor ?? null,
     createdAt: now,
   });
@@ -277,7 +369,65 @@ export function receiveGoods(input: {
     });
   }
 
-  return receipt;
+  return getGoodsReceipt(receipt.receiptId)!;
+}
+
+export function voidGoodsReceipt(input: {
+  receiptId: string;
+  actor?: string | null;
+}): GoodsReceiptRecord {
+  const receipt = getGoodsReceipt(input.receiptId);
+  if (!receipt) throw new Error("receipt_not_found");
+  if (receipt.status === "void") return receipt;
+
+  const paid = sumSupplierPaid(receipt.poId, "factory");
+  const remainingReceived = sumReceivedQty(receipt.poId) - receipt.qtyReceived;
+  const remainingAmount = roundSatang(
+    Math.max(0, remainingReceived) * receipt.unitThb,
+  );
+  if (paid - remainingAmount > 0.009) {
+    throw new Error("void_blocked_by_payment");
+  }
+
+  const now = new Date().toISOString();
+  if (receipt.destination === "warehouse" && receipt.productKey) {
+    voidReceiveFromStock({
+      receiptId: receipt.receiptId,
+      productKey: receipt.productKey,
+      qty: receipt.qtyReceived,
+      locationId: receipt.locationId,
+      damagedQty: receipt.qtyDamaged,
+      actor: input.actor,
+      at: now,
+    });
+  }
+
+  setGoodsReceiptStatus({ receiptId: receipt.receiptId, status: "void" });
+  deleteJournalBySourceKey(`inv:${receipt.receiptId}`);
+
+  const po = getFactoryPo(receipt.poId);
+  if (po) {
+    const totalReceived = sumReceivedQty(po.poId);
+    patchPoReceived({
+      poId: po.poId,
+      receivedQty: totalReceived,
+      destinationMode: po.destinationMode,
+      status: totalReceived <= 0 ? (po.status === "received" ? "inbound" : po.status) : po.status,
+      at: now,
+    });
+  }
+
+  if (receipt.orderId) {
+    getOrderRepository().insertEvent({
+      orderId: receipt.orderId,
+      eventType: "goods_receipt",
+      message: `ยกเลิกใบรับ ${receipt.receiptId}`,
+      actor: input.actor ?? null,
+      createdAt: now,
+    });
+  }
+
+  return getGoodsReceipt(receipt.receiptId)!;
 }
 
 export function payFactoryForReceived(input: {

@@ -38,7 +38,10 @@ const ERRORS: Record<string, string> = {
   po_not_receivable: "ใบสั่งนี้ยังรับของไม่ได้",
   qty_required: "กรุณาระบุจำนวนที่รับ",
   over_received: "รับเกินจำนวนในใบสั่งโรงงาน",
+  product_key_required: "กรุณาระบุรหัสสินค้าในคลัง (เมื่อรับเข้าคลัง)",
+  location_not_found: "ไม่พบที่เก็บในคลัง",
   amount_required: "กรุณาระบุยอดเงิน",
+  void_blocked_by_payment: "ยกเลิกใบรับไม่ได้ เพราะจ่ายโรงงานเกินยอดรับที่เหลือ",
   pay_exceeds_received: "จ่ายเจ้าหนี้โรงงานได้ไม่เกินยอดของที่รับตาม PO",
   pay_exceeds_freight: "จ่ายเจ้าหนี้ขนส่งได้ไม่เกินยอดที่ตั้งค้าง",
   receipt_not_found: "ไม่พบใบรับสินค้า",
@@ -88,6 +91,8 @@ export async function receiveGoodsAction(
       destination: text(formData, "destination") || undefined,
       qcNotes: text(formData, "qcNotes"),
       trackingTh: text(formData, "trackingTh"),
+      productKey: text(formData, "productKey") || undefined,
+      locationCode: text(formData, "locationCode") || undefined,
       actor: actor.email,
     });
   } catch (error) {

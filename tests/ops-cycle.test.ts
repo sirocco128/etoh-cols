@@ -125,6 +125,7 @@ describe("ops cycle: GR, supplier pay, cash receipt, issues", () => {
       poId: po.poId,
       qtyReceived: 20,
       destination: "warehouse",
+      productKey: "CYCLE-SKU-01",
     });
     assert.equal(gr.qtyReceived, 20);
     assert.ok(gr.amountThb > 0);
@@ -223,6 +224,7 @@ describe("ops cycle: GR, supplier pay, cash receipt, issues", () => {
       qtyReceived: 18,
       qtyDamaged: 2,
       destination: "warehouse",
+      productKey: "CYCLE-SKU-DMG",
       qcNotes: "สกรีนโลโก้หลุด",
     });
     const claim = getClaimByReceiptId(gr.receiptId);

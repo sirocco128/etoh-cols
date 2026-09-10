@@ -25,6 +25,7 @@ import { getQuoteByRequestId } from "@/lib/quote-repository";
 import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { bahtText } from "@/lib/th-baht-text";
 import { composeOrderShipTo, quoteShipToParts } from "@/lib/thai-address-format";
+import { shipFromStock } from "@/lib/wms-service";
 import {
   calculateDepositPlan,
   normalizeThaiTaxId,
@@ -674,6 +675,19 @@ export function updateOrderFulfillment(input: {
   const fresh = repo.getOrderByOrderId(order.orderId);
   if (!fresh) throw new Error("order_not_found");
   maybeIssueTaxInvoice(fresh, now, input.actor ?? null);
+
+  if (to === "out_for_delivery" || to === "delivered") {
+    try {
+      shipFromStock({
+        orderId: fresh.orderId,
+        actor: input.actor,
+        at: now,
+      });
+    } catch {
+      // Stock may already be shipped or WMS not seeded; do not block fulfillment.
+    }
+  }
+
   return repo.getOrderByOrderId(order.orderId) ?? fresh;
 }
 

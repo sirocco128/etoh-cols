@@ -32,6 +32,7 @@ PNGs land in `public/sop/screenshots/`. Content catalog: `lib/sop-guide-content.
 - Orders / payments: http://localhost:3000/ops/orders
 - Factory PO (admin): http://localhost:3000/ops/factory-po
 - Ops cycle (receipts / inbound / pay factory / assets / claims / issues / QR / **approvals**): http://localhost:3000/ops/cycle
+- Stock WMS (balances / movements / adjust / cycle counts): http://localhost:3000/ops/stock
 - Accounting slip approval: http://localhost:3000/ops/approvals
 - Reports (revenue cycle, permission-gated): http://localhost:3000/ops/reports
 - Executive P&L (admin / accountant): http://localhost:3000/ops/finance
