@@ -2,10 +2,13 @@
 #
 # Prerequisites:
 #   cp .env.staging.example .env.staging   # or: npm run sprint2:apply-intake -- --target .env.staging
-#   npm run db:migrate                     # once on host before first web start (or set RUN_DB_MIGRATIONS=true)
 #
 #   docker compose -f docker-compose.staging.yml up -d --build
 #   npm run staging:smoke
+#
+# Schema: Compose service `migrate` applies all db/migrations/*.sql (SQLite)
+# and db/mysql/wms_core.sql when SMARTGIFT_MYSQL_ENABLED=true. Do not rely on
+# host `npm run db:migrate` for this stack.
 #
 # MinIO (images, PDFs, slips, mockups): API 9010 / console 9011 on the host.
 # Replica: API 9012 / console 9013.
@@ -109,6 +112,25 @@ services:
       - -c
       - "tr -d '\\r' < /mirror.sh > /tmp/mirror-lf.sh && exec /bin/sh /tmp/mirror-lf.sh"
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: giftset-staging-migrate
+    restart: "no"
+    environment:
+      SQLITE_PATH: /app/.data/leads.sqlite
+      SMARTGIFT_MYSQL_ENABLED: ${SMARTGIFT_MYSQL_ENABLED:-true}
+      SMARTGIFT_MYSQL_HOST: ${SMARTGIFT_MYSQL_HOST:-host.docker.internal}
+      SMARTGIFT_MYSQL_PORT: ${SMARTGIFT_MYSQL_PORT:-3307}
+      SMARTGIFT_MYSQL_USER: ${SMARTGIFT_MYSQL_USER:-biz}
+      SMARTGIFT_MYSQL_PASSWORD: ${SMARTGIFT_MYSQL_PASSWORD:-biz_secret}
+      SMARTGIFT_MYSQL_DATABASE: ${SMARTGIFT_MYSQL_DATABASE:-smartgift}
+    volumes:
+      - giftset_staging_leads:/app/.data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   web:
     build:
       context: .
@@ -153,6 +175,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       minio:

@@ -68,6 +68,8 @@ COPY --from=builder /app/db ./db
 # Work-manual markdown for /ops/manual (loader reads process.cwd()/docs)
 COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder /app/scripts/apply-wms-mysql.mjs ./scripts/apply-wms-mysql.mjs
+COPY --from=builder /app/scripts/migrate-all.mjs ./scripts/migrate-all.mjs
 COPY --from=builder /app/scripts/validate-runtime.mjs ./scripts/validate-runtime.mjs
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 

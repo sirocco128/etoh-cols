@@ -14,6 +14,8 @@
     "test": "node scripts/run-tests.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "db:migrate": "node scripts/migrate.mjs",
+    "db:migrate:all": "node scripts/migrate-all.mjs",
+    "db:migrate:compose": "docker compose -f docker-compose.staging.yml run --rm migrate",
     "wms:mysql:apply": "node scripts/apply-wms-mysql.mjs",
     "wms:mysql:sync": "node scripts/sync-wms-mysql.mjs",
     "partner:key": "node scripts/partner-api-key.mjs",
