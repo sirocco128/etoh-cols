@@ -66,9 +66,9 @@ const PRODUCT_IMAGE: Record<string, string> = {
   technology: "/images/product-it.jpg",
   wellness: "/images/product-tumbler.jpg",
   office: "/images/product-placeholder.jpg",
-  bag: "/images/product-eco.jpg",
-  eco: "/images/product-eco.jpg",
-  custom: "/images/product-placeholder.jpg",
+  bag: "/images/category-bags.jpg",
+  eco: "/images/category-eco.jpg",
+  custom: "/images/category-custom.jpg",
 };
 
 const TAB_LABEL: Record<string, string> = {

@@ -6,22 +6,28 @@
 export const PRODUCT_IMAGE_FALLBACK = "/images/product-placeholder.jpg";
 
 const CATEGORY_COVER_FALLBACK: Record<string, string> = {
-  "tumbler-set": "/images/product-tumbler-set.jpg",
-  "eco-giftset": "/images/product-eco-set.jpg",
+  "tumbler-set": "/images/category-tumbler.jpg",
+  "eco-giftset": "/images/category-eco.jpg",
   "it-set": "/images/product-it-set.jpg",
   "team-building-set": "/images/category-team.jpg",
   "eco-friendly": "/images/product-eco-set.jpg",
   "classic-oriental": "/images/category-team.jpg",
   "novelty-self-care": "/images/product-tumbler-set.jpg",
   "executive-smart-tech": "/images/product-it-set.jpg",
-  "gift-set": "/images/product-tumbler-set.jpg",
-  drinkware: "/images/product-tumbler-set.jpg",
+  "gift-set": "/images/hero-giftset.jpg",
+  drinkware: "/images/category-tumbler.jpg",
   technology: "/images/product-it-set.jpg",
   wellness: "/images/product-tumbler-set.jpg",
-  office: "/images/category-team.jpg",
-  bag: "/images/product-eco-set.jpg",
-  eco: "/images/product-eco-set.jpg",
-  custom: "/images/product-placeholder.jpg",
+  bag: "/images/category-bags.jpg",
+  bags: "/images/category-bags.jpg",
+  eco: "/images/category-eco.jpg",
+  lifestyle: "/images/category-lifestyle.jpg",
+  apparel: "/images/category-apparel.jpg",
+  campaign: "/images/category-campaign.jpg",
+  packaging: "/images/category-packaging.jpg",
+  seasonal: "/images/hero-giftset.jpg",
+  custom: "/images/category-custom.jpg",
+  office: "/images/mockup-notebook.jpg",
 };
 
 export function isUsableImageSrc(src: string | null | undefined): boolean {
@@ -54,10 +60,10 @@ export function productCoverImage(
 }
 
 const SHORT_CATEGORY_TABS: Record<string, string> = {
-  "eco-giftset": "เซ็ตรักษ์โลก",
-  "it-set": "สายไอที",
-  "tumbler-set": "เซ็ตสำนักงาน",
-  "team-building-set": "ทริปบริษัท",
+  "eco-giftset": "รักษ์โลก",
+  "it-set": "ไอที",
+  "tumbler-set": "แก้ว/กระบอก",
+  "team-building-set": "ออฟฟิศ",
   "eco-friendly": "รักษ์โลก",
   "classic-oriental": "ตะวันออก",
   "novelty-self-care": "Wellness",
@@ -67,8 +73,14 @@ const SHORT_CATEGORY_TABS: Record<string, string> = {
   technology: "ไอที",
   wellness: "เวลเนส",
   office: "ออฟฟิศ",
-  bag: "กระเป๋า/ถุงผ้า",
+  bag: "กระเป๋า",
+  bags: "กระเป๋า",
   eco: "รักษ์โลก",
+  lifestyle: "ชีวิตประจำวัน",
+  apparel: "เสื้อผ้า",
+  campaign: "แคมเปญ",
+  packaging: "บรรจุภัณฑ์",
+  seasonal: "ตามฤดูกาล",
   custom: "สั่งผลิต",
   clearance: "เคลียร์",
 };

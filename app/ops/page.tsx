@@ -45,7 +45,7 @@ export default async function OpsIndexPage() {
           href: "/ops/quotes?status=new",
           title: "คำขอใหม่",
           count: newQuotes,
-          body: "ใบเสนอราคาที่ยังไม่ได้ติดต่อ — รวมจาก SmartGift เว็บ",
+          body: "ใบเสนอราคาที่ยังไม่ได้ติดต่อ — รวมจากเว็บ Smart Gift",
           hot: newQuotes > 0,
         }
       : null,
@@ -153,7 +153,7 @@ export default async function OpsIndexPage() {
           </div>
           {recentNew.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-forest/20 px-4 py-6 text-center text-sm text-ink/60">
-              ยังไม่มีคำขอสถานะใหม่ — เมื่อลูกค้าส่ง brief จาก SmartGift
+              ยังไม่มีคำขอสถานะใหม่ — เมื่อลูกค้าส่งคำขอจากเว็บ Smart Gift
               จะโผล่ที่นี่
             </p>
           ) : (
@@ -173,7 +173,7 @@ export default async function OpsIndexPage() {
                           </span>
                           {fromSmg ? (
                             <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[11px] font-medium text-forest">
-                              SmartGift เว็บ
+                              Smart Gift
                             </span>
                           ) : null}
                           <span className="text-[11px] text-ink/55">

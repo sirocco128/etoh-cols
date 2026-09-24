@@ -142,18 +142,18 @@ describe("formatCampaignSourceLabel", () => {
   it("labels smg-ui briefs as SmartGift web", () => {
     assert.equal(
       formatCampaignSourceLabel({ utmSource: "smg-ui" }),
-      "SmartGift เว็บ",
+      "Smart Gift",
     );
     assert.equal(
       formatCampaignSourceLabel({
         utmSource: "smg-ui",
         utmMedium: "brief",
       }),
-      "SmartGift เว็บ · brief",
+      "Smart Gift · brief",
     );
     assert.equal(
       formatCampaignSourceLabel({ detail: "[smg-ui brief]\nqty=10" }),
-      "SmartGift เว็บ",
+      "Smart Gift",
     );
   });
 

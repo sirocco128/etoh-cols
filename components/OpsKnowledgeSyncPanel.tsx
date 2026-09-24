@@ -64,7 +64,7 @@ export function OpsKnowledgeSyncPanel({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [note, setNote] = useState(
-    "กด «ดูสิ่งที่เปลี่ยน» ก่อน แล้วพิมพ์ อัปเดต เพื่อซิงค์คลัง Terabis",
+    "กด «ดูสิ่งที่เปลี่ยน» ก่อน แล้วพิมพ์ อัปเดต เพื่อซิงค์คลัง Smart Gift",
   );
   const [diff, setDiff] = useState<KnowledgeDiff | null>(null);
   const [source, setSource] = useState<"api" | "local" | null>(null);

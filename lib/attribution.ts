@@ -279,6 +279,8 @@ export function isSmartgiftWebLead(input: {
   return detail.includes("[smg-ui brief]");
 }
 
+export const SMART_GIFT_LEAD_BADGE = "Smart Gift";
+
 export function formatCampaignSourceLabel(input: {
   utmSource?: string | null;
   utmMedium?: string | null;
@@ -293,8 +295,8 @@ export function formatCampaignSourceLabel(input: {
     const campaign = (input.utmCampaign || "").trim();
     const extras = [medium, campaign].filter(Boolean);
     return extras.length
-      ? `SmartGift เว็บ · ${extras.join(" · ")}`
-      : "SmartGift เว็บ";
+      ? `${SMART_GIFT_LEAD_BADGE} · ${extras.join(" · ")}`
+      : SMART_GIFT_LEAD_BADGE;
   }
 
   const parts = [input.utmSource, input.utmMedium, input.utmCampaign]

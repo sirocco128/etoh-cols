@@ -46,8 +46,8 @@ export const OPS_AUDIT_ACTION_LABELS: Record<string, string> = {
   "schedule.notify": "ส่งเมลแจ้งนัดหมาย",
   "schedule.availability": "แก้ชั่วโมงว่าง",
   "schedule.book": "จองนัดหมายสาธารณะ",
-  "knowledge.diff": "เทียบคลังความรู้ Terabis",
-  "knowledge.sync": "อัปเดตคลังความรู้ Terabis",
+  "knowledge.diff": "เทียบคลังความรู้ Smart Gift",
+  "knowledge.sync": "อัปเดตคลังความรู้ Smart Gift",
 };
 
 export function opsAuditActionLabel(action: string): string {
@@ -100,7 +100,7 @@ export function describeOpsAuditImpact(params: {
     case "login":
       return text(detail.method) === "google"
         ? "เข้าสู่ระบบด้วย Google"
-        : "เข้าสู่ระบบคอนโซลปฏิบัติการ";
+        : "เข้าสู่ระบบคอนโซล Smart Gift";
     case "logout":
       return "ออกจากระบบ";
     case "quote.update":
@@ -132,9 +132,9 @@ export function describeOpsAuditImpact(params: {
     case "assistant.ops":
       return "เรียกผู้ช่วยเซลล์ (ไม่ออกใบเสนอราคาและไม่เปิดต้นทุนโรงงาน)";
     case "knowledge.diff":
-      return `เทียบคลัง Terabis — พบ ${text(detail.changedCount) || "0"} หัวข้อที่เปลี่ยน`;
+      return `เทียบคลัง Smart Gift — พบ ${text(detail.changedCount) || "0"} หัวข้อที่เปลี่ยน`;
     case "knowledge.sync":
-      return `อัปเดตคลัง Terabis${text(detail.lastSyncAt) ? ` เวลา ${text(detail.lastSyncAt)}` : ""} — ไม่แตะราคา/ต้นทุนโรงงาน`;
+      return `อัปเดตคลัง Smart Gift${text(detail.lastSyncAt) ? ` เวลา ${text(detail.lastSyncAt)}` : ""} — ไม่แตะราคา/ต้นทุนโรงงาน`;
     case "object.download":
       return `เปิดไฟล์ ${id || text(detail.key)}`;
     case "claim.create":

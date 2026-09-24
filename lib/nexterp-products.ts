@@ -96,7 +96,7 @@ export function adaptNexterpProduct(row: NexterpProductRow): Product {
   const priceMax = sell != null ? Math.round(sell * 1.08) : 0;
   const description =
     (row.description || "").trim() ||
-    `${row.name} (รหัส ${row.sku}) — สินค้าจากระบบคลัง ทาราบิท สั่งผลิต/สกรีนโลโก้ได้ตามออเดอร์`;
+    `${row.name} (รหัส ${row.sku}) — สินค้าจากระบบคลัง Smart Gift สั่งผลิต/สกรีนโลโก้ได้ตามออเดอร์`;
 
   const enableCustomDesign =
     categorySlug === "tumbler-set" && looksLikeTumblerSet(row.name);
@@ -134,11 +134,11 @@ export function adaptNexterpCategory(row: NexterpCategoryRow): Category {
   return {
     name: row.name_th,
     slug,
-    description: `${row.name_th} จากคลังสินค้า ทาราบิท (${row.product_count} รายการ) — สั่งผลิตและสกรีนโลโก้ได้`,
+    description: `${row.name_th} จากคลังสินค้า Smart Gift (${row.product_count} รายการ) — สั่งผลิตและสกรีนโลโก้ได้`,
     heroImage,
     seo: {
       seoTitle: row.name_th,
-      metaDescription: `เลือก${row.name_th} สกรีนโลโก้ สั่งผลิตตามออเดอร์ จากคลัง ทาราบิท`,
+      metaDescription: `เลือก${row.name_th} สกรีนโลโก้ สั่งผลิตตามออเดอร์ จากคลัง Smart Gift`,
       canonicalPath: `/giftset/${slug}`,
       ogImage: heroImage,
     },
@@ -167,7 +167,7 @@ export async function listNexterpCategories(): Promise<Category[]> {
     }
     bySlug.set(adapted.slug, {
       ...existing,
-      description: `${existing.name} / ${adapted.name} จากคลัง ทาราบิท`,
+      description: `${existing.name} / ${adapted.name} จากคลัง Smart Gift`,
     });
   }
   return [...bySlug.values()];

@@ -11,13 +11,22 @@ This project can use **three remotes**:
 ## Gitea on NAS (Portainer)
 
 ```
-http://192.168.1.30:3000/tong/premium-giftset-web.git
-https://git.next-dev.net/tong/premium-giftset-web
+http://192.168.1.30:3000/tong/mcp-alibaba.git
+https://git.next-dev.net/tong/mcp-alibaba
+```
+
+`origin` is already this remote (`git@gitea:tong/mcp-alibaba.git`).
+
+Mirror for the `poratania` Gitea user (after that repo exists and the `gitea-poratania` key is authorized):
+
+```
+git@gitea-poratania:poratania/mcp-alibaba.git
 ```
 
 ```bash
-git remote add gitea http://192.168.1.30:3000/tong/premium-giftset-web.git
-git push -u gitea main
+git remote add poratania git@gitea-poratania:poratania/mcp-alibaba.git
+git push -u origin main
+git push -u poratania main
 ```
 
 Portainer deploys `docker-compose.portainer.yml` from this repo. See [NAS-PORTAINER.md](./NAS-PORTAINER.md).

@@ -11,7 +11,7 @@ import {
   updateArticle,
   type SaveArticleInput,
 } from "@/lib/article-repository";
-import { isArticleStatus } from "@/lib/article-types";
+import { isArticleStatus, parseBangkokDateTimeLocal } from "@/lib/article-types";
 import { writeOpsAudit } from "@/lib/ops-audit";
 import { requireOpsActor } from "@/lib/ops-auth";
 import { isPlatformAdmin } from "@/lib/ops-roles";
@@ -24,7 +24,9 @@ const ERRORS: Record<string, string> = {
   invalid_slug: "รหัสหน้าเว็บต้องเป็นอังกฤษตัวเล็กคั่นขีด",
   article_not_found: "ไม่พบบทความ",
   unpublish_before_edit: "เก็บออกจากเว็บก่อนแล้วค่อยแก้",
-  create_failed: "สร้างบทความไม่สำเร็จ",
+  invalid_category: "หมวดบทความไม่ถูกต้อง",
+  invalid_publish_at: "เวลาเผยแพร่ไม่ถูกต้อง",
+  publish_at_not_future: "เวลาเผยแพร่ต้องอยู่ข้างหน้า",
 };
 
 function articleError(error: unknown): string {
@@ -44,6 +46,7 @@ function saveInputFromForm(formData: FormData): SaveArticleInput {
     seoTitle: String(formData.get("seoTitle") || "") || undefined,
     metaDescription: String(formData.get("metaDescription") || "") || undefined,
     keywords: String(formData.get("keywords") || "") || undefined,
+    category: String(formData.get("category") || "") || undefined,
   };
 }
 
@@ -79,6 +82,7 @@ export async function generateArticleDraftAction(
       keywords: drafted.draft.keywords,
       brief: `[${topic}] ${brief}`.slice(0, 800),
       source: "ai",
+      category: topic,
     });
     createdId = created.id;
     writeOpsAudit({
@@ -178,6 +182,7 @@ export async function setArticleStatusAction(
       to,
       isAdmin: isPlatformAdmin(actor.role),
       actorEmail: actor.email,
+      publishAt: to === "scheduled" ? parseBangkokDateTimeLocal(String(formData.get("publishAt") || "")) : null,
     });
     writeOpsAudit({
       actor,

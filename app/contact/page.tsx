@@ -59,8 +59,8 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       </h1>
       <p className="mt-4 max-w-2xl text-ink/80 leading-relaxed">
         {isMessage
-          ? `${COMPANY.legalName} — ${CONTACT_INQUIRY_INTRO}`
-          : `${COMPANY.legalName} — กรอกชื่อ บริษัท ช่องทางติดต่อ และจำนวนโดยประมาณ ทีมขายติดต่อกลับในเวลาทำการ หน้านี้ไม่ใช่การสั่งซื้อ และไม่มีการชำระเงิน หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์`}
+          ? `${COMPANY.brandName} — ${CONTACT_INQUIRY_INTRO}`
+          : `${COMPANY.brandName} — กรอกชื่อ บริษัท ช่องทางติดต่อ และจำนวนโดยประมาณ ทีมขายติดต่อกลับในเวลาทำการ หน้านี้ไม่ใช่การสั่งซื้อ และไม่มีการชำระเงิน หลังอนุมัติราคาแล้วจึงชำระมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ที่หน้าออเดอร์ ใบกำกับภาษีออกในนาม ${COMPANY.legalName}`}
       </p>
 
       <div

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   articleTransitionError,
+  formatBangkokDateTimeLocal,
+  parseBangkokDateTimeLocal,
   slugifyArticle,
   toArticleHtml,
 } from "../lib/article-types";
@@ -13,6 +15,8 @@ import {
   mediaForTopic,
   resolveArticleTopic,
 } from "../lib/article-media-catalog";
+import { PLANNED_ARTICLES } from "../lib/article-publish-plan";
+import { isValidSeoDescription, isValidSeoTitle } from "../lib/seo-limits";
 
 describe("article blog", () => {
   it("slugifyArticle falls back when the title is Thai-only", () => {
@@ -148,5 +152,45 @@ describe("article blog", () => {
     assert.match(withSources.body, /Mammalwatcher|travel-khao-yai|commons\.wikimedia/);
     assert.equal(withSources.coverUrl, "/images/articles/travel-khao-yai.jpg");
     assert.equal(withSources.topic, "travel");
+  });
+
+  it("schedule transitions stay with an admin and a future time", () => {
+    assert.equal(
+      articleTransitionError({ from: "review", to: "scheduled", isAdmin: false }),
+      "เฉพาะผู้ดูแลจึงจะตั้งเวลาเผยแพร่ได้",
+    );
+    assert.equal(
+      articleTransitionError({ from: "review", to: "scheduled", isAdmin: true }),
+      null,
+    );
+    assert.equal(
+      articleTransitionError({ from: "scheduled", to: "scheduled", isAdmin: true }),
+      null,
+    );
+    assert.equal(
+      articleTransitionError({ from: "scheduled", to: "draft", isAdmin: false }),
+      "เฉพาะผู้ดูแลจึงจะยกเลิกเวลาได้",
+    );
+    const morning = parseBangkokDateTimeLocal("2026-09-25T09:00");
+    assert.ok(morning);
+    assert.equal(formatBangkokDateTimeLocal(morning.toISOString()), "2026-09-25T09:00");
+  });
+
+  it("queues twenty articles across the five blog categories", () => {
+    assert.equal(PLANNED_ARTICLES.length, 20);
+    const slugs = new Set(PLANNED_ARTICLES.map((article) => article.slug));
+    assert.equal(slugs.size, 20);
+    const counts: Record<string, number> = {};
+    let previous = 0;
+    for (const article of PLANNED_ARTICLES) {
+      counts[article.category] = (counts[article.category] || 0) + 1;
+      assert.equal(article.categoryName.length > 0, true);
+      assert.equal(isValidSeoTitle(article.seoTitle), true);
+      assert.equal(isValidSeoDescription(article.metaDescription), true);
+      assert.ok(article.publishAt.getTime() > previous);
+      previous = article.publishAt.getTime();
+      assert.equal(formatBangkokDateTimeLocal(article.publishAt.toISOString()).endsWith("T09:00"), true);
+    }
+    assert.deepEqual(counts, { gift: 8, earth: 3, travel: 3, it: 3, ai: 3 });
   });
 });

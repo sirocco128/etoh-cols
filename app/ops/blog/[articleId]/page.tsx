@@ -6,7 +6,8 @@ import {
 } from "@/app/actions/ops-articles";
 import { OpsCycleForm } from "@/components/OpsCycleForm";
 import { getArticleById } from "@/lib/article-repository";
-import { ARTICLE_STATUS_LABELS, type ArticleStatus } from "@/lib/article-types";
+import { ARTICLE_STATUS_LABELS, formatBangkokDateTimeLocal, type ArticleStatus } from "@/lib/article-types";
+import { ARTICLE_TOPIC_LABELS, ARTICLE_TOPICS, resolveArticleTopic } from "@/lib/article-media-catalog";
 import { requireOpsPage } from "@/lib/ops-auth";
 import { isPlatformAdmin } from "@/lib/ops-roles";
 
@@ -21,7 +22,9 @@ const STATUS_ACTIONS: Array<{
 }> = [
   { from: "draft", to: "review", label: "ส่งตรวจ" },
   { from: "review", to: "draft", label: "ตีกลับ" },
-  { from: "review", to: "live", label: "เผยแพร่", adminOnly: true },
+  { from: "review", to: "live", label: "เผยแพร่ทันที", adminOnly: true },
+  { from: "scheduled", to: "live", label: "เผยแพร่ทันที", adminOnly: true },
+  { from: "scheduled", to: "draft", label: "ยกเลิกเวลา", adminOnly: true },
   { from: "live", to: "archived", label: "เก็บออกจากเว็บ" },
   { from: "archived", to: "draft", label: "เปิดร่างใหม่" },
 ];
@@ -54,6 +57,8 @@ export default async function OpsArticlePage({
         <h1 className="mt-3 text-2xl font-bold text-forest">{article.title}</h1>
         <p className="mt-2 text-sm text-ink/70">
           {ARTICLE_STATUS_LABELS[article.status]}
+          {" · "}
+          {ARTICLE_TOPIC_LABELS[resolveArticleTopic(article.category)]}
           {article.source === "ai" ? " · ผู้ช่วย" : " · คนเขียน"}
           {" · "}
           <span className="font-mono text-xs">{article.slug}</span>
@@ -85,6 +90,24 @@ export default async function OpsArticlePage({
               </OpsCycleForm>
             ))}
           </div>
+          {isAdmin && (article.status === "review" || article.status === "scheduled") ? (
+            <div className="mt-6 max-w-sm">
+              <OpsCycleForm action={setArticleStatusAction} submitLabel="ตั้งเวลาเผยแพร่">
+                <input type="hidden" name="articleId" value={article.id} />
+                <input type="hidden" name="to" value="scheduled" />
+                <label className="block text-sm">
+                  <span className="font-medium">เวลาเผยแพร่ (เวลาไทย)</span>
+                  <input
+                    type="datetime-local"
+                    name="publishAt"
+                    required
+                    defaultValue={formatBangkokDateTimeLocal(article.publishedAt)}
+                    className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+                  />
+                </label>
+              </OpsCycleForm>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -138,6 +161,20 @@ export default async function OpsArticlePage({
                   defaultValue={article.body}
                   className="mt-1 w-full rounded border border-forest/20 px-3 py-2 font-mono text-sm"
                 />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium">หมวดบทความ</span>
+                <select
+                  name="category"
+                  defaultValue={article.category}
+                  className="mt-1 w-full rounded border border-forest/20 px-3 py-2"
+                >
+                  {ARTICLE_TOPICS.map((topic) => (
+                    <option key={topic} value={topic}>
+                      {ARTICLE_TOPIC_LABELS[topic]}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="block text-sm">
                 <span className="font-medium">ผู้เขียน</span>

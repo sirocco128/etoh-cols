@@ -48,7 +48,7 @@ function openRouterHeaders(): Record<string, string> | null {
     "Content-Type": "application/json",
   };
   const referer = toHttpHeaderValue(config.siteUrl, "http://localhost:3000");
-  const title = toHttpHeaderValue(config.siteName, "Terabis");
+  const title = toHttpHeaderValue(config.siteName, "Smart Gift");
   if (referer) headers["HTTP-Referer"] = referer;
   if (title) headers["X-Title"] = title;
   return headers;

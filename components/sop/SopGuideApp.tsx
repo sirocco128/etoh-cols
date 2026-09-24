@@ -96,7 +96,7 @@ export function SopGuideApp() {
     <div className="sop-guide relative min-h-dvh bg-[linear-gradient(165deg,#f4f7f4_0%,#e9f0ea_42%,#f7f5f0_100%)] text-ink">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(176,138,62,0.18),_transparent_60%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(230,83,18,0.2),_transparent_60%)]"
       />
 
       <header className="sticky top-0 z-40 border-b border-forest/10 bg-forest/95 text-paper backdrop-blur-md pt-[env(safe-area-inset-top)]">

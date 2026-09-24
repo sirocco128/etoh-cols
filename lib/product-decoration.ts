@@ -13,14 +13,24 @@ export const LOGO_DECORATION_OPTIONS: LogoDecorationOption[] = [
     hint: "พิมพ์โลโก้บนผิวเรียบ เช่น ถุงผ้า กล่อง กระบอกน้ำ",
   },
   {
-    value: "uv-print",
-    label: "พิมพ์ UV",
-    hint: "ลายคมชัด สีเต็ม เหมาะผิวแข็งและของพรีเมียม",
+    value: "emboss",
+    label: "ปั๊มนูน",
+    hint: "นูนโลโก้บนหนัง ปกสมุด หรือกล่อง",
   },
   {
     value: "laser",
     label: "เลเซอร์",
     hint: "แกะโลโก้บนโลหะหรืออะลูมิเนียม ไม่หลุดลอกง่าย",
+  },
+  {
+    value: "full-color",
+    label: "พิมพ์สี",
+    hint: "ลายสีเต็มบนผิวที่รับงานพิมพ์ได้",
+  },
+  {
+    value: "uv-print",
+    label: "พิมพ์ UV",
+    hint: "ลายคมชัด สีเต็ม เหมาะผิวแข็งและของพรีเมียม",
   },
   {
     value: "embroidery",
@@ -32,9 +42,9 @@ export const LOGO_DECORATION_OPTIONS: LogoDecorationOption[] = [
 const ALL_LOGO_METHODS = LOGO_DECORATION_OPTIONS.map((item) => item.value);
 
 const METHODS_BY_SLUG: Record<string, LogoDecorationOption["value"][]> = {
-  "tumbler-notebook-pen-set": ["screen-print", "uv-print", "laser"],
-  "eco-tote-bamboo-set": ["screen-print", "embroidery", "uv-print"],
-  "it-powerbank-set": ["laser", "uv-print", "screen-print"],
+  "tumbler-notebook-pen-set": ["screen-print", "uv-print", "laser", "emboss"],
+  "eco-tote-bamboo-set": ["screen-print", "embroidery", "uv-print", "full-color"],
+  "it-powerbank-set": ["laser", "uv-print", "screen-print", "full-color"],
 };
 
 export function decorationValuesForProduct(

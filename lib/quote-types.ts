@@ -1,10 +1,25 @@
 export const DECORATION_METHODS = [
   "screen-print",
-  "uv-print",
+  "emboss",
   "laser",
+  "full-color",
+  "uv-print",
   "embroidery",
   "not-sure",
 ] as const;
+
+export const DECORATION_METHOD_OPTIONS: ReadonlyArray<{
+  value: DecorationMethod;
+  label: string;
+}> = [
+  { value: "not-sure", label: "ยังไม่แน่ใจ" },
+  { value: "screen-print", label: "สกรีน" },
+  { value: "emboss", label: "ปั๊มนูน" },
+  { value: "laser", label: "เลเซอร์" },
+  { value: "full-color", label: "พิมพ์สี" },
+  { value: "uv-print", label: "พิมพ์ UV" },
+  { value: "embroidery", label: "ปัก" },
+];
 
 /** Max length for the submitted product-interest summary (DB column is TEXT). */
 export const PRODUCT_INTEREST_MAX = 800;

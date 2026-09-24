@@ -37,7 +37,7 @@ export function Navbar({
       <div className="mx-auto flex max-w-content items-center justify-between gap-2 px-page py-2.5 sm:gap-4 sm:py-3">
         <Link
           href="/"
-          className="shrink-0 text-base font-bold tracking-tight text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass xs:text-lg dark:text-brass-soft"
+          className="shrink-0 text-base font-bold tracking-tight text-brass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass xs:text-lg"
         >
           {site.name}
         </Link>

@@ -20,7 +20,7 @@ export function detectReplyLang(text: string): ReplyLang {
 
 export function buyerLanguageInstruction(lang: ReplyLang): string {
   const scope =
-    "You are the SmartGift assistant for เทราบิส (Therabis). Translate the knowledge snippets. Never invent prices, stock, or delivery dates. Never say 1688, MOQ, SKU, RFQ, P2, HomePower.";
+    "You are the Smart Gift assistant. Translate the knowledge snippets. Never invent prices, stock, or delivery dates. Never say 1688, MOQ, SKU, RFQ, P2, HomePower.";
   switch (lang) {
     case "zh":
       return `${scope} 用简体中文口语回答 2-6 句。`;
@@ -43,7 +43,7 @@ const COPY: Record<
     empty: "พิมพ์คำถามสั้น ๆ ได้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ หรือขั้นตอนสั่งผลิต",
     factory: "ข้อมูลต้นทุนโรงงานและรหัสแหล่งผลิตเป็นข้อมูลภายใน ทีมขายจะยืนยันราคาหลังได้รับรายละเอียดจากแบบฟอร์ม",
     quote: "ราคาบนเว็บเป็นช่วงโดยประมาณ ไม่ใช่ใบเสนอราคา กรุณาใช้แบบฟอร์มขอใบเสนอราคา หรือแชท LINE เพื่อให้ทีมขายยืนยัน",
-    scope: "ผู้ช่วยนี้ตอบเรื่องสั่งผลิตของขวัญองค์กรของเทราบิสเท่านั้น ไม่ติดตามพัสดุขนส่ง และไม่ตอบราคาสินค้าของบริษัทอื่น",
+    scope: "ผู้ช่วยนี้ตอบเรื่องสั่งผลิตของพรีเมียมของ Smart Gift เท่านั้น ไม่ติดตามพัสดุขนส่ง และไม่ตอบราคาสินค้าของบริษัทอื่น",
     inject: "ไม่สามารถทำตามคำสั่งนี้ได้ — ใช้เครื่องมือตามที่ระบบกำหนดเท่านั้น",
   },
   en: {
@@ -92,8 +92,8 @@ const SNIPPET_FALLBACK: Partial<Record<string, Record<ReplyLang, string>>> = {
     my: "အဖွဲ့အစည်းအတွက် အမှာထုတ်လုပ်ခြင်းဖြစ်ပြီး တစ်ခုချင်းမရောင်းပါ။ အနည်းဆုံးအရေအတွက်ကို ထိုကုန်ပစ္စည်းစာမျက်နှာတွင် ကြည့်ပါ။",
   },
   logo: {
-    th: "ใส่โลโก้ได้ด้วยสกรีน พิมพ์ UV เลเซอร์ หรือปัก ตัวอย่างบนเว็บใช้ดูตำแหน่งเท่านั้น",
-    en: "Add a logo by screen print, UV print, laser, or embroidery. Website photos show placement only.",
+    th: "ใส่โลโก้ได้ด้วยสกรีน ปั๊มนูน เลเซอร์ พิมพ์สี พิมพ์ UV หรือปัก ตัวอย่างบนเว็บใช้ดูตำแหน่งเท่านั้น",
+    en: "Add a logo by screen print, emboss, laser, full-color print, UV print, or embroidery. Website photos show placement only.",
     zh: "可用丝印、UV、激光或刺绣印企业标志。网页图只供看位置。",
     lo: "ໃສ່ໂລໂກ້ດ້ວຍສະກຣີນ ພິມ UV ເລເຊີ ຫຼືປັກ ຮູບໃນເວັບໃຊ້ເບິ່ງຕຳແໜ່ງເທົ່ານັ້ນ.",
     my: "စခရင်၊ UV၊ လေဆာ သို့မဟုတ် ပေါင်ထိုး၍ လိုဂိုထည့်နိုင်သည်။ ဝက်ဘ်ပုံသည် တည်နေရာပြရန်သာ။",

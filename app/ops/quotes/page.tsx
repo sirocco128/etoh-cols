@@ -122,7 +122,7 @@ export default async function OpsQuotesPage({
         <p className="mt-6 rounded-xl border border-forest/10 px-4 py-8 text-center text-sm text-ink/60">
           ยังไม่มีคำขอ
           {leadStatus === "new"
-            ? " สถานะใหม่ — เมื่อลูกค้าส่งจาก SmartGift หรือแบบฟอร์ม จะขึ้นที่นี่"
+            ? " สถานะใหม่ — เมื่อลูกค้าส่งจากเว็บ Smart Gift หรือแบบฟอร์ม จะขึ้นที่นี่"
             : null}
         </p>
       ) : (
@@ -149,7 +149,7 @@ export default async function OpsQuotesPage({
                     </Link>
                     {fromSmg ? (
                       <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[11px] font-medium text-forest">
-                        SmartGift เว็บ
+                        Smart Gift
                       </span>
                     ) : null}
                     {isNew ? (
@@ -228,7 +228,7 @@ export default async function OpsQuotesPage({
                         <div className="flex flex-wrap items-center gap-1.5">
                           {fromSmg ? (
                             <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[11px] font-medium text-forest">
-                              SmartGift เว็บ
+                              Smart Gift
                             </span>
                           ) : null}
                           <span>{formatCampaignSourceLabel(row)}</span>

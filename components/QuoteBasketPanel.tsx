@@ -20,12 +20,14 @@ import { minNeededDateYmd } from "@/lib/bangkok-date";
 
 const DECORATION_OPTIONS = [
   { value: "", label: "ยังไม่เลือก" },
-  { value: "screen-print", label: "สกรีนพิมพ์" },
-  { value: "uv-print", label: "พิมพ์ UV" },
+  { value: "not-sure", label: "ยังไม่แน่ใจ" },
+  { value: "screen-print", label: "สกรีน" },
+  { value: "emboss", label: "ปั๊มนูน" },
   { value: "laser", label: "เลเซอร์" },
+  { value: "full-color", label: "พิมพ์สี" },
+  { value: "uv-print", label: "พิมพ์ UV" },
   { value: "embroidery", label: "ปัก" },
   { value: "foil", label: "ปั๊มฟอยล์" },
-  { value: "not-sure", label: "ยังไม่แน่ใจ" },
 ] as const;
 
 export function QuoteBasketPanel() {

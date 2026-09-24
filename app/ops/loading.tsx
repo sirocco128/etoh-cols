@@ -15,7 +15,7 @@ export default function OpsLoading() {
           </div>
         ))}
       </div>
-      <span className="sr-only">กำลังโหลดคอนโซลปฏิบัติการ</span>
+      <span className="sr-only">กำลังโหลดคอนโซล Smart Gift</span>
     </div>
   );
 }

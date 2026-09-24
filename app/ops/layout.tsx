@@ -4,13 +4,14 @@ import { getOpsActor, isOpsAuthConfigured } from "@/lib/ops-auth";
 import { opsDeskUserLine } from "@/lib/ops-desk-guard";
 import { buildOpsNavLinks, opsActorLabel } from "@/lib/ops-nav";
 import { OpsNav } from "@/components/OpsNav";
+import { OPS_CONSOLE_KICKER, OPS_CONSOLE_TITLE } from "@/lib/ux-copy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
-  title: "คอนโซลปฏิบัติการ",
+  title: `${OPS_CONSOLE_TITLE} · ${OPS_CONSOLE_KICKER}`,
 };
 
 export default async function OpsLayout({
@@ -40,7 +41,8 @@ export default async function OpsLayout({
       <header className="sticky top-0 z-30 border-b border-forest/10 bg-forest text-paper print:hidden pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-6xl min-w-0 flex-wrap items-center gap-3 px-page py-3">
           <Link href="/ops" className="text-lg font-semibold tracking-tight">
-            คอนโซลปฏิบัติการ
+            <span className="text-brass-soft">{OPS_CONSOLE_TITLE}</span>
+            <span className="ml-2 text-sm font-medium text-paper/70">{OPS_CONSOLE_KICKER}</span>
           </Link>
         </div>
       </header>

@@ -18,7 +18,8 @@ const DDL = `CREATE TABLE IF NOT EXISTS sg_article (
   body MEDIUMTEXT NOT NULL,
   cover_url VARCHAR(512) NULL,
   author VARCHAR(120) NOT NULL DEFAULT 'ทีมคอนเทนต์',
-  status ENUM('draft','review','live','archived') NOT NULL DEFAULT 'draft',
+  category VARCHAR(32) NOT NULL DEFAULT 'gift',
+  status ENUM('draft','review','scheduled','live','archived') NOT NULL DEFAULT 'draft',
   source ENUM('human','ai') NOT NULL DEFAULT 'human',
   brief VARCHAR(800) NULL,
   seo_title VARCHAR(60) NULL,
@@ -31,7 +32,8 @@ const DDL = `CREATE TABLE IF NOT EXISTS sg_article (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uk_sg_article_slug (slug),
-  KEY idx_sg_article_status (status, published_at)
+  KEY idx_sg_article_status (status, published_at),
+  KEY idx_sg_article_category (category, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`;
 
 let ensured: Promise<void> | null = null;
@@ -50,11 +52,30 @@ export async function articleTableReady(): Promise<boolean> {
   }
 }
 
+async function columnExists(column: string): Promise<boolean> {
+  const rows = await smartgiftQuery<RowDataPacket[]>(
+    `SELECT 1 AS ok FROM information_schema.columns
+     WHERE table_schema = DATABASE() AND table_name = 'sg_article' AND column_name = :column
+     LIMIT 1`,
+    { column },
+  );
+  return rows.length > 0;
+}
+
 async function ensureOnce(): Promise<void> {
   if (!isSmartgiftMysqlEnabled()) {
     throw new Error("SmartGift MySQL is not enabled");
   }
   await smartgiftExec(DDL);
+  if (!(await columnExists("category"))) {
+    await smartgiftExec(
+      `ALTER TABLE sg_article ADD COLUMN category VARCHAR(32) NOT NULL DEFAULT 'gift' AFTER author`,
+    );
+  }
+  await smartgiftExec(
+    `ALTER TABLE sg_article
+     MODIFY status ENUM('draft','review','scheduled','live','archived') NOT NULL DEFAULT 'draft'`,
+  );
 }
 
 export async function ensureArticleSchema(): Promise<void> {

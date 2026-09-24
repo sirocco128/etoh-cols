@@ -20,8 +20,8 @@ Related: [STAGING-DEPLOY.md](./STAGING-DEPLOY.md) · [GIT-REMOTES.md](./GIT-REMO
 ## Gitea
 
 ```
-http://192.168.1.30:3000/tong/premium-giftset-web.git
-https://git.next-dev.net/tong/premium-giftset-web
+http://192.168.1.30:3000/tong/mcp-alibaba.git
+https://git.next-dev.net/tong/mcp-alibaba
 ```
 
 Push `main` (or the current branch), then point Portainer at that repo.
@@ -30,7 +30,7 @@ Push `main` (or the current branch), then point Portainer at that repo.
 
 1. Open Portainer on the NAS (`https://192.168.1.30:9443` or `:9000`).
 2. Stacks → Add stack → **Repository**.
-3. Repository URL: `http://192.168.1.30:3000/tong/premium-giftset-web.git`
+3. Repository URL: `http://192.168.1.30:3000/tong/mcp-alibaba.git`
 4. Compose path: `docker-compose.portainer.yml`
 5. Authenticate as Gitea user `tong`.
 6. Paste env from `.env.portainer.example` into the stack environment (never commit a filled `.env.portainer`).

@@ -1,12 +1,13 @@
+import { SMART_GIFT_PARTNER_POINTS } from "@/lib/smart-gift-method";
+
 /**
- * Known company facts for บริษัท เทราบิส จำกัด (not catalog/product data).
- * Legal name, tax ID, and registered address come from the FlowAccount export
- * filename and the Department of Business Development record (0105556003873).
- * Do not invent phone, email, or LINE here.
+ * Public brand is Smart Gift. The registered juristic person, tax ID, and
+ * address stay บริษัท เทราบิส จำกัด (DBD 0105556003873) so invoices and
+ * payment slips match the bank account. Do not invent phone, email, or LINE.
  */
 
 export const COMPANY = {
-  brandName: "เทราบิส",
+  brandName: "Smart Gift",
   legalName: "บริษัท เทราบิส จำกัด",
   legalNameEn: "Terabiz Company Limited",
   taxId: "0105556003873",
@@ -19,27 +20,10 @@ export const COMPANY = {
   countryCode: "TH",
   countryTh: "ประเทศไทย",
   description:
-    "รับผลิตของขวัญองค์กรและสินค้าพรีเมียม สกรีนโลโก้ได้ — สั่งตามออเดอร์แล้วผลิตจากจีน ไม่ใช่ร้านค้าพร้อมส่ง",
+    "ของพรีเมียมครบทุกหมวดสำหรับทุกแบรนด์และทุกแคมเปญ สกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน แล้วขอใบเสนอราคา",
 } as const;
 
-export const COMPANY_SERVICES = [
-  {
-    title: "รับผลิตตามออเดอร์",
-    body: "ลูกค้ายืนยันสเปคและโลโก้ก่อน แล้วจึงสั่งผลิต ไม่ตัดของจากคลังสำเร็จรูป",
-  },
-  {
-    title: "สกรีนโลโก้ใส่ได้",
-    body: "สกรีน พิมพ์ UV เลเซอร์ หรือปัก ตามวัสดุของชิ้นงาน",
-  },
-  {
-    title: "ผลิตจากจีน จัดส่งไทย",
-    body: "หลังอนุมัติแบบ สั่งโรงงาน แล้วขนส่งเข้าไทย ตรวจคุณภาพและแพ็กตามจุดส่ง",
-  },
-  {
-    title: "ขอใบเสนอราคา",
-    body: "ติดต่อผ่านแบบฟอร์มโดยยังไม่ชำระเงิน หลังอนุมัติราคาแล้วจึงวางบิลมัดจำหรือเต็มจำนวนผ่านพร้อมเพย์ และออกใบกำกับภาษีในนามบริษัท",
-  },
-] as const;
+export const COMPANY_SERVICES = SMART_GIFT_PARTNER_POINTS;
 
 export function formatRegisteredAddress(parts?: {
   streetAddress?: string;

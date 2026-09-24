@@ -22,7 +22,7 @@ export type OpenRouterMockupConfig = {
  */
 export function toHttpHeaderValue(
   value: string | undefined,
-  fallback = "Terabis",
+  fallback = "Smart Gift",
 ): string | undefined {
   const trimmed = (value || "").trim();
   if (!trimmed) return undefined;
@@ -55,7 +55,7 @@ export function getOpenRouterMockupConfig(): OpenRouterMockupConfig {
       (process.env.NEXT_PUBLIC_SITE_URL || "").trim() || undefined,
       "http://localhost:3000",
     ),
-    siteName: toHttpHeaderValue(appTitle, "Terabis"),
+    siteName: toHttpHeaderValue(appTitle, "Smart Gift"),
   };
 }
 
@@ -136,7 +136,7 @@ export async function generateOpenRouterImage(
     "Content-Type": "application/json",
   };
   const referer = toHttpHeaderValue(config.siteUrl, "http://localhost:3000");
-  const title = toHttpHeaderValue(config.siteName, "Terabis");
+  const title = toHttpHeaderValue(config.siteName, "Smart Gift");
   if (referer) headers["HTTP-Referer"] = referer;
   if (title) headers["X-Title"] = title;
 

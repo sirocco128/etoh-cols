@@ -34,7 +34,7 @@ describe("product catalog images", () => {
       productCoverImage([], "it-set"),
       "/images/product-it-set.jpg",
     );
-    assert.equal(categoryTabLabel("it-set", "Gift Set อุปกรณ์ไอที"), "สายไอที");
+    assert.equal(categoryTabLabel("it-set", "Gift Set อุปกรณ์ไอที"), "ไอที");
     assert.equal(
       productCoverImage([], "executive-smart-tech"),
       "/images/product-it-set.jpg",

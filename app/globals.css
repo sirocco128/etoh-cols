@@ -3,7 +3,7 @@
  * ──────────────────────────────────────────────
  * User:        ผู้จัดซื้อองค์กรที่ต้องการของขวัญพรีเมียม — ต้องการความเชื่อมั่นและภาพลักษณ์หรู
  * Tension:     Luxury editorial BUT operational density
- * Aesthetic:   Premium packaging — forest + brass, glass, micro-gradients
+ * Aesthetic:   Smart Gift catalog — charcoal type, brand orange, warm paper
  * Type:        Geist (display) + Sarabun (Thai body)
  * Motion:      Cinematic 450–550ms cubic-bezier(0.22, 1, 0.36, 1)
  * Signature:   Glass navbar + brass hairline + premium mesh
@@ -15,30 +15,30 @@
 
 :root {
   color-scheme: light;
-  --color-forest: #14352a;
-  --color-forest-rgb: 20 53 42;
-  --color-forest-light: #1e4a3a;
-  --color-forest-light-rgb: 30 74 58;
-  --color-forest-mist: #e9f0ea;
-  --color-forest-mist-rgb: 233 240 234;
-  --color-brass: #b08a3e;
-  --color-brass-rgb: 176 138 62;
-  --color-brass-soft: #d9c08a;
-  --color-brass-soft-rgb: 217 192 138;
-  --color-ink: #22282c;
-  --color-ink-rgb: 34 40 44;
+  --color-forest: #1c1c1c;
+  --color-forest-rgb: 28 28 28;
+  --color-forest-light: #333333;
+  --color-forest-light-rgb: 51 51 51;
+  --color-forest-mist: #fff3eb;
+  --color-forest-mist-rgb: 255 243 235;
+  --color-brass: #e65312;
+  --color-brass-rgb: 230 83 18;
+  --color-brass-soft: #ff7a3c;
+  --color-brass-soft-rgb: 255 122 60;
+  --color-ink: #2a2a2a;
+  --color-ink-rgb: 42 42 42;
   --color-paper: #ffffff;
   --color-paper-rgb: 255 255 255;
-  --background: #f7f5f0;
-  --foreground: #22282c;
+  --background: #fff8f4;
+  --foreground: #1c1c1c;
   --card: #ffffff;
-  --muted: #e9f0ea;
-  --border: rgba(20, 53, 42, 0.12);
-  --ring: #b08a3e;
-  --primary: #14352a;
+  --muted: #fff3eb;
+  --border: rgba(28, 28, 28, 0.1);
+  --ring: #e65312;
+  --primary: #e65312;
   --primary-foreground: #ffffff;
-  --accent: #b08a3e;
-  --accent-foreground: #14352a;
+  --accent: #e65312;
+  --accent-foreground: #ffffff;
   --font-size-base: 1.0625rem;
   --line-height-body: 1.65;
   --letter-spacing-display: -0.03em;
@@ -130,20 +130,20 @@ html[data-theme="teal"] {
 
 .dark {
   color-scheme: dark;
-  --color-forest-mist: #1a332b;
-  --color-forest-mist-rgb: 26 51 43;
-  --color-ink: #e8eee9;
-  --color-ink-rgb: 232 238 233;
-  --color-paper: #10211b;
-  --color-paper-rgb: 16 33 27;
-  --background: #0c1915;
-  --foreground: #e8eee9;
-  --card: #163028;
-  --muted: #1a332b;
+  --color-forest-mist: #2a211c;
+  --color-forest-mist-rgb: 42 33 28;
+  --color-ink: #f6f1ec;
+  --color-ink-rgb: 246 241 236;
+  --color-paper: #14110f;
+  --color-paper-rgb: 20 17 15;
+  --background: #100e0c;
+  --foreground: #f6f1ec;
+  --card: #241c18;
+  --muted: #2a211c;
   --border: rgba(255, 255, 255, 0.1);
-  --primary: #d9c08a;
-  --primary-foreground: #14352a;
-  --accent-foreground: #14352a;
+  --primary: #ff7a3c;
+  --primary-foreground: #1c1c1c;
+  --accent-foreground: #1c1c1c;
 }
 
 html.dark[data-theme="navy"] {
@@ -195,30 +195,36 @@ html.dark[data-theme="teal"] {
    but follows the selected html[data-theme] palette. */
 .ops-shell {
   color-scheme: light;
-  --color-forest: #14352a;
-  --color-forest-rgb: 20 53 42;
-  --color-forest-light: #1e4a3a;
-  --color-forest-light-rgb: 30 74 58;
-  --color-forest-mist: #e9f0ea;
-  --color-forest-mist-rgb: 233 240 234;
-  --color-brass: #b08a3e;
-  --color-brass-rgb: 176 138 62;
-  --color-brass-soft: #d9c08a;
-  --color-brass-soft-rgb: 217 192 138;
-  --color-ink: #22282c;
-  --color-ink-rgb: 34 40 44;
+  --color-forest: #1c1c1c;
+  --color-forest-rgb: 28 28 28;
+  --color-forest-light: #333333;
+  --color-forest-light-rgb: 51 51 51;
+  --color-forest-mist: #fff3eb;
+  --color-forest-mist-rgb: 255 243 235;
+  --color-brass: #e65312;
+  --color-brass-rgb: 230 83 18;
+  --color-brass-soft: #ff7a3c;
+  --color-brass-soft-rgb: 255 122 60;
+  --color-ink: #2a2a2a;
+  --color-ink-rgb: 42 42 42;
   --color-paper: #ffffff;
   --color-paper-rgb: 255 255 255;
-  --background: #e9f0ea;
-  --foreground: #22282c;
+  --background: #fff8f4;
+  --foreground: #1c1c1c;
   --card: #ffffff;
-  --muted: #e9f0ea;
-  --border: rgba(20, 53, 42, 0.12);
-  --ring: #b08a3e;
-  --primary: #14352a;
+  --muted: #fff3eb;
+  --border: rgba(28, 28, 28, 0.1);
+  --ring: #e65312;
+  --primary: #e65312;
   --primary-foreground: #ffffff;
-  --accent: #b08a3e;
-  --accent-foreground: #14352a;
+  --accent: #e65312;
+  --accent-foreground: #ffffff;
+}
+
+/* Solid brand buttons stay white on orange, including links that also set text-forest. */
+a.bg-brass,
+button.bg-brass {
+  color: var(--accent-foreground);
 }
 
 .ops-desk-watermark {
@@ -469,7 +475,7 @@ html[data-theme="teal"] .ops-shell {
 html.dark .hover\:text-forest:hover,
 html.dark .group-hover\:text-forest:hover,
 html.dark .group:hover .group-hover\:text-forest {
-  color: #d5e8dc;
+  color: #ffd8c4;
 }
 
 html.dark[data-theme="navy"] .text-forest {

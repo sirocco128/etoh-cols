@@ -45,7 +45,7 @@ describe("ops nav", () => {
     assert.equal(isOpsNavActive("/ops", "/ops/board"), false);
     assert.equal(admin.some((link) => link.href === "/ops/users" && link.group === "system"), true);
     assert.equal(admin.some((link) => link.href === "/ops/knowledge-sync" && link.group === "system"), true);
-    assert.equal(admin.find((link) => link.href === "/ops/knowledge-sync")?.label, "อัปเดตคลัง Terabis");
+    assert.equal(admin.find((link) => link.href === "/ops/knowledge-sync")?.label, "อัปเดตคลัง Smart Gift");
     assert.equal(admin.some((link) => link.href === "/ops/manual" && link.group === "system"), true);
     assert.equal(admin.find((link) => link.href === "/ops/manual")?.label, "คู่มือการทำงาน");
     assert.equal(admin.some((link) => link.href === "/ops/holds" && link.group === "cycle"), true);

@@ -66,7 +66,7 @@ describe("openrouter header sanitization", () => {
   });
 
   it("replaces Thai site names so fetch headers stay ByteString-safe", () => {
-    assert.equal(toHttpHeaderValue("เทราบิส"), "Terabis");
+    assert.equal(toHttpHeaderValue("เทราบิส"), "Smart Gift");
     assert.equal(toHttpHeaderValue("เทราบิส", "GiftPro"), "GiftPro");
   });
 });

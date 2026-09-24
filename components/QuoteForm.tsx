@@ -47,18 +47,13 @@ import {
   MOCKUP_BRIEF_EVENT,
   type MockupBriefEventDetail,
 } from "@/lib/mockup-studio";
+import { DECORATION_METHOD_OPTIONS } from "@/lib/quote-types";
 
 const DRAFT_KEY = "giftpro:quote-form-draft:v1";
 
 const initialState: QuoteActionState = { ok: false };
 
-const DECORATION_OPTIONS = [
-  { value: "not-sure", label: "ยังไม่แน่ใจ" },
-  { value: "screen-print", label: "สกรีนพิมพ์" },
-  { value: "uv-print", label: "พิมพ์ UV" },
-  { value: "laser", label: "เลเซอร์" },
-  { value: "embroidery", label: "ปัก" },
-] as const;
+const DECORATION_OPTIONS = DECORATION_METHOD_OPTIONS;
 
 type QuoteFormProps = {
   productInterest?: string;

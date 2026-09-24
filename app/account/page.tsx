@@ -31,7 +31,7 @@ export default function AccountHubPage() {
     <div className="relative mx-auto max-w-2xl px-page py-12 sm:py-16">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-6 h-40 bg-[radial-gradient(ellipse_at_top,_rgba(176,138,62,0.12),_transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 -top-6 h-40 bg-[radial-gradient(ellipse_at_top,_rgba(230,83,18,0.14),_transparent_70%)]"
       />
       <Breadcrumbs items={[{ label: ACCOUNT_HUB_TITLE }]} />
       <h1 className="relative text-3xl font-bold tracking-tight text-forest sm:text-4xl">

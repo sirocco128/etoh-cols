@@ -9,9 +9,9 @@
  *              Add: กลุ่มตามวงจรงานของขวัญองค์กร (ขาย → ราคา → ปฏิบัติการ → บัญชี)
  *
  * — UI —
- * Aesthetic:   Utilitarian — same forest/brass chrome, no new brand fonts
+ * Aesthetic:   Utilitarian — charcoal rail, orange wordmark, no new brand fonts
  * Type:        inherit storefront (ops stays in existing shell)
- * Palette:     forest / forest-light / brass-soft / paper — follows data-theme
+ * Palette:     charcoal / warm mist / brand orange / paper — follows data-theme
  * Spatial:     Dense utility left rail; content keeps max-w-6xl
  * Motion:      Mechanical 150ms — drawer rows + mobile drawer, no fade-on-everything
  * Signature:   Brass left rail on the active item; folder cards with a file-tab header
@@ -36,6 +36,7 @@ import { ChevronDown, ChevronRight, Menu, PanelLeftClose, Search, X } from "luci
 import { opsLogoutAction } from "@/app/actions/ops";
 import { OpsDeskGuard } from "@/components/OpsDeskGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { OPS_CONSOLE_KICKER, OPS_CONSOLE_TITLE } from "@/lib/ux-copy";
 import {
   filterOpsNavGroups,
   groupHasActiveLink,
@@ -394,7 +395,10 @@ export function OpsNav({
               !railOpen && "lg:hidden",
             )}
           >
-            คอนโซลปฏิบัติการ
+            <span className="block truncate text-brass-soft">{OPS_CONSOLE_TITLE}</span>
+            <span className="block truncate text-[11px] font-medium text-paper/70">
+              {OPS_CONSOLE_KICKER}
+            </span>
           </Link>
           <button
             type="button"
@@ -459,7 +463,7 @@ export function OpsNav({
                 railOpen ? "lg:hidden" : "lg:inline",
               )}
             >
-              คอนโซลปฏิบัติการ
+              <span className="text-brass-soft">{OPS_CONSOLE_TITLE}</span>
             </Link>
           </div>
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">

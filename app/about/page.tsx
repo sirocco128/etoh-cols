@@ -12,6 +12,7 @@ import { getPublicContact } from "@/lib/public-contact";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { metadataForPath } from "@/lib/page-seo";
 import { site } from "@/lib/site";
+import { SMART_GIFT_TAGLINE_EN, SMART_GIFT_TAGLINE_TH } from "@/lib/smart-gift-method";
 
 export async function generateMetadata(): Promise<Metadata> {
   return metadataForPath("/about");
@@ -34,28 +35,28 @@ export default function AboutPage() {
     <>
       <JsonLd data={breadcrumbs} />
 
-      <section className="relative isolate overflow-hidden bg-forest text-paper">
-        <div className="relative min-h-[16rem] w-full sm:min-h-[20rem] lg:min-h-[22rem]">
-          <Image
-            src="/images/about-facility.jpg"
-            alt="สำนักงานคอลเซ็นเตอร์และพื้นที่ผลิตของบริษัท เทราบิส จำกัด"
-            fill
-            priority
-            className="object-cover object-[center_38%]"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-forest/90 via-forest/40 to-forest/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-forest/75 via-transparent to-forest/20" />
-          <div className="relative mx-auto flex min-h-[16rem] max-w-content flex-col justify-end px-page py-10 sm:min-h-[20rem] sm:py-14 lg:min-h-[22rem]">
-            <p className="text-sm font-semibold uppercase tracking-wide text-brass-soft">
-              {COMPANY.legalNameEn}
+      <section className="border-b border-forest/10 bg-forest-mist">
+        <div className="mx-auto grid max-w-content items-center gap-8 px-page py-10 sm:py-14 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brass">
+              {SMART_GIFT_TAGLINE_EN}
             </p>
-            <h1 className="mt-2 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
+            <h1 className="mt-2 max-w-2xl text-3xl font-bold leading-tight text-forest sm:text-4xl md:text-5xl">
               เกี่ยวกับ {COMPANY.brandName}
             </h1>
-            <p className="mt-3 max-w-xl text-sm text-paper/85 sm:text-base">
-              ทีมขาย บริการลูกค้า และประสานงานผลิตของขวัญองค์กรพร้อมโลโก้
+            <p className="mt-3 max-w-xl text-sm text-ink/75 sm:text-base">
+              {SMART_GIFT_TAGLINE_TH}
             </p>
+          </div>
+          <div className="media-frame media-frame--hero rounded-3xl bg-paper shadow-lift">
+            <Image
+              src="/images/about-facility.jpg"
+              alt="พื้นที่ทำงานของ Smart Gift สำหรับของพรีเมียมองค์กร"
+              fill
+              priority
+              className="object-cover object-[center_38%]"
+              sizes="(max-width:1024px) 100vw, 42vw"
+            />
           </div>
         </div>
       </section>
@@ -65,14 +66,14 @@ export default function AboutPage() {
 
         <section className="max-w-3xl">
           <p className="text-base leading-relaxed text-ink/80">
-            {COMPANY.legalName} รับออกแบบและผลิตของขวัญองค์กรพร้อมโลโก้
-            สำหรับงานต้อนรับ พนักงานใหม่ คู่ค้า และอีเวนต์
-            สินค้าสั่งตามออเดอร์แล้วผลิตจากจีน ไม่ใช่ร้านค้าพร้อมส่ง
+            {COMPANY.brandName} รับทำของพรีเมียมให้ของขวัญองค์กร สินค้าขายปลีก
+            แคมเปญ อีเวนต์ งานภาครัฐ และของพนักงาน สกรีนโลโก้และสั่งผลิตตามแบบจากจีน
+            ใบกำกับภาษีออกในนาม {COMPANY.legalName}
           </p>
         </section>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-bold text-forest">สิ่งที่เราทำให้</h2>
+          <h2 className="text-2xl font-bold text-forest">วิธีที่เราทำงาน</h2>
           <ul className="mt-8 grid gap-5 sm:grid-cols-2">
             {COMPANY_SERVICES.map((item) => (
               <li
@@ -92,7 +93,11 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-forest">ข้อมูลนิติบุคคล</h2>
           <dl className="mt-8 grid gap-6 sm:grid-cols-2">
             <div>
-              <dt className="text-sm font-semibold text-forest">ชื่อบริษัท</dt>
+              <dt className="text-sm font-semibold text-forest">ชื่อที่แสดง</dt>
+              <dd className="mt-1 text-ink/80">{COMPANY.brandName}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-semibold text-forest">ชื่อจดทะเบียน</dt>
               <dd className="mt-1 text-ink/80">{COMPANY.legalName}</dd>
             </div>
             <div>

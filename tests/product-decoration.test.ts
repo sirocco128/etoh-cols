@@ -25,8 +25,10 @@ describe("product decoration methods", () => {
     const values = decorationValuesForProduct("custom-new-set");
     assert.deepEqual(values, [
       "screen-print",
-      "uv-print",
+      "emboss",
       "laser",
+      "full-color",
+      "uv-print",
       "embroidery",
     ]);
   });
@@ -36,6 +38,7 @@ describe("product decoration methods", () => {
       "screen-print",
       "embroidery",
       "uv-print",
+      "full-color",
     ]);
   });
 });

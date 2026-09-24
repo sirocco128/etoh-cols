@@ -561,7 +561,7 @@ async function renderBrandedProductCanvas(options: {
     const hint = materialHint(options.surface.kind);
     ctx.fillStyle = "rgba(255,255,255,0.94)";
     ctx.fillRect(0, height - captionH, width, captionH);
-    ctx.fillStyle = "#14352a";
+    ctx.fillStyle = "#1c1c1c";
     ctx.font = '700 30px "Noto Sans Thai", system-ui, sans-serif';
     ctx.textAlign = "left";
     ctx.fillText(
@@ -660,11 +660,11 @@ async function renderSceneComposite(options: {
 
   ctx.fillStyle = "rgba(255,255,255,0.95)";
   ctx.fillRect(0, height * 0.78, width, height * 0.22);
-  ctx.fillStyle = "#14352a";
+  ctx.fillStyle = "#1c1c1c";
   ctx.font = '700 30px "Noto Sans Thai", system-ui, sans-serif';
   ctx.textAlign = "left";
   ctx.fillText(options.variant.label, width * 0.08, height * 0.84);
-  ctx.fillStyle = "#1e4a3a";
+  ctx.fillStyle = "#2a2a2a";
   ctx.font = '700 24px "Noto Sans Thai", system-ui, sans-serif';
   ctx.fillText(options.title, width * 0.08, height * 0.89);
   ctx.fillStyle = "rgba(34,40,44,0.68)";

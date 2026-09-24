@@ -22,7 +22,7 @@ export default async function PortfolioPage() {
       <div className="max-w-2xl">
         <h1 className="text-3xl font-bold text-forest sm:text-4xl">ผลงาน</h1>
         <p className="mt-3 text-ink/75">
-          ตัวอย่างแนวทางผลิต Gift Set สำหรับองค์กร เพื่อช่วยประเมินสไตล์และขอบเขตบริการ
+          ตัวอย่างแนวทางผลิตของพรีเมียมสำหรับองค์กร เพื่อช่วยประเมินสไตล์และขอบเขตงาน
         </p>
       </div>
 

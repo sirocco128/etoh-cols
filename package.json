@@ -37,6 +37,7 @@
     "cms:setup": "node scripts/cms-local-setup.mjs",
     "cms:seed": "node scripts/seed-strapi-content.mjs",
     "articles:seed-factual": "node scripts/seed-factual-article-drafts.mjs",
+    "articles:schedule": "node scripts/seed-scheduled-articles.mjs",
     "images:stock": "node scripts/fetch-stock-images.mjs",
     "alibaba:sync": "node scripts/sync-1688-strapi.mjs",
     "1688:sync": "node scripts/sync-1688-strapi.mjs",

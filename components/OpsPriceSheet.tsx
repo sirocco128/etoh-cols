@@ -102,7 +102,7 @@ function buildSummaryText(
   params: PriceSheetParams,
 ): string {
   const lines = [
-    "SmartGift · สรุปราคา Final",
+    "Smart Gift · สรุปราคา Final",
     previewDateLine(),
     `โปรไฟล์ ${params.profile} · FX ${params.cnyToThb}`,
     "",
@@ -1141,7 +1141,7 @@ inland default = ${inland.rateCnyPerCbm} CNY/CBM (min ${inland.minCny})`}
                 Preview · ใบเสนอราคาแบบย่อ
               </p>
               <h3 className="mt-1 text-xl font-semibold text-forest">
-                SmartGift · สรุปราคา Final
+                Smart Gift · สรุปราคา Final
               </h3>
               <p className="mt-1 text-sm text-ink/65">{previewDateLine()}</p>
               <p className="mt-1 text-sm text-ink/65">

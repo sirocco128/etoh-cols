@@ -100,6 +100,16 @@ export default async function NewArticlePage() {
               <input name="author" placeholder="ทีมคอนเทนต์" className="mt-1 w-full rounded border border-forest/20 px-3 py-2" />
             </label>
             <label className="block text-sm">
+              <span className="font-medium">หมวดบทความ</span>
+              <select name="category" defaultValue="gift" className="mt-1 w-full rounded border border-forest/20 px-3 py-2">
+                {ARTICLE_TOPICS.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {ARTICLE_TOPIC_LABELS[topic]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
               <span className="font-medium">URL รูปปก</span>
               <input name="coverUrl" className="mt-1 w-full rounded border border-forest/20 px-3 py-2" />
             </label>

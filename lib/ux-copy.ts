@@ -52,9 +52,11 @@ export const ACCOUNT_HUB_TITLE = "ลูกค้าที่สั่งแล�
 
 export const ACCOUNT_HUB_NAV_HINT = "ติดตามออเดอร์ · แจ้งปัญหา";
 
-export const OPS_CONSOLE_TITLE = "คอนโซลปฏิบัติการ";
+export const OPS_CONSOLE_TITLE = "Smart Gift";
 
-/** Short storefront label — keep “คอนโซลปฏิบัติการ” for staff chrome, not the buyer header. */
+export const OPS_CONSOLE_KICKER = "คอนโซลปฏิบัติการ";
+
+/** Short storefront label — staff chrome uses Smart Gift, not the buyer header. */
 export const OPS_CONSOLE_NAV_LABEL = "พนักงาน";
 
 export const OPS_CONSOLE_NAV_HINT = "เข้าทำงาน — สำหรับพนักงาน";
@@ -82,18 +84,18 @@ export const REPORT_ISSUE_FOR_ORDER = "แจ้งปัญหาออเด�
 export const HOW_IT_WORKS = [
   {
     step: "1",
-    title: "เลือกแนวเซ็ตหรือบอกโจทย์",
-    body: "ดูหมวดสินค้า หรือแจ้งงบ จำนวน และโอกาสใช้งาน",
+    title: "เลือกสินค้าหรือบอกโจทย์",
+    body: "เลือกหมวดของพรีเมียม หรือแจ้งงบ จำนวน และโอกาสใช้งาน",
   },
   {
     step: "2",
-    title: "ส่งคำขอใบเสนอราคา",
-    body: "กรอกแบบฟอร์มหรือแชท LINE — ทีมขายติดต่อกลับในเวลาทำการ",
+    title: "ปรึกษาและขอใบเสนอราคา",
+    body: "ส่งโจทย์ทางแบบฟอร์มหรือ LINE ทีมขายเสนอแนวทางและแบบตำแหน่งโลโก้",
   },
   {
     step: "3",
     title: "อนุมัติแบบแล้วผลิต",
-    body: "ยืนยันตัวอย่างก่อนผลิต จากนั้นผลิตและจัดส่งตามนัด",
+    body: "ยืนยันตัวอย่างก่อนผลิต จากนั้นผลิตและจัดส่งตามนัด สั่งซ้ำจากสเปคเดิมได้",
   },
 ] as const;
 
@@ -110,10 +112,10 @@ export const MOQ_NOTICE_SHORT = "สั่งขั้นต่ำ";
 export const MOQ_NOTICE =
   "สินค้านี้เป็นงานสั่งผลิตจำนวนมากสำหรับองค์กร ไม่ใช่สินค้าขายปลีกทีละชิ้น — ต้องถึงจำนวนขั้นต่ำตามที่ระบุ";
 
-export const CATALOG_PILL = "สินค้าพรีเมียม นำเข้าสั่งผลิตตามออเดอร์";
+export const CATALOG_PILL = "ของพรีเมียมสำหรับทุกแบรนด์ ทุกแคมเปญ";
 
 export const CATALOG_SUBTITLE =
-  "ทุกชิ้นสกรีนโลโก้ใส่ได้ — สั่งตามออเดอร์แล้วผลิตจากจีน ไม่ใช่ของพร้อมส่ง เลือกเซ็ต แล้วขอใบเสนอราคาเมื่อพร้อม";
+  "ทุกชิ้นสกรีนโลโก้ใส่ได้ — สั่งผลิตตามแบบจากจีน ไม่ใช่ของพร้อมส่ง เลือกหมวด แล้วขอใบเสนอราคาเมื่อพร้อม";
 
 export const CATALOG_LOADING = "กำลังโหลดแคตตาล็อกจากฐานสินค้า…";
 
@@ -169,7 +171,7 @@ export function quoteBasketLockNote(qty: number): string {
 export const LOGO_DECORATION_HEADING = "สกรีนโลโก้ใส่ได้";
 
 export const LOGO_DECORATION_INTRO =
-  "สินค้านี้สั่งผลิตตามออเดอร์ ไม่ใช่ของพร้อมส่ง — ใส่โลโก้องค์กรได้ด้วยสกรีน พิมพ์ UV เลเซอร์ หรือปัก แล้วค่อยสั่งโรงงานหลังยืนยันแบบ";
+  "สินค้านี้สั่งผลิตตามแบบ ไม่ใช่ของพร้อมส่ง — ใส่โลโก้ได้ด้วยสกรีน ปั๊มนูน เลเซอร์ พิมพ์สี หรือปัก แล้วค่อยสั่งโรงงานหลังยืนยันแบบ";
 
 export const LOGO_MOCKUP_NOTE =
   "ตัวอย่างบนหน้าเว็บใช้ดูตำแหน่งโลโก้เท่านั้น ยังไม่ใช่แบบผลิต ไฟล์โลโก้จริงส่งให้ทีมขายทางอีเมลหรือ LINE";

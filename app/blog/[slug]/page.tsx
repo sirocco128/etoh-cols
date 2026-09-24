@@ -78,6 +78,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
         <header className="mt-2">
           <h1 className="text-3xl font-bold text-forest sm:text-4xl">{article.title}</h1>
           <p className="mt-4 text-sm text-ink/65">
+            {article.categoryName ? <span>{article.categoryName} · </span> : null}
             โดย {article.author}
             {article.publishedAt ? (
               <>
@@ -108,7 +109,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
         </div>
 
         <aside className="mt-14 rounded-3xl border border-forest/10 bg-forest-mist/40 px-6 py-8 sm:px-8">
-          <h2 className="text-lg font-bold text-forest">สนใจ Gift Set สำหรับองค์กร?</h2>
+          <h2 className="text-lg font-bold text-forest">สนใจของพรีเมียมสำหรับองค์กร?</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink/75">
             แจ้งจำนวน งบประมาณ และวันที่ต้องการใช้งาน — ทีมขายจะส่งใบเสนอราคากลับ
             ไม่มีการชำระเงินบนเว็บ

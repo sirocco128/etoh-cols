@@ -128,7 +128,7 @@ describe("mockup-studio quote brief", () => {
   });
 
   it("exports the Thai watermark label", () => {
-    assert.equal(MOCKUP_WATERMARK_TEXT, "เทราบิส");
+    assert.equal(MOCKUP_WATERMARK_TEXT, "Smart Gift");
   });
 });
 

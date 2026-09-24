@@ -25,10 +25,10 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     id: "forest",
     option: "default",
-    label: "ป่าพรีเมียม",
-    hint: "ธีมเดิมของเว็บ — เขียวป่าและทองเหลือง",
-    swatchPrimary: "#14352a",
-    swatchAccent: "#b08a3e",
+    label: "Smart Gift",
+    hint: "พื้นอ่อน ตัวอักษรเข้ม ปุ่มส้ม ตามแบบแคตตาล็อก",
+    swatchPrimary: "#1c1c1c",
+    swatchAccent: "#e65312",
   },
   {
     id: "navy",

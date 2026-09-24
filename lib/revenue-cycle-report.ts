@@ -26,6 +26,8 @@ export { defaultFinanceRange };
 
 export const DECORATION_REPORT_LABELS: Record<string, string> = {
   "screen-print": "สกรีน",
+  emboss: "ปั๊มนูน",
+  "full-color": "พิมพ์สี",
   "uv-print": "UV",
   laser: "เลเซอร์",
   embroidery: "ปัก",

@@ -106,7 +106,7 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
             className="absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col border-l border-white/20 bg-paper/95 shadow-lift backdrop-blur-md pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:border-white/10 dark:bg-forest/90"
           >
             <div className="flex items-center justify-between border-b border-forest/10 px-4 py-4">
-              <p className="font-semibold text-forest">{site.name}</p>
+              <p className="font-semibold text-brass">{site.name}</p>
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-forest/20 text-forest dark:border-white/15 dark:text-paper"

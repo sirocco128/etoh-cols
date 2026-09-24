@@ -5,8 +5,10 @@ import {
   countArticles,
   countArticlesByStatus,
   listArticles,
+  publishDueArticles,
   type ArticleListFilter,
 } from "@/lib/article-repository";
+import { ARTICLE_TOPIC_LABELS, resolveArticleTopic } from "@/lib/article-media-catalog";
 import {
   ARTICLE_STATUS_LABELS,
   isArticleStatus,
@@ -31,7 +33,7 @@ type SearchParams = Promise<{
 
 type ListStatus = ArticleStatus | "all";
 
-const TAB_ORDER: ListStatus[] = ["review", "draft", "live", "archived", "all"];
+const TAB_ORDER: ListStatus[] = ["review", "scheduled", "draft", "live", "archived", "all"];
 
 function formatWhen(iso: string | null): string {
   if (!iso) return "—";
@@ -65,6 +67,7 @@ export default async function OpsBlogPage({
   let statusCounts: Record<ArticleStatus, number> = {
     draft: 0,
     review: 0,
+    scheduled: 0,
     live: 0,
     archived: 0,
   };
@@ -74,6 +77,7 @@ export default async function OpsBlogPage({
     if (!mysqlOn) {
       error = "ยังไม่ได้เปิด SMARTGIFT_MYSQL_ENABLED";
     } else {
+      await publishDueArticles();
       const filter: ArticleListFilter = {
         status: status === "all" ? "" : status,
         q,
@@ -188,6 +192,8 @@ export default async function OpsBlogPage({
                 </Link>
                 <p className="mt-1 font-mono text-xs text-ink/60">{row.slug}</p>
                 <p className="mt-1 text-xs text-ink/65">
+                  {ARTICLE_TOPIC_LABELS[resolveArticleTopic(row.category)]}
+                  {" · "}
                   {ARTICLE_STATUS_LABELS[row.status]}
                   {row.source === "ai" ? " · ผู้ช่วย" : " · คนเขียน"}
                 </p>
@@ -202,6 +208,7 @@ export default async function OpsBlogPage({
                 <tr className="border-b border-forest/15 text-ink/60">
                   <th className="py-2 pr-3">ชื่อ</th>
                   <th className="py-2 pr-3">slug</th>
+                  <th className="py-2 pr-3">หมวด</th>
                   <th className="py-2 pr-3">สถานะ</th>
                   <th className="py-2 pr-3">ที่มา</th>
                   <th className="py-2 pr-3">อัปเดต</th>
@@ -219,6 +226,9 @@ export default async function OpsBlogPage({
                       </Link>
                     </td>
                     <td className="py-2 pr-3 font-mono text-xs">{row.slug}</td>
+                    <td className="py-2 pr-3">
+                      {ARTICLE_TOPIC_LABELS[resolveArticleTopic(row.category)]}
+                    </td>
                     <td className="py-2 pr-3">{ARTICLE_STATUS_LABELS[row.status]}</td>
                     <td className="py-2 pr-3">{row.source === "ai" ? "ผู้ช่วย" : "คนเขียน"}</td>
                     <td className="py-2 pr-3 text-xs text-ink/70">{formatWhen(row.updatedAt)}</td>

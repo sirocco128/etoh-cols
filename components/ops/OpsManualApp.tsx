@@ -153,7 +153,7 @@ export function OpsManualApp({
 
   return (
     <div className="ops-manual -mx-page -my-6 sm:-my-8">
-      <div className="border-b border-forest/10 bg-[linear-gradient(120deg,#14352a_0%,#1e4a3a_55%,#0f2a21_100%)] px-page py-5 text-paper">
+      <div className="border-b border-brass/40 bg-forest px-page py-5 text-paper">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-soft">

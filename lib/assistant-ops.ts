@@ -92,6 +92,8 @@ const SYSTEM_SKILL = [
 
 function decorationLabel(value: string): string {
   if (value === "screen-print") return "สกรีน";
+  if (value === "emboss") return "ปั๊มนูน";
+  if (value === "full-color") return "พิมพ์สี";
   if (value === "uv-print") return "พิมพ์ UV";
   if (value === "laser") return "เลเซอร์";
   if (value === "embroidery") return "ปัก";
@@ -172,12 +174,12 @@ async function searchNexterp(query: string): Promise<string> {
         limit: 8,
         pricedOnly: false,
       });
-      if (rows.length === 0) return "ไม่พบชุดของขวัญ SmartGift ที่ตรงคำค้น";
+      if (rows.length === 0) return "ไม่พบของพรีเมียม Smart Gift ที่ตรงคำค้น";
       return rows
         .map((item) => formatPublicCatalogHit(item.name, item.priceRange, item.slug))
         .join("\n");
     } catch (error) {
-      return `ค้นแคตตาล็อก SmartGift ไม่สำเร็จ: ${error instanceof Error ? error.message : "error"}`;
+      return `ค้นแคตตาล็อก Smart Gift ไม่สำเร็จ: ${error instanceof Error ? error.message : "error"}`;
     }
   }
   if (!isNexterpMysqlEnabled()) {

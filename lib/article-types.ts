@@ -1,4 +1,4 @@
-export const ARTICLE_STATUSES = ["draft", "review", "live", "archived"] as const;
+export const ARTICLE_STATUSES = ["draft", "review", "scheduled", "live", "archived"] as const;
 export type ArticleStatus = (typeof ARTICLE_STATUSES)[number];
 
 export const ARTICLE_SOURCES = ["human", "ai"] as const;
@@ -7,6 +7,7 @@ export type ArticleSource = (typeof ARTICLE_SOURCES)[number];
 export const ARTICLE_STATUS_LABELS: Record<ArticleStatus, string> = {
   draft: "ร่าง",
   review: "รอตรวจ",
+  scheduled: "ตั้งเวลาแล้ว",
   live: "เผยแพร่แล้ว",
   archived: "เก็บแล้ว",
 };
@@ -19,6 +20,7 @@ export type ArticleRow = {
   body: string;
   coverUrl: string;
   author: string;
+  category: string;
   status: ArticleStatus;
   source: ArticleSource;
   brief: string;
@@ -124,6 +126,70 @@ export function toArticleHtml(input: string): string {
   return chunks.join("\n");
 }
 
+const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+/** `datetime-local` value interpreted as Asia/Bangkok (no DST). */
+export function parseBangkokDateTimeLocal(value: string): Date | null {
+  const match = String(value || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) {
+    return null;
+  }
+  const utc = Date.UTC(year, month - 1, day, hour, minute) - BANGKOK_OFFSET_MS;
+  const date = new Date(utc);
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const pick = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  if (pick("year") !== year || pick("month") !== month || pick("day") !== day) return null;
+  if (pick("hour") !== hour || pick("minute") !== minute) return null;
+  return date;
+}
+
+export function formatBangkokDateTimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const pick = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  return `${pick("year")}-${pick("month")}-${pick("day")}T${pick("hour")}:${pick("minute")}`;
+}
+
+/** 09:00 Asia/Bangkok on a calendar day, used for the publish queue. */
+export function bangkokMorning(year: number, month: number, day: number): Date {
+  const date = parseBangkokDateTimeLocal(
+    `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T09:00`,
+  );
+  if (!date) throw new Error("invalid_publish_at");
+  return date;
+}
+
+export function isFuturePublishAt(date: Date, now = new Date()): boolean {
+  return date.getTime() > now.getTime();
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -140,11 +206,23 @@ export type ArticleTransition = {
 
 export function articleTransitionError(input: ArticleTransition): string | null {
   const { from, to, isAdmin } = input;
-  if (from === to) return null;
+  if (from === to && to !== "scheduled") return null;
+  if (from === "scheduled" && to === "scheduled") {
+    return isAdmin ? null : "เฉพาะผู้ดูแลจึงจะตั้งเวลาเผยแพร่ได้";
+  }
   if (from === "draft" && to === "review") return null;
   if (from === "review" && to === "draft") return null;
   if (from === "review" && to === "live") {
     return isAdmin ? null : "เฉพาะผู้ดูแลจึงจะเผยแพร่ได้";
+  }
+  if (from === "review" && to === "scheduled") {
+    return isAdmin ? null : "เฉพาะผู้ดูแลจึงจะตั้งเวลาเผยแพร่ได้";
+  }
+  if (from === "scheduled" && to === "live") {
+    return isAdmin ? null : "เฉพาะผู้ดูแลจึงจะเผยแพร่ได้";
+  }
+  if (from === "scheduled" && to === "draft") {
+    return isAdmin ? null : "เฉพาะผู้ดูแลจึงจะยกเลิกเวลาได้";
   }
   if (from === "live" && to === "archived") return null;
   if (from === "archived" && to === "draft") return null;

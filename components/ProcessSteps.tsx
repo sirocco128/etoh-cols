@@ -27,7 +27,7 @@ export function ProcessSteps({
             className="relative rounded-2xl border border-forest/10 bg-paper/90 px-5 py-6 shadow-sm backdrop-blur-md"
           >
             <span
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-forest text-sm font-bold text-paper"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brass text-sm font-bold text-paper"
               aria-hidden
             >
               {item.step}

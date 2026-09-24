@@ -50,10 +50,10 @@ export default async function SopPage({
   const unlocked = await hasSopGuideAccess();
   if (!unlocked) {
     return (
-      <div className="relative min-h-dvh overflow-hidden bg-[linear-gradient(160deg,#14352a_0%,#1e4a3a_45%,#0f2a21_100%)] px-6 py-16 text-paper">
+      <div className="relative min-h-dvh overflow-hidden bg-forest px-6 py-16 text-paper">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(176,138,62,0.25),transparent_45%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(230,83,18,0.28),transparent_45%)]"
         />
         <div className="relative mx-auto max-w-lg rounded-2xl border border-paper/15 bg-paper px-6 py-10 text-ink shadow-2xl sm:px-10">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brass">

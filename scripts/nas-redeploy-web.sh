@@ -1,12 +1,12 @@
 #!/bin/sh
 # NAS helper: copy to /volume1/docker/tarabiz-web-build.sh and set GIT_REPO_URL
-# Example: GIT_REPO_URL='http://user:pass@192.168.1.30:3000/tong/premium-giftset-web.git'
+# Example: GIT_REPO_URL='http://user:pass@192.168.1.30:3000/tong/mcp-alibaba.git'
 set -eu
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 LOG="/volume1/docker/tarabiz-web-build.log"
 LOCK="/volume1/docker/tarabiz-web-build.lock"
 SRC="/tmp/tarabiz-web-build"
-REPO_URL="${GIT_REPO_URL:-http://192.168.1.30:3000/tong/premium-giftset-web.git}"
+REPO_URL="${GIT_REPO_URL:-http://192.168.1.30:3000/tong/mcp-alibaba.git}"
 
 if [ -f "$LOCK" ]; then
   echo "BUILD_LOCKED" | tee -a "$LOG"

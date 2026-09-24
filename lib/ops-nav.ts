@@ -123,7 +123,7 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   if (actor.role === "superadmin" || actor.role === "admin") {
     links.push({
       href: "/ops/knowledge-sync",
-      label: "อัปเดตคลัง Terabis",
+      label: "อัปเดตคลัง Smart Gift",
       group: "system",
     });
   }
