@@ -13,6 +13,7 @@ export default ({ env }) => {
     "http://127.0.0.1:9020",
     "http://127.0.0.1:33920",
     "http://192.168.1.30:33920",
+    "https://smartgift.next-dev.net",
     "https://tarabiz.next-dev.net",
   ].filter(Boolean);
 

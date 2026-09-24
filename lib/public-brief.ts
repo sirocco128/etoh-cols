@@ -1,6 +1,6 @@
 /**
  * smartgift-brief/1 → QuoteRequestInput for submitQuotePayload.
- * Fixed backend host: https://tarabiz.next-dev.net
+ * Fixed backend host: https://smartgift.next-dev.net
  */
 
 import { z } from "zod";

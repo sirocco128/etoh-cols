@@ -124,23 +124,23 @@ describe("ops Google Sign-In", () => {
     withEnv(
       {
         ...AUTH_ENV,
-        NEXT_PUBLIC_SITE_URL: "https://tarabiz.next-dev.net",
+        NEXT_PUBLIC_SITE_URL: "https://smartgift.next-dev.net",
       },
       () => {
         assert.equal(
           googleOAuthCookieOrigin("http://0.0.0.0:3000/api/ops/auth/google"),
-          "https://tarabiz.next-dev.net",
+          "https://smartgift.next-dev.net",
         );
         assert.equal(
           googleAuthRedirectUri("http://0.0.0.0:3000/api/ops/auth/google"),
-          "https://tarabiz.next-dev.net/api/ops/auth/google/callback",
+          "https://smartgift.next-dev.net/api/ops/auth/google/callback",
         );
         assert.equal(
           googleOAuthCookieOrigin("http://0.0.0.0:3000/api/ops/auth/google", {
-            "x-forwarded-host": "tarabiz.next-dev.net",
+            "x-forwarded-host": "smartgift.next-dev.net",
             "x-forwarded-proto": "https",
           }),
-          "https://tarabiz.next-dev.net",
+          "https://smartgift.next-dev.net",
         );
         assert.equal(
           googleOAuthCookieOrigin("http://web:3000/api/ops/auth/google", {

@@ -1,5 +1,5 @@
 /**
- * CORS for smg-ui → public BFF on this host (tarabiz.next-dev.net).
+ * CORS for smg-ui → public BFF on this host (smartgift.next-dev.net).
  * Partner API stays server-to-server (no CORS).
  */
 

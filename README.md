@@ -66,7 +66,7 @@ docker run --rm \
 curl -f 'http://127.0.0.1:3000/api/health?deep=1'
 ```
 
-### NAS / Portainer (`https://tarabiz.next-dev.net`)
+### NAS / Portainer (`https://smartgift.next-dev.net`)
 
 Full stack (Next.js + Strapi + Postgres + MinIO) on the NAS:
 
@@ -167,7 +167,7 @@ npm run db:migrate
 | [docs/PARTNER-API.md](docs/PARTNER-API.md) | REST คู่ค้า (API key, quotes/orders) |
 | [docs/PUBLIC-SMG-BFF.md](docs/PUBLIC-SMG-BFF.md) | smg-ui brief + catalog BFF (CORS → tarabiz) |
 | [docs/GIT-REMOTES.md](docs/GIT-REMOTES.md) | Cursor origin + Gitea NAS + GitLab |
-| [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md) | NAS Docker Compose + Cloudflare `tarabiz.next-dev.net` |
+| [docs/NAS-PORTAINER.md](docs/NAS-PORTAINER.md) | NAS Docker Compose + Cloudflare `smartgift.next-dev.net` |
 | [RELEASE_NOTES.md](RELEASE_NOTES.md) | P0/P1 baseline |
 | [SECURITY.md](SECURITY.md) | Security baseline summary |
 
@@ -183,11 +183,11 @@ curl -H "Authorization: Bearer sgp_…" http://localhost:3000/api/partner/v1/quo
 
 ## Public SMG BFF (smg-ui)
 
-Browser CORS adapters on `https://tarabiz.next-dev.net` — brief → `/ops/quotes`, catalog read without Partner API key. Ops UI unchanged. See [docs/PUBLIC-SMG-BFF.md](docs/PUBLIC-SMG-BFF.md).
+Browser CORS adapters on `https://smartgift.next-dev.net` — brief → `/ops/quotes`, catalog read without Partner API key. Ops UI unchanged. See [docs/PUBLIC-SMG-BFF.md](docs/PUBLIC-SMG-BFF.md).
 
 ```bash
 # smg-ui
-VITE_BRIEF_ENDPOINT=https://tarabiz.next-dev.net/api/public/brief
+VITE_BRIEF_ENDPOINT=https://smartgift.next-dev.net/api/public/brief
 # this host
 PUBLIC_SMG_ORIGINS=https://your-smg-ui.example,http://localhost:8080
 ```

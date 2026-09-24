@@ -3,7 +3,7 @@
 Read-only machine API for CRM / n8n / ERP / external storefront BFF to **pull current state**.  
 Webhook (`quote.requested`) still **pushes** new RFQs. This API does not replace it.
 
-For **browser** smg-ui (CORS, no API key) use [`PUBLIC-SMG-BFF.md`](./PUBLIC-SMG-BFF.md) on `https://tarabiz.next-dev.net` instead — `/api/public/brief` + `/api/public/catalog/*`.
+For **browser** smg-ui (CORS, no API key) use [`PUBLIC-SMG-BFF.md`](./PUBLIC-SMG-BFF.md) on `https://smartgift.next-dev.net` instead — `/api/public/brief` + `/api/public/catalog/*`.
 
 **OpenAPI / Swagger:** [`docs/partner-api.openapi.yaml`](./partner-api.openapi.yaml)  
 Import into [Swagger Editor](https://editor.swagger.io/) or any OpenAPI 3 viewer.

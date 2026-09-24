@@ -1,9 +1,9 @@
-# Public SMG BFF — smg-ui ↔ tarabiz.next-dev.net
+# Public SMG BFF — smg-ui ↔ smartgift.next-dev.net
 
 Browser-facing adapters for the SmartGift Vite SPA (`smg-ui`).  
 Ops console stays at `/ops/*` on this same host — unchanged.
 
-**Fixed backend base:** `https://tarabiz.next-dev.net`
+**Fixed backend base:** `https://smartgift.next-dev.net`
 
 OpenAPI: [`public-smg-bff.openapi.yaml`](./public-smg-bff.openapi.yaml)
 
@@ -35,13 +35,13 @@ Successful brief response includes `requestId`, `messageTh`, and `nextSteps` for
 ## smg-ui env
 
 ```
-VITE_BRIEF_ENDPOINT=https://tarabiz.next-dev.net/api/public/brief
+VITE_BRIEF_ENDPOINT=https://smartgift.next-dev.net/api/public/brief
 ```
 
 Catalog (optional; static JSON can stay until cutover):
 
 ```
-VITE_CATALOG_BFF=https://tarabiz.next-dev.net/api/public/catalog
+VITE_CATALOG_BFF=https://smartgift.next-dev.net/api/public/catalog
 ```
 
 ## Brief contract (`smartgift-brief/1`)
@@ -81,11 +81,11 @@ Same serializers as Partner `catalog:read` (see Partner OpenAPI), without Bearer
 ## Verify
 
 ```bash
-curl -sS https://tarabiz.next-dev.net/api/public
-curl -sS -X POST https://tarabiz.next-dev.net/api/public/brief \
+curl -sS https://smartgift.next-dev.net/api/public
+curl -sS -X POST https://smartgift.next-dev.net/api/public/brief \
   -H 'content-type: application/json' \
   -H 'origin: http://localhost:8080' \
   -d '{"schema":"smartgift-brief/1","consent":true,"brief":{"qty":10},"contact":{"name":"ทดสอบ ระบบ","email":"test@example.com","phone":"0812345678"}}'
 ```
 
-Then open `https://tarabiz.next-dev.net/ops/quotes`.
+Then open `https://smartgift.next-dev.net/ops/quotes`.

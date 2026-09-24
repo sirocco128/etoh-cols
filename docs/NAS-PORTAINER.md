@@ -1,6 +1,6 @@
-# NAS Portainer + Cloudflare — tarabiz.next-dev.net
+# NAS Portainer + Cloudflare — smartgift.next-dev.net
 
-Deploy the full Terabis stack on the NAS at `192.168.1.30` and publish `https://tarabiz.next-dev.net` through a Cloudflare Tunnel.
+Deploy the full Terabis stack on the NAS at `192.168.1.30` and publish `https://smartgift.next-dev.net` through a Cloudflare Tunnel.
 
 Related: [STAGING-DEPLOY.md](./STAGING-DEPLOY.md) · [GIT-REMOTES.md](./GIT-REMOTES.md)
 
@@ -48,12 +48,12 @@ curl -fsS "http://192.168.1.30:33100/api/health?deep=1"
 `next-dev.net` is already on Cloudflare (`git.next-dev.net`). Add a public hostname on the existing tunnel, or run `cloudflared` in this stack:
 
 1. Zero Trust → Networks → Tunnels → create (or reuse) a tunnel.
-2. Public hostname: `tarabiz.next-dev.net` → `http://web:3000` (or `http://192.168.1.30:33100` if the tunnel is not on the compose network).
+2. Public hostname: `smartgift.next-dev.net` → `http://web:3000` (or `http://192.168.1.30:33100` if the tunnel is not on the compose network).
 3. SSL/TLS: **Full**.
 4. Copy the tunnel token into Portainer env `TUNNEL_TOKEN`.
 5. Enable compose profile `tunnel` so the `cloudflared` service starts.
 
-Optional: `cms.tarabiz.next-dev.net` → `http://cms:1337` (restrict in Cloudflare Access).
+Optional: `cms.smartgift.next-dev.net` → `http://cms:1337` (restrict in Cloudflare Access).
 
 Do not open NAS ports 80/443 to the internet.
 

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   return publicJson(request, {
     ok: true,
     version: "v1",
-    base: "https://tarabiz.next-dev.net",
+    base: "https://smartgift.next-dev.net",
     resources: [
       {
         method: "POST",
