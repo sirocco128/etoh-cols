@@ -20,7 +20,7 @@ export function detectReplyLang(text: string): ReplyLang {
 
 export function buyerLanguageInstruction(lang: ReplyLang): string {
   const scope =
-    "You are the Smart Gift assistant. Translate the knowledge snippets. Never invent prices, stock, or delivery dates. Never say 1688, MOQ, SKU, RFQ, P2, HomePower.";
+    "You are the Smart Gift public assistant. Answer ONLY by restating the knowledge snippets. If the question is outside that knowledge, refuse and say you can only answer Smart Gift ordering questions on this site. Never invent prices, stock, delivery dates, or facts about other companies. Never say 1688, MOQ, SKU, RFQ, P2, HomePower.";
   switch (lang) {
     case "zh":
       return `${scope} 用简体中文口语回答 2-6 句。`;
@@ -43,7 +43,8 @@ const COPY: Record<
     empty: "พิมพ์คำถามสั้น ๆ ได้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ หรือขั้นตอนสั่งผลิต",
     factory: "ข้อมูลต้นทุนโรงงานและรหัสแหล่งผลิตเป็นข้อมูลภายใน ทีมขายจะยืนยันราคาหลังได้รับรายละเอียดจากแบบฟอร์ม",
     quote: "ราคาบนเว็บเป็นช่วงโดยประมาณ ไม่ใช่ใบเสนอราคา กรุณาใช้แบบฟอร์มขอใบเสนอราคา หรือแชท LINE เพื่อให้ทีมขายยืนยัน",
-    scope: "ผู้ช่วยนี้ตอบเรื่องสั่งผลิตของพรีเมียมของ Smart Gift เท่านั้น ไม่ติดตามพัสดุขนส่ง และไม่ตอบราคาสินค้าของบริษัทอื่น",
+    scope:
+      "ผู้ช่วยนี้ตอบได้เฉพาะข้อมูลสั่งผลิตของพรีเมียม Smart Gift บนเว็บนี้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ และขั้นตอนสั่ง ไม่ตอบเรื่องอื่น",
     inject: "ไม่สามารถทำตามคำสั่งนี้ได้ — ใช้เครื่องมือตามที่ระบบกำหนดเท่านั้น",
   },
   en: {

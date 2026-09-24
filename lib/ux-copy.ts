@@ -181,12 +181,12 @@ export const MOCKUP_RETAIL_HEADING = "ช่องรีเทล";
 export const MOCKUP_RETAIL_HINT =
   "พิมพ์คำสั่งเดิมเพื่อขยับรายละเอียดในรูป เช่น สูงขึ้นไปอีกนิด หรือ เปลี่ยนสีเป็นดำด้าน";
 
-export const BUYER_ASSISTANT_TITLE = "ถามเรื่องสั่งผลิต";
+export const BUYER_ASSISTANT_TITLE = "แชท AI Smart Gift";
 
 export const BUYER_ASSISTANT_INTRO =
-  "ตอบได้เฉพาะขั้นตอน จำนวนขั้นต่ำ และวิธีใส่โลโก้ — ไม่ใช่ใบเสนอราคา และไม่มีการชำระเงินในแชท";
+  "ตอบได้เฉพาะข้อมูลสั่งผลิตบนเว็บนี้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ และขั้นตอนสั่ง — ไม่ใช่ใบเสนอราคา และไม่มีการชำระเงินในแชท";
 
-export const BUYER_ASSISTANT_CTA = "ถามคำถาม";
+export const BUYER_ASSISTANT_CTA = "แชท AI";
 
 export const BUYER_ASSISTANT_CHIPS = [
   "สั่งขั้นต่ำกี่ชุด",

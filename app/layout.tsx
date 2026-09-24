@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { AnalyticsConsentBanner } from "@/components/AnalyticsConsentBanner";
 import { CaptureAttribution } from "@/components/CaptureAttribution";
 import { BuyerAssistantWidget } from "@/components/BuyerAssistantWidget";
-import { TerabisAiWidget } from "@/components/TerabisAiWidget";
 import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 import { FloatingQuoteDock } from "@/components/FloatingQuoteDock";
 import { Footer } from "@/components/Footer";
@@ -19,7 +18,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-presets";
-import { isP2QuoteToolsEnabled, isTaipWidgetEnabled } from "@/lib/feature-flags";
+import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
 import { buildMetadata } from "@/lib/metadata";
 import {
   buildLocalBusinessJsonLd,
@@ -108,7 +107,7 @@ export default function RootLayout({
             {null}
           </SiteChrome>
           <SiteChrome
-            chrome={isTaipWidgetEnabled() ? <TerabisAiWidget /> : <BuyerAssistantWidget />}
+            chrome={<BuyerAssistantWidget />}
           >
             {null}
           </SiteChrome>

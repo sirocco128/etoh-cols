@@ -63,7 +63,7 @@ export const FIRM_QUOTE_REFUSAL_TH =
   "ราคาบนเว็บเป็นช่วงโดยประมาณ ไม่ใช่ใบเสนอราคา กรุณาใช้แบบฟอร์มขอใบเสนอราคา หรือแชท LINE เพื่อให้ทีมขายยืนยัน";
 
 export const PUBLIC_SCOPE_REFUSAL_TH =
-  "ผู้ช่วยนี้ตอบเรื่องสั่งผลิตของพรีเมียมของ Smart Gift เท่านั้น ไม่ติดตามพัสดุขนส่ง และไม่ตอบราคาสินค้าของบริษัทอื่น";
+  "ผู้ช่วยนี้ตอบได้เฉพาะข้อมูลสั่งผลิตของพรีเมียม Smart Gift บนเว็บนี้ เช่น จำนวนขั้นต่ำ วิธีใส่โลโก้ และขั้นตอนสั่ง ไม่ตอบเรื่องอื่น";
 
 const PUBLIC_SCOPE_PATTERNS = [
   /\bhp-bat\b/i,
@@ -81,6 +81,8 @@ const PUBLIC_SCOPE_PATTERNS = [
   /nexterp/i,
   /物流/,
   /运单/,
+  /อากาศ|ฝนตก|พยากรณ์|weather/i,
+  /นายก|ข่าววันนี้|ผลบอล|หุ้น/,
 ];
 
 export function looksPublicScopeOverreach(text: string): boolean {

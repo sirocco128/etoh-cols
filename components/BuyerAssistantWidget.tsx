@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { buyerQuotePath } from "@/lib/assistant-public";
 import { isBuyerAssistantEnabled } from "@/lib/feature-flags";
 import {
   BUYER_ASSISTANT_CHIPS,
@@ -11,7 +12,7 @@ import {
   BUYER_ASSISTANT_TITLE,
 } from "@/lib/ux-copy";
 
-const HIDDEN_PREFIXES = ["/privacy", "/terms"];
+const HIDDEN_PREFIXES = ["/contact", "/privacy", "/terms", "/quote-basket"];
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -30,8 +31,18 @@ export function BuyerAssistantWidget() {
   const [busy, setBusy] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const thread = threadRef.current;
+    if (!open || !thread) return;
+    thread.scrollTop = thread.scrollHeight;
+  }, [open, turns, error, busy]);
 
   const chips = useMemo(() => [...BUYER_ASSISTANT_CHIPS], []);
+  const quoteHref = buyerQuotePath(
+    turns.filter((turn) => turn.role === "user").map((turn) => turn.content),
+  );
 
   if (!enabled || hidden) return null;
 
@@ -46,7 +57,7 @@ export function BuyerAssistantWidget() {
       const res = await fetch("/api/assistant/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ message: content, history: turns.slice(-6) }),
       });
       const json = (await res.json()) as {
         ok?: boolean;
@@ -65,7 +76,7 @@ export function BuyerAssistantWidget() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-6 right-4 z-40 hidden lg:block">
+    <div className="pointer-events-none fixed right-4 z-40 bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-6">
       {open ? (
         <div className="pointer-events-auto mb-3 flex h-[min(28rem,70vh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-forest/15 bg-paper shadow-[0_16px_48px_rgba(20,53,42,0.16)]">
           <div className="flex items-start justify-between gap-2 bg-forest px-4 py-3 text-paper">
@@ -81,34 +92,34 @@ export function BuyerAssistantWidget() {
               ปิด
             </button>
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3 text-sm">
-            {turns.length === 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {chips.map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className="rounded-full border border-forest/20 px-3 py-1.5 text-left text-xs text-forest hover:bg-forest-mist"
-                    onClick={() => void send(chip)}
-                  >
-                    {chip}
-                  </button>
-                ))}
+          <div
+            ref={threadRef}
+            className="flex-1 space-y-3 overflow-y-auto px-3 py-3 text-sm"
+          >
+            {turns.map((turn, index) => (
+              <div
+                key={`${turn.role}-${index}`}
+                className={
+                  turn.role === "user"
+                    ? "ml-8 rounded-2xl bg-forest px-3 py-2 text-paper"
+                    : "mr-4 rounded-2xl bg-forest-mist px-3 py-2 text-ink"
+                }
+              >
+                {turn.content}
               </div>
-            ) : (
-              turns.map((turn, index) => (
-                <div
-                  key={`${turn.role}-${index}`}
-                  className={
-                    turn.role === "user"
-                      ? "ml-8 rounded-2xl bg-forest px-3 py-2 text-paper"
-                      : "mr-4 rounded-2xl bg-forest-mist px-3 py-2 text-ink"
-                  }
+            ))}
+            <div className="flex flex-wrap gap-2">
+              {chips.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="rounded-full border border-forest/20 px-3 py-1.5 text-left text-xs text-forest hover:bg-forest-mist"
+                  onClick={() => void send(chip)}
                 >
-                  {turn.content}
-                </div>
-              ))
-            )}
+                  {chip}
+                </button>
+              ))}
+            </div>
             {error ? (
               <p className="text-xs text-red-700" role="alert">
                 {error}
@@ -144,7 +155,7 @@ export function BuyerAssistantWidget() {
             </div>
             <p className="mt-2 text-[11px] text-ink/60">
               ต้องการตัวเลขที่ตรงงาน?{" "}
-              <Link href="/contact" className="underline underline-offset-2">
+              <Link href={quoteHref} className="underline underline-offset-2">
                 ขอใบเสนอราคา
               </Link>
             </p>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runBuyerAssistant } from "@/lib/assistant-public";
+import { runBuyerAssistant, type BuyerAssistantTurn } from "@/lib/assistant-public";
 import { isBuyerAssistantEnabled } from "@/lib/feature-flags";
 import { consumeRateLimit } from "@/lib/quote-repository";
 import { hashIp, resolveClientIp } from "@/lib/quote-service";
@@ -7,6 +7,21 @@ import { getFaqs } from "@/lib/strapi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function readHistory(value: unknown): BuyerAssistantTurn[] {
+  if (!Array.isArray(value)) return [];
+  const turns: BuyerAssistantTurn[] = [];
+  for (const item of value.slice(-6)) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as { role?: unknown; content?: unknown };
+    if (record.role !== "user" && record.role !== "assistant") continue;
+    turns.push({
+      role: record.role,
+      content: String(record.content || "").slice(0, 500),
+    });
+  }
+  return turns;
+}
 
 function readIntEnv(key: string, fallback: number): number {
   const raw = Number(process.env[key]);
@@ -18,9 +33,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "ปิดใช้งาน" }, { status: 404 });
   }
 
-  let body: { message?: string };
+  let body: { message?: string; history?: unknown };
   try {
-    body = (await request.json()) as { message?: string };
+    body = (await request.json()) as { message?: string; history?: unknown };
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
@@ -48,6 +63,7 @@ export async function POST(request: Request) {
   const result = await runBuyerAssistant({
     message: String(body.message || ""),
     faqs,
+    history: readHistory(body.history),
   });
 
   return NextResponse.json({

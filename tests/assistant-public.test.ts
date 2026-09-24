@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { faqs } from "../lib/data";
 import { retrieveKnowledge, knowledgeFromFaqs } from "../lib/assistant-knowledge";
-import { runBuyerAssistant } from "../lib/assistant-public";
+import { buyerQuotePath, runBuyerAssistant } from "../lib/assistant-public";
 
 describe("buyer assistant", () => {
   it("retrieves logo and process snippets", () => {
@@ -73,5 +73,44 @@ describe("buyer assistant", () => {
       faqs,
     });
     assert.equal(battery.refused, true);
+  });
+
+  it("refuses questions outside Smart Gift ordering knowledge", async () => {
+    process.env.OPENROUTER_API_KEY = "";
+    const weather = await runBuyerAssistant({
+      message: "อากาศวันนี้เป็นอย่างไร",
+      faqs,
+    });
+    assert.equal(weather.refused, true);
+    assert.match(weather.reply, /Smart Gift|เว็บนี้/);
+  });
+
+  it("answers a short follow-up from the earlier question", async () => {
+    process.env.OPENROUTER_API_KEY = "";
+    const alone = await runBuyerAssistant({
+      message: "อืมครับ",
+      faqs,
+    });
+    assert.equal(alone.refused, true);
+
+    const followUp = await runBuyerAssistant({
+      message: "อืมครับ",
+      faqs,
+      history: [
+        { role: "user", content: "สั่งขั้นต่ำกี่ชุด" },
+        { role: "assistant", content: "ต้องถึงจำนวนขั้นต่ำบนหน้าสินค้า" },
+      ],
+    });
+    assert.equal(followUp.refused, false);
+    assert.match(followUp.reply, /ขั้นต่ำ|จำนวน/);
+  });
+
+  it("puts recent questions on the quote form link", () => {
+    const path = buyerQuotePath(["สั่งขั้นต่ำกี่ชุด", "สกรีนโลโก้ได้อย่างไร"]);
+    const note = new URL(path, "http://local").searchParams.get("note") || "";
+    assert.match(note, /จากแชทบนเว็บ/);
+    assert.match(note, /สั่งขั้นต่ำกี่ชุด/);
+    assert.match(note, /สกรีนโลโก้/);
+    assert.equal(buyerQuotePath([]), "/contact");
   });
 });

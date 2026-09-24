@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  BUYER_ASSISTANT_CTA,
   BUYER_ASSISTANT_INTRO,
   BUYER_ASSISTANT_TITLE,
   CHINA_AFTER_ORDER_INTRO,
@@ -95,7 +96,8 @@ describe("ux-copy (buyer-facing strings)", () => {
   });
 
   it("buyer assistant copy is jargon-free", () => {
-    assert.match(BUYER_ASSISTANT_TITLE, /สั่งผลิต|ถาม/);
+    assert.match(BUYER_ASSISTANT_TITLE, /Smart Gift|สั่งผลิต|ถาม/);
+    assert.match(BUYER_ASSISTANT_CTA, /แชท AI/);
     assert.doesNotMatch(BUYER_ASSISTANT_INTRO, BUYER_JARGON);
     assert.doesNotMatch(BUYER_ASSISTANT_INTRO, /\b1688\b/);
     assert.match(BUYER_ASSISTANT_INTRO, /ไม่ใช่ใบเสนอราคา/);
