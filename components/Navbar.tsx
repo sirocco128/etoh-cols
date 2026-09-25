@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavLink } from "@/components/NavLink";
 import { NavMore } from "@/components/NavMore";
 import { NavUtilityCluster } from "@/components/NavUtilityCluster";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { withOptionalBasketLink } from "@/lib/nav";
 import { site } from "@/lib/site";
@@ -37,9 +37,10 @@ export function Navbar({
       <div className="mx-auto flex max-w-content items-center justify-between gap-2 px-page py-2.5 sm:gap-4 sm:py-3">
         <Link
           href="/"
-          className="shrink-0 text-base font-bold tracking-tight text-brass focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass xs:text-lg"
+          aria-label={site.name}
+          className="shrink-0 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass"
         >
-          {site.name}
+          <BrandLogo />
         </Link>
 
         <nav className="hidden min-w-0 items-center gap-3 lg:flex xl:gap-6" aria-label="เมนูหลัก">
@@ -55,7 +56,6 @@ export function Navbar({
             </NavLink>
           ))}
           <NavMore />
-          <ThemeSwitcher />
           <ThemeToggle />
           <Button asChild className="shrink-0">
             <Link href="/contact">ขอใบเสนอราคา</Link>
@@ -64,7 +64,6 @@ export function Navbar({
 
         <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
           <ThemeToggle />
-          <ThemeSwitcher compact />
           <MobileMenu enableP2QuoteTools={enableP2QuoteTools} />
         </div>
       </div>

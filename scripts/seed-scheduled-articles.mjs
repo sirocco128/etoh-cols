@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Queue the twenty planned articles as status=scheduled.
+ * Queue the thirty planned articles as status=scheduled.
  * Skips rows that are already live. Updates draft/review/scheduled copies.
  *
  * Usage: node scripts/seed-scheduled-articles.mjs
@@ -148,7 +148,7 @@ for (const article of PLANNED_ARTICLES) {
       `UPDATE sg_article SET
          title = ?, excerpt = ?, body = ?, cover_url = ?, author = 'ทีมคอนเทนต์',
          category = ?, status = 'scheduled', source = 'human',
-         brief = 'คิวเผยแพร่ 20 บทความ',
+         brief = 'คิวเผยแพร่ 30 บทความ',
          seo_title = ?, meta_description = ?, keywords = ?,
          reviewed_by = 'seed-schedule', published_at = ?
        WHERE id = ?`,
@@ -161,7 +161,7 @@ for (const article of PLANNED_ARTICLES) {
       `INSERT INTO sg_article (
          slug, title, excerpt, body, cover_url, author, category, status, source, brief,
          seo_title, meta_description, keywords, reviewed_by, published_at
-       ) VALUES (?, ?, ?, ?, ?, 'ทีมคอนเทนต์', ?, 'scheduled', 'human', 'คิวเผยแพร่ 20 บทความ', ?, ?, ?, 'seed-schedule', ?)`,
+       ) VALUES (?, ?, ?, ?, ?, 'ทีมคอนเทนต์', ?, 'scheduled', 'human', 'คิวเผยแพร่ 30 บทความ', ?, ?, ?, 'seed-schedule', ?)`,
       [article.slug, ...params],
     );
     inserted += 1;

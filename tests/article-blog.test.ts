@@ -176,10 +176,10 @@ describe("article blog", () => {
     assert.equal(formatBangkokDateTimeLocal(morning.toISOString()), "2026-09-25T09:00");
   });
 
-  it("queues twenty articles across the five blog categories", () => {
-    assert.equal(PLANNED_ARTICLES.length, 20);
+  it("queues thirty articles across the five blog categories", () => {
+    assert.equal(PLANNED_ARTICLES.length, 30);
     const slugs = new Set(PLANNED_ARTICLES.map((article) => article.slug));
-    assert.equal(slugs.size, 20);
+    assert.equal(slugs.size, 30);
     const counts: Record<string, number> = {};
     let previous = 0;
     for (const article of PLANNED_ARTICLES) {
@@ -191,6 +191,6 @@ describe("article blog", () => {
       previous = article.publishAt.getTime();
       assert.equal(formatBangkokDateTimeLocal(article.publishAt.toISOString()).endsWith("T09:00"), true);
     }
-    assert.deepEqual(counts, { gift: 8, earth: 3, travel: 3, it: 3, ai: 3 });
+    assert.deepEqual(counts, { gift: 11, earth: 5, travel: 5, it: 5, ai: 4 });
   });
 });

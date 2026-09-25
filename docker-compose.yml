@@ -2,7 +2,7 @@
 # MinIO stores images (public) and customer/ops documents (private vault).
 # Strapi itself runs on the host from ./cms after bootstrap — see docs/SPRINT1-LOCAL-CMS.md
 #
-#   docker compose up -d postgres minio minio-replica minio-init minio-mirror
+#   docker compose up -d postgres mysql minio minio-replica minio-init minio-mirror
 #   npm run cms:bootstrap
 #   cd cms && npm install && npm run develop
 #
@@ -31,6 +31,26 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  mysql:
+    image: mysql:8.4
+    container_name: giftset-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: biz_secret
+      MYSQL_DATABASE: smartgift
+      MYSQL_USER: biz
+      MYSQL_PASSWORD: biz_secret
+    volumes:
+      - giftset_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ubiz", "-pbiz_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   minio:
     image: minio/minio:latest
@@ -128,6 +148,7 @@ services:
       - giftset_clamav:/var/lib/clamav
 
 volumes:
+  giftset_mysql:
   giftset_pgdata:
   giftset_minio:
   giftset_minio_replica:
