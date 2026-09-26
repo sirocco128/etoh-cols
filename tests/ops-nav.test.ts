@@ -144,8 +144,19 @@ describe("ops nav", () => {
     const grouped = groupOpsNavLinks(admin);
     assert.deepEqual(
       grouped.map((group) => group.id),
-      ["today", "sales", "catalog", "cycle", "finance", "content", "system"],
+      ["today", "etoh", "sales", "catalog", "cycle", "finance", "content", "system"],
     );
+    const etoh = grouped.find((group) => group.id === "etoh")?.links.map((link) => link.href);
+    assert.deepEqual(etoh, [
+      "/ops/etoh",
+      "/ops/etoh/quotes",
+      "/ops/etoh/customers",
+      "/ops/etoh/prices",
+      "/ops/etoh/lots",
+      "/ops/etoh/drums",
+      "/ops/etoh/sync",
+    ]);
+    assert.equal(viewer.some((link) => link.href === "/ops/etoh/prices"), false);
     assert.equal(grouped.find((group) => group.id === "sales")?.links[0]?.href, "/ops/quotes");
     const filtered = filterOpsNavGroups(grouped, "โรงงาน");
     assert.deepEqual(

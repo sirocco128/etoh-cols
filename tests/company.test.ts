@@ -2,7 +2,9 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   COMPANY,
+  COMPANY_TAX_ID_PLACEHOLDER,
   formatOpeningHoursDisplay,
+  isPlaceholderTaxId,
   formatRegisteredAddress,
   isPlaceholderEmail,
   isPlaceholderLine,
@@ -43,18 +45,25 @@ function siteWith(
 }
 
 describe("company identity (non-product)", () => {
-  it("uses บริษัท เทราบิส จำกัด and DBD tax ID", () => {
-    assert.equal(COMPANY.brandName, "Smart Gift");
-    assert.equal(COMPANY.legalName, "บริษัท เทราบิส จำกัด");
-    assert.equal(COMPANY.legalNameEn, "Terabiz Company Limited");
-    assert.equal(COMPANY.taxId, "0105556003873");
-    assert.equal(COMPANY.registeredOnTh, "9 มกราคม 2556");
+  it("uses the Etoh Cols brand and flags the tax ID as a placeholder", () => {
+    assert.equal(COMPANY.brandName, "Etoh Cols");
+    assert.equal(COMPANY.legalName, "บริษัท อิโตะ คอลส์ จำกัด");
+    assert.equal(COMPANY.legalNameEn, "Etoh Cols Co., Ltd.");
+    assert.equal(COMPANY.taxId, COMPANY_TAX_ID_PLACEHOLDER);
+    assert.equal(isPlaceholderTaxId(COMPANY.taxId), true);
+    assert.equal(isPlaceholderTaxId("0105556003873"), false);
+    assert.equal(isPlaceholderTaxId("12345"), true);
   });
 
-  it("formats the registered Thung Khru address", () => {
+  it("formats a registered address from deployment parts", () => {
     assert.equal(
-      formatRegisteredAddress(),
-      "50/238 ซอยประชาอุทิศ 72 แขวงทุ่งครุ เขตทุ่งครุ กรุงเทพมหานคร 10140",
+      formatRegisteredAddress({
+        streetAddress: "1 ถนนตัวอย่าง",
+        locality: "แขวงตัวอย่าง",
+        region: "เขตตัวอย่าง กรุงเทพมหานคร",
+        postalCode: "10000",
+      }),
+      "1 ถนนตัวอย่าง แขวงตัวอย่าง เขตตัวอย่าง กรุงเทพมหานคร 10000",
     );
   });
 

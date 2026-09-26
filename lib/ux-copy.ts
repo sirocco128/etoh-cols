@@ -52,7 +52,7 @@ export const ACCOUNT_HUB_TITLE = "ลูกค้าที่สั่งแล�
 
 export const ACCOUNT_HUB_NAV_HINT = "ติดตามออเดอร์ · แจ้งปัญหา";
 
-export const OPS_CONSOLE_TITLE = "Smart Gift";
+export const OPS_CONSOLE_TITLE = "Etoh Cols";
 
 export const OPS_CONSOLE_KICKER = "คอนโซลปฏิบัติการ";
 

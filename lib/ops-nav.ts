@@ -5,6 +5,7 @@ import { getStrapiAdminUrl } from "@/lib/strapi-url";
 /** Work-stage groups — matches how staff actually move through a giftset job. */
 export const OPS_NAV_GROUP_IDS = [
   "today",
+  "etoh",
   "sales",
   "catalog",
   "cycle",
@@ -17,6 +18,7 @@ export type OpsNavGroupId = (typeof OPS_NAV_GROUP_IDS)[number];
 
 export const OPS_NAV_GROUP_LABELS: Record<OpsNavGroupId, string> = {
   today: "วันนี้",
+  etoh: "เอทานอล",
   sales: "ขายและลูกค้า",
   catalog: "ราคาและสินค้า",
   cycle: "ปฏิบัติการ",
@@ -45,6 +47,24 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
   ];
   if (actorMay(actor, "reports.read")) {
     links.push({ href: "/ops/reports", label: "รายงาน", group: "finance" });
+  }
+  // Etoh Cols (ethanol) desk
+  links.push(
+    { href: "/ops/etoh", label: "คิดราคาเอทานอล", group: "etoh" },
+    { href: "/ops/etoh/quotes", label: "ใบเสนอราคาเอทานอล", group: "etoh" },
+  );
+  if (actorMay(actor, "customers.read")) {
+    links.push({ href: "/ops/etoh/customers", label: "เงื่อนไขลูกค้า", group: "etoh" });
+  }
+  if (actorMay(actor, "catalog.write")) {
+    links.push({ href: "/ops/etoh/prices", label: "ราคา / บรรจุภัณฑ์", group: "etoh" });
+  }
+  if (actorMay(actor, "stock.read")) {
+    links.push({ href: "/ops/etoh/lots", label: "ล็อตนำเข้า / CoA", group: "etoh" });
+    links.push({ href: "/ops/etoh/drums", label: "ถังหมุนเวียน", group: "etoh" });
+  }
+  if (actorMay(actor, "reports.read")) {
+    links.push({ href: "/ops/etoh/sync", label: "ส่งข้อมูล NEXTERP", group: "etoh" });
   }
   links.push(
     { href: "/ops/quotes", label: "ใบเสนอราคา", group: "sales" },

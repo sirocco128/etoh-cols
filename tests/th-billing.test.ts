@@ -7,7 +7,7 @@ import {
   roundSatang,
   splitVat,
 } from "../lib/th-billing";
-import { COMPANY } from "../lib/company";
+import { COMPANY_TAX_ID_PLACEHOLDER } from "../lib/company";
 
 describe("Thai VAT + deposit (revenue cycle)", () => {
   it("adds 7% VAT exclusive like a ภ.พ.30 invoice", () => {
@@ -49,8 +49,9 @@ describe("Thai VAT + deposit (revenue cycle)", () => {
     );
   });
 
-  it("validates the Terabis tax ID checksum", () => {
-    assert.equal(isValidThaiTaxId(COMPANY.taxId), true);
+  it("validates the Thai tax ID checksum", () => {
+    assert.equal(isValidThaiTaxId("0105556003873"), true);
+    assert.equal(isValidThaiTaxId(COMPANY_TAX_ID_PLACEHOLDER), false);
     assert.equal(isValidThaiTaxId("0105556003874"), false);
   });
 });

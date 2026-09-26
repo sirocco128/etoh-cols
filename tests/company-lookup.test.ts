@@ -9,7 +9,9 @@ import {
   uniqueCompaniesByTaxId,
   formatVatBranchLabel,
 } from "../lib/company-lookup";
-import { COMPANY } from "../lib/company";
+// Fixture juristic person (valid RD tax ID format) — independent of the
+// deployed brand in lib/company.ts.
+const COMPANY = { taxId: "0105556003873", legalName: "บริษัท เทราบิส จำกัด" } as const;
 
 const RD_VAT_SOAP = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Body><ServiceResponse xmlns="https://rdws.rd.go.th/serviceRD3/vatserviceRD3"><ServiceResult><vtitleName><anyType xsi:type="xsd:string">บริษัท</anyType></vtitleName><vName><anyType xsi:type="xsd:string">เทราบิส จำกัด</anyType></vName><vHouseNumber><anyType xsi:type="xsd:string">50/238</anyType></vHouseNumber><vSoiName><anyType xsi:type="xsd:string">ประชาอุทิศ 72</anyType></vSoiName><vThambol><anyType xsi:type="xsd:string">ทุ่งครุ</anyType></vThambol><vAmphur><anyType xsi:type="xsd:string">ทุ่งครุ</anyType></vAmphur><vProvince><anyType xsi:type="xsd:string">กรุงเทพมหานคร</anyType></vProvince><vPostCode><anyType xsi:type="xsd:string">10140</anyType></vPostCode><vBusinessFirstDate><anyType xsi:type="xsd:string">2013-01-25</anyType></vBusinessFirstDate><vmsgerr /></ServiceResult></ServiceResponse></soap:Body></soap:Envelope>`;
 

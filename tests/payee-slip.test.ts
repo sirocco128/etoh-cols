@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { COMPANY } from "../lib/company";
+// Fixture juristic person (valid RD tax ID format) — independent of the
+// deployed brand in lib/company.ts.
+const COMPANY = { taxId: "0105556003873", legalName: "บริษัท เทราบิส จำกัด" } as const;
 import {
   formatBankAccountNo,
   formatPromptPayId,

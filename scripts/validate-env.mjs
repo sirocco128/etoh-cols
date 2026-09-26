@@ -112,6 +112,16 @@ if (!siteName.trim() || /giftpro asia/i.test(siteName) || /demo/i.test(siteName)
   errors.push("NEXT_PUBLIC_SITE_NAME must be a real brand name (not GiftPro Asia Demo).");
 }
 
+// Etoh Cols fork: invoices and receipts print SITE_TAX_ID. The code default is
+// a placeholder until the DBD registration number is supplied.
+const siteTaxId = String(process.env.SITE_TAX_ID ?? "").trim();
+if (!/^\d{13}$/.test(siteTaxId) || siteTaxId === "0000000000000") {
+  errors.push("SITE_TAX_ID must be the real 13-digit DBD tax ID (not 0000000000000).");
+}
+if (!String(process.env.SITE_STREET_ADDRESS ?? "").trim()) {
+  errors.push("SITE_STREET_ADDRESS must be the registered address printed on tax invoices.");
+}
+
 const phoneDisplay = process.env.NEXT_PUBLIC_SITE_PHONE_DISPLAY ?? "";
 if (!phoneDisplay.trim() || /000/.test(phoneDisplay)) {
   errors.push("NEXT_PUBLIC_SITE_PHONE_DISPLAY must not be a placeholder (000).");

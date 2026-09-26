@@ -1,29 +1,42 @@
-import { SMART_GIFT_PARTNER_POINTS } from "@/lib/smart-gift-method";
+import { ETOH_PARTNER_POINTS } from "@/lib/etoh/brand";
+import { isValidThaiTaxId } from "@/lib/th-billing";
 
 /**
- * Public brand is Smart Gift. The registered juristic person, tax ID, and
- * address stay บริษัท เทราบิส จำกัด (DBD 0105556003873) so invoices and
- * payment slips match the bank account. Do not invent phone, email, or LINE.
+ * Public brand is Etoh Cols (บริษัท อิโตะ คอลส์ จำกัด), an ethanol importer.
+ *
+ * The DBD tax ID and registered address are NOT known yet. They default to
+ * the placeholders below and must be set per deployment with SITE_TAX_ID,
+ * SITE_LEGAL_NAME, SITE_STREET_ADDRESS, SITE_ADDRESS_LOCALITY,
+ * SITE_ADDRESS_REGION and SITE_POSTAL_CODE. `validate:env` refuses a
+ * production (indexing) build while COMPANY_TAX_ID_PLACEHOLDER is in use.
+ * Do not invent phone, email, LINE, tax ID, or address values.
  */
 
+export const COMPANY_TAX_ID_PLACEHOLDER = "0000000000000";
+
 export const COMPANY = {
-  brandName: "Smart Gift",
-  legalName: "บริษัท เทราบิส จำกัด",
-  legalNameEn: "Terabiz Company Limited",
-  taxId: "0105556003873",
-  registeredOn: "2013-01-09",
-  registeredOnTh: "9 มกราคม 2556",
-  streetAddress: "50/238 ซอยประชาอุทิศ 72",
-  locality: "แขวงทุ่งครุ",
-  region: "เขตทุ่งครุ กรุงเทพมหานคร",
-  postalCode: "10140",
+  brandName: "Etoh Cols",
+  legalName: "บริษัท อิโตะ คอลส์ จำกัด",
+  legalNameEn: "Etoh Cols Co., Ltd.",
+  taxId: COMPANY_TAX_ID_PLACEHOLDER,
+  registeredOn: "",
+  registeredOnTh: "",
+  streetAddress: "",
+  locality: "",
+  region: "กรุงเทพมหานคร",
+  postalCode: "",
   countryCode: "TH",
   countryTh: "ประเทศไทย",
   description:
-    "ของพรีเมียมครบทุกหมวดสำหรับทุกแบรนด์และทุกแคมเปญ สกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน แล้วขอใบเสนอราคา",
+    "ผู้นำเข้าและจัดหาเอทานอลสำหรับอุตสาหกรรม (Industrial, Denatured, TBA & Bitrex, Food Grade) บรรจุ ISO Tank / IBC / ถัง 200 ลิตร / แกลลอน พร้อม CoA และ SDS จัดส่งทั่วประเทศ",
 } as const;
 
-export const COMPANY_SERVICES = SMART_GIFT_PARTNER_POINTS;
+export function isPlaceholderTaxId(taxId: string): boolean {
+  const v = String(taxId || "").trim();
+  return v === COMPANY_TAX_ID_PLACEHOLDER || !isValidThaiTaxId(v);
+}
+
+export const COMPANY_SERVICES = ETOH_PARTNER_POINTS;
 
 export function formatRegisteredAddress(parts?: {
   streetAddress?: string;
