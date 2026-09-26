@@ -4,7 +4,7 @@ import { EtohPrintButton } from "@/components/etoh/EtohPrintButton";
 import { requireOpsPage } from "@/lib/ops-auth";
 import { getOrderRepository } from "@/lib/order-repository";
 import { getGrade, getPack, ETOH_DOCUMENT_LABELS } from "@/lib/etoh/catalog";
-import { getEtohOrder, getShipmentByOrder } from "@/lib/etoh/sales";
+import { getEtohOrder, getShipmentByDn, getShipmentByOrder } from "@/lib/etoh/sales";
 import { formatThaiDate } from "@/lib/etoh/ops-data";
 import { getSiteConfig } from "@/lib/site";
 import { isPlaceholderTaxId } from "@/lib/company";
@@ -12,13 +12,20 @@ import { isPlaceholderTaxId } from "@/lib/company";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export default async function DeliveryNotePage({ params }: { params: Promise<{ orderId: string }> }) {
+export default async function DeliveryNotePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{ dn?: string }>;
+}) {
   await requireOpsPage("orders.read");
   const { orderId } = await params;
+  const { dn } = await searchParams;
   const order = getOrderRepository().getOrderByOrderId(orderId);
   const meta = getEtohOrder(orderId);
-  const shipment = getShipmentByOrder(orderId);
-  if (!order || !meta || !shipment) notFound();
+  const shipment = dn ? getShipmentByDn(dn) : getShipmentByOrder(orderId);
+  if (!order || !meta || !shipment || shipment.orderId !== orderId) notFound();
   const site = getSiteConfig();
   const documents = Array.from(new Set(meta.lines.flatMap((l) => getGrade(l.grade).documents)));
 
@@ -69,15 +76,18 @@ export default async function DeliveryNotePage({ params }: { params: Promise<{ o
             </tr>
           </thead>
           <tbody>
-            {meta.lines.map((l, i) => (
+            {shipment.items.map((it, n) => {
+              const l = meta.lines[it.lineIndex]!;
+              const i = it.lineIndex;
+              return (
               <tr key={i} className="border-b border-forest/10 align-top">
-                <td className="px-2 py-2">{i + 1}</td>
+                <td className="px-2 py-2">{n + 1}</td>
                 <td className="px-2 py-2">
                   {getGrade(l.grade).nameTh} · {getPack(l.pack).nameTh}
-                  <p className="font-mono text-xs text-ink/50">{l.sku} · ≈ {(l.litres * getGrade(l.grade).densityKgPerL).toLocaleString("th-TH")} กก.</p>
+                  <p className="font-mono text-xs text-ink/50">{l.sku} · ≈ {Math.round(it.litres * getGrade(l.grade).densityKgPerL).toLocaleString("th-TH")} กก.</p>
                 </td>
-                <td className="px-2 py-2 text-right tabular-nums">{l.qty}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{l.litres.toLocaleString("th-TH")}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{it.qty}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{it.litres.toLocaleString("th-TH")}</td>
                 <td className="px-2 py-2 text-xs">
                   {shipment.lots.filter((s) => s.lineIndex === i).map((s) => (
                     <p key={`${s.lotId}`}>
@@ -86,7 +96,8 @@ export default async function DeliveryNotePage({ params }: { params: Promise<{ o
                   ))}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
         <div className="mt-4 text-xs text-ink/70">
@@ -96,6 +107,9 @@ export default async function DeliveryNotePage({ params }: { params: Promise<{ o
               <li key={d}>{ETOH_DOCUMENT_LABELS[d]} ตามเลขล็อตด้านบน</li>
             ))}
           </ul>
+          {shipment.depositThb > 0 ? (
+            <p className="mt-2">ภาชนะหมุนเวียน: เก็บมัดจำ {shipment.depositThb.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท (คืนเงินเมื่อคืนภาชนะ)</p>
+          ) : null}
           <p className="mt-2">สินค้าเป็นของเหลวไวไฟ — จัดเก็บห่างจากความร้อนและประกายไฟ ตาม SDS</p>
         </div>
         <footer className="mt-10 grid gap-10 text-center text-xs text-ink/70 sm:grid-cols-3">

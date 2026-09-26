@@ -41,7 +41,14 @@ import {
   updateLotCoa,
 } from "@/lib/etoh/repository";
 import { getCustomerById } from "@/lib/customer-repository";
-import { convertQuoteToOrder, markDelivered, shipOrder } from "@/lib/etoh/sales";
+import {
+  convertQuoteToOrder,
+  markDelivered,
+  returnContainers,
+  settleDepositDoc,
+  shipOrder,
+  voidDepositDoc,
+} from "@/lib/etoh/sales";
 import { logFollowup } from "@/lib/etoh/followups";
 
 function text(form: FormData, key: string): string {
@@ -429,7 +436,11 @@ export async function recordDrumMovementAction(
   const meta = await requestMeta();
   const customerId = Number(text(formData, "customerId"));
   if (!getCustomerById(customerId)) return { ok: false, error: "ไม่พบลูกค้า" };
-  const direction = text(formData, "direction") === "in" ? -1 : 1;
+  // Returns must go through returnContainersAction so deposits are cancelled/refunded.
+  if (text(formData, "direction") === "in") {
+    return { ok: false, error: "รับคืนภาชนะที่ช่อง \"รับคืนภาชนะจากลูกค้า\" เพื่อให้ระบบออกใบคืนมัดจำ" };
+  }
+  const direction = 1;
   const qty = num(formData, "qty", Number.NaN);
   try {
     recordDrumMovement({
@@ -529,8 +540,16 @@ export async function shipOrderAction(
   const orderId = text(formData, "orderId");
   let dnNo = "";
   try {
+    const items: { lineIndex: number; qty: number }[] = [];
+    for (const [key, value] of formData.entries()) {
+      const m = /^qty_(\d+)$/.exec(key);
+      if (m && typeof value === "string" && value.trim() !== "") {
+        items.push({ lineIndex: Number(m[1]), qty: Number(value) });
+      }
+    }
     const shipment = shipOrder({
       orderId,
+      items,
       shipTo: text(formData, "shipTo") || undefined,
       vehicle: text(formData, "vehicle") || undefined,
       driver: text(formData, "driver") || undefined,
@@ -589,5 +608,91 @@ export async function logFollowupAction(
     return failure(error, "บันทึกการติดตามไม่สำเร็จ");
   }
   revalidatePath("/ops/etoh/followups");
+  return { ok: true };
+}
+
+/* ------------------------------------------------ container deposits */
+
+export async function returnContainersAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("stock.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์" };
+  const meta = await requestMeta();
+  const customerId = Number(text(formData, "customerId"));
+  if (!getCustomerById(customerId)) return { ok: false, error: "ไม่พบลูกค้า" };
+  const packCode = text(formData, "packCode");
+  if (!isPackCode(packCode)) return { ok: false, error: "เลือกภาชนะ" };
+  let refundNo: string | null = null;
+  try {
+    refundNo = returnContainers({
+      customerId,
+      packCode,
+      qty: num(formData, "qty", Number.NaN),
+      memo: text(formData, "memo") || null,
+      actor: actor.email,
+    }).refund?.docNo ?? null;
+  } catch (error) {
+    return failure(error, "บันทึกรับคืนไม่สำเร็จ");
+  }
+  writeOpsAudit({ actor, action: "etoh.container.return", status: "ok", resourceType: "customer", resourceId: String(customerId), detail: { packCode, refundNo }, ...meta });
+  revalidatePath("/ops/etoh/drums");
+  return { ok: true };
+}
+
+export async function settleDepositAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("finance.write");
+  if (!actor) return { ok: false, error: "เฉพาะฝ่ายบัญชี" };
+  const meta = await requestMeta();
+  const id = Number(text(formData, "id"));
+  let docNo = "";
+  try {
+    docNo = settleDepositDoc({ id, method: text(formData, "method"), reference: text(formData, "reference"), actor: actor.email }).docNo;
+  } catch (error) {
+    return failure(error, "บันทึกรับ/จ่ายมัดจำไม่สำเร็จ");
+  }
+  writeOpsAudit({ actor, action: "etoh.deposit.settle", status: "ok", resourceType: "etoh_deposit", resourceId: docNo, ...meta });
+  revalidatePath("/ops/etoh/drums");
+  return { ok: true };
+}
+
+export async function voidDepositAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("finance.write");
+  if (!actor) return { ok: false, error: "เฉพาะฝ่ายบัญชี" };
+  const meta = await requestMeta();
+  const id = Number(text(formData, "id"));
+  let docNo = "";
+  try {
+    docNo = voidDepositDoc(id, actor.email).docNo;
+  } catch (error) {
+    return failure(error, "ยกเลิกเอกสารไม่สำเร็จ");
+  }
+  writeOpsAudit({ actor, action: "etoh.deposit.void", status: "ok", resourceType: "etoh_deposit", resourceId: docNo, ...meta });
+  revalidatePath("/ops/etoh/drums");
+  return { ok: true };
+}
+
+/* -------------------------------------------------------- dashboard */
+
+export async function saveTargetAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("catalog.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์ตั้งเป้า" };
+  const containers = num(formData, "containers", Number.NaN);
+  if (!Number.isInteger(containers) || containers < 1 || containers > 200) {
+    return { ok: false, error: "เป้าต้องเป็น 1–200 ตู้/เดือน" };
+  }
+  setSetting("monthly_target_containers", String(containers), actor.email);
+  writeOpsAudit({ actor, action: "etoh.settings.save", status: "ok", resourceType: "etoh_settings", resourceId: "monthly_target_containers", detail: { containers } });
+  revalidatePath("/ops/etoh/dashboard");
   return { ok: true };
 }

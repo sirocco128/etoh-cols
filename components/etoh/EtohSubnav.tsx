@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const ITEMS = [
+  { key: "dashboard", href: "/ops/etoh/dashboard", label: "ภาพรวม" },
   { key: "calc", href: "/ops/etoh", label: "คิดราคา" },
   { key: "quotes", href: "/ops/etoh/quotes", label: "ใบเสนอราคา" },
   { key: "orders", href: "/ops/etoh/orders", label: "ออเดอร์ / ส่งของ" },

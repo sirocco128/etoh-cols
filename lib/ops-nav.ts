@@ -49,6 +49,9 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
     links.push({ href: "/ops/reports", label: "รายงาน", group: "finance" });
   }
   // Etoh Cols (ethanol) desk
+  if (actorMay(actor, "reports.read")) {
+    links.push({ href: "/ops/etoh/dashboard", label: "ภาพรวมยอดขาย", group: "etoh" });
+  }
   links.push(
     { href: "/ops/etoh", label: "คิดราคาเอทานอล", group: "etoh" },
     { href: "/ops/etoh/quotes", label: "ใบเสนอราคาเอทานอล", group: "etoh" },

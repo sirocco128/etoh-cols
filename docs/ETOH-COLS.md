@@ -32,7 +32,7 @@ Tests: `tests/etoh-pricing.test.ts`, `tests/etoh-repository.test.ts`.
 | Step | Where | What happens |
 | --- | --- | --- |
 | Accept quote → order | `/ops/etoh/quotes/[id]` (`orders.write`) | Creates an `orders` row (ORD-…) from the frozen quote. **Cash** customers get a full-amount invoice + PromptPay voucher and must pay before shipping. **Credit** customers are checked against their credit limit (override needs `catalog.write`, audited). |
-| Ship | `/ops/etoh/orders/[orderId]` (`stock.write`) | Allocates **released, unexpired lots FIFO** (expiry, then arrival), issues the **ใบกำกับภาษี** at delivery, posts revenue + output VAT (AR for credit), opens the payment voucher, records drums/IBC out, marks empty lots `depleted`. A stock shortage aborts with nothing written. |
+| Ship (partial allowed) | `/ops/etoh/orders/[orderId]` (`stock.write`) | Enter the qty per line for this truck (defaults to everything outstanding). Each shipment gets its own DN and **its own ใบกำกับภาษี**; the last shipment reconciles rounding so the invoices sum exactly to the order. Allocates **released, unexpired lots FIFO** (expiry, then arrival), issues the **ใบกำกับภาษี** at delivery, posts revenue + output VAT (AR for credit), opens the payment voucher, records drums/IBC out, marks empty lots `depleted`. A stock shortage aborts with nothing written. |
 | Delivery note | `/ops/etoh/orders/[orderId]/dn` | Printable DN-YYMM-NNNN with lot numbers, CoA purity, weights and three signature boxes. |
 | Delivered | same page | Receiver name → order `delivered`. |
 | Paid later | existing `/ops/orders` / approvals | Confirming the voucher marks the order paid and now issues the **receipt** even when the tax invoice was issued earlier (credit sales). |
@@ -42,7 +42,29 @@ Shared-engine changes: `lib/db-transaction.ts` (nest-safe transactions via
 SAVEPOINT) is now used by document numbering and journal posting so the whole
 shipment commits atomically; `maybeIssueTaxInvoice` issues the receipt
 independently of the tax invoice. Container deposits stay outside the VAT
-order total and live in the drum ledger.
+order total and are handled by the deposit documents below.
+
+## Phase 3 — deposits, partial shipments, LINE, dashboard
+
+Migration `033_etoh_partial_shipments_deposits.sql`.
+
+**Container deposits (ledger account 2150 เงินมัดจำภาชนะรับ)**
+
+| Event | Document | Journal |
+| --- | --- | --- |
+| Shipment with drums/IBC | `DP-YYMM-NNNN` charge, status *open* | none until collected |
+| Deposit collected (`finance.write`, `/ops/etoh/drums`) | DP → *settled*, method + reference | DR cash/bank · CR 2150 |
+| Customer returns containers (`stock.write`) | Uncollected open charges are voided/reduced first; only the remainder becomes an `RF-YYMM-NNNN` refund | — |
+| Refund paid (`finance.write`) | RF → *settled* | DR 2150 · CR cash/bank |
+
+Printable receipt/refund slip: `/ops/etoh/deposits/[id]` (not a tax invoice — deposits are outside the VAT base). Opening balances of drums already at customers: "ยอดยกมา" on the drums page.
+
+**LINE alerts** (Messaging API push, never blocks the business action)
+
+- New web RFQ → pushed immediately to `ETOH_SALES_LINE_TO`.
+- Daily digest: `POST /api/jobs/etoh-daily-digest` with `Authorization: Bearer $CRON_SECRET` (suggested 08:15 Asia/Bangkok) — month-to-date litres vs target, open quotes, customers due to reorder, overdue invoices.
+
+**Dashboard** `/ops/etoh/dashboard` (`reports.read`): delivered litres/containers vs target (default 12 containers × drums-per-container × 200 L, editable), pace line and month-end projection, 6-month history, RFQs, open quotes, 90-day win rate, receivables, reorder calls due, stock cover by grade, top customers.
 
 ### Pricing rules
 
@@ -83,10 +105,12 @@ Schedule: `POST /api/jobs/etoh-nexterp-sync` with `Authorization: Bearer $CRON_S
 - [ ] Separate `SQLITE_PATH` (never share Smart Gift's database).
 - [ ] Enter base prices, container deposits and tier discounts on `/ops/etoh/prices`.
 - [ ] NEXTERP: implement the ingest endpoint above, then set `NEXTERP_SYNC_URL` / `NEXTERP_SYNC_SECRET`.
+- [ ] LINE OA: create a Messaging API channel, add the OA to the sales group, set `LINE_CHANNEL_ACCESS_TOKEN`, `ETOH_SALES_LINE_TO` (groupId `C…`), `ETOH_OPS_BASE_URL`; schedule the digest cron.
+- [ ] Record opening drum balances per customer on `/ops/etoh/drums` before the first live shipment.
 - [ ] Confirm excise-department licensing for repacking into 20 L / 5 L before enabling those packs.
 
 ## Not yet converted (next phases)
 
-- Public storefront, blog, AI assistant copy and SEO still carry Smart Gift gift-set content (≈ 20 files under `app/`, `lib/data.ts`, `lib/ux-copy.ts`, assistant prompts). Phase 2 replaces them with ethanol product / end-use pages and an RFQ form.
-- Partial shipments (one delivery note per order today), deposit refunds as credit notes, WMS bin-level stock for drums.
-- LINE notification for new RFQs, sales dashboard vs the 12-container target, dealer portal, import forecast.
+- AI assistant prompts may still reference gift sets — review before enabling the chat widget.
+- Privacy / terms pages still carry Smart Gift wording — needs legal review for Etoh Cols.
+- WMS bin-level stock for drums, dealer portal, import forecast.

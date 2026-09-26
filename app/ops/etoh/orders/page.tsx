@@ -13,10 +13,8 @@ export default async function EtohOrdersPage() {
   await requireOpsPage("orders.read");
   const items = listEtohOrders();
   const today = bangkokToday();
-  const toShip = items.filter((i) => !i.shipment && i.order.fulfillmentStatus !== "cancelled");
-  const openAr = items
-    .filter((i) => i.shipment && i.order.paymentStatus !== "paid")
-    .reduce((s, i) => s + i.order.totalAmount - i.order.paidAmount, 0);
+  const toShip = items.filter((i) => !i.progress.fullyShipped && i.order.fulfillmentStatus !== "cancelled");
+  const openAr = items.reduce((s, i) => s + Math.max(0, i.progress.invoicedTotal - i.order.paidAmount), 0);
 
   return (
     <div>
@@ -47,8 +45,9 @@ export default async function EtohOrdersPage() {
                 </td>
               </tr>
             ) : (
-              items.map(({ order, meta, shipment }) => {
-                const overdue = shipment?.dueDate && shipment.dueDate < today && order.paymentStatus !== "paid";
+              items.map(({ order, meta, shipments, progress }) => {
+                const shipment = shipments[shipments.length - 1] ?? null;
+                const overdue = shipments.some((s) => s.dueDate && s.dueDate < today) && order.paidAmount + 0.004 < progress.invoicedTotal;
                 return (
                   <tr key={order.orderId} className="border-b border-forest/10">
                     <td className="px-2 py-2.5">
@@ -67,7 +66,7 @@ export default async function EtohOrdersPage() {
                     <td className="px-2 py-2.5">
                       {shipment ? (
                         <span>
-                          {shipment.dnNo} · {shipment.status === "delivered" ? "ส่งถึงแล้ว" : "กำลังส่ง"}
+                          {shipments.length} ใบส่งของ · {progress.fullyShipped ? (progress.allDelivered ? "ส่งครบ ถึงแล้ว" : "ส่งครบ กำลังส่ง") : "ส่งบางส่วน"}
                         </span>
                       ) : (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">{FULFILLMENT_LABELS[order.fulfillmentStatus]} · รอส่ง</span>

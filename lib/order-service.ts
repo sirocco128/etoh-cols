@@ -198,17 +198,31 @@ function maybeIssueTaxInvoice(order: OrderRecord, now: string, actor: string | n
       createdAt: now,
     });
   }
-  // Credit sales get the tax invoice at delivery and the receipt when paid later,
-  // so the receipt is issued independently of the tax invoice.
-  if (!repo.hasDocument(fresh.orderId, "receipt")) {
+  // Credit sales get the tax invoice at delivery and receipts as money comes in
+  // (possibly in parts), so only the not-yet-receipted balance is issued here.
+  const receipted = roundSatang(
+    repo
+      .listDocumentsByOrder(fresh.orderId)
+      .filter((d) => d.documentType === "receipt")
+      .reduce((sum, d) => sum + d.grandTotal, 0),
+  );
+  const unreceipted = roundSatang(fresh.totalAmount - receipted);
+  if (unreceipted > 0.004) {
+    const share =
+      receipted > 0
+        ? splitVat({ amount: unreceipted, vatMode: "inclusive" })
+        : { subtotalExVat: fresh.subtotalExVat, vatAmount: fresh.vatAmount };
     issueDocument({
       type: "receipt",
       order: fresh,
       paymentId: null,
-      subtotalExVat: fresh.subtotalExVat,
-      vatAmount: fresh.vatAmount,
-      grandTotal: fresh.totalAmount,
-      lineDescription: `รับชำระค่าสินค้าครบจำนวน — ${fresh.productSummary}`,
+      subtotalExVat: share.subtotalExVat,
+      vatAmount: share.vatAmount,
+      grandTotal: unreceipted,
+      lineDescription:
+        receipted > 0
+          ? `รับชำระงวดสุดท้าย ครบจำนวน — ${fresh.productSummary}`
+          : `รับชำระค่าสินค้าครบจำนวน — ${fresh.productSummary}`,
       now,
     });
   }
@@ -542,6 +556,21 @@ export function confirmPayment(input: {
     actor: input.actor ?? null,
     createdAt: now,
   });
+
+  // Part payment of an invoiced balance (credit sales shipped in parts): receipt per payment.
+  if (payment.kind === "remaining" && paymentStatus !== "paid") {
+    const share = splitVat({ amount: payment.amount, vatMode: "inclusive" });
+    issueDocument({
+      type: "receipt",
+      order,
+      paymentId: payment.paymentId,
+      subtotalExVat: share.subtotalExVat,
+      vatAmount: share.vatAmount,
+      grandTotal: payment.amount,
+      lineDescription: `รับชำระบางส่วน ${payment.amount.toFixed(2)} บาท — ${order.productSummary}`,
+      now,
+    });
+  }
 
   const fresh = repo.getOrderByOrderId(order.orderId);
   if (!fresh) throw new Error("order_not_found");

@@ -148,6 +148,7 @@ describe("ops nav", () => {
     );
     const etoh = grouped.find((group) => group.id === "etoh")?.links.map((link) => link.href);
     assert.deepEqual(etoh, [
+      "/ops/etoh/dashboard",
       "/ops/etoh",
       "/ops/etoh/quotes",
       "/ops/etoh/orders",

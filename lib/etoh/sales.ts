@@ -7,11 +7,18 @@
  *                                                          ├─ revenue + VAT (AR for credit customers)
  *                                                          └─ returnable drums / IBC out to customer
  *
+ * An order can ship in several delivery notes; each one carries its own
+ * ใบกำกับภาษี for the goods delivered and the final one reconciles the order
+ * total (delivery fee, header discount, rounding).
+ *
  * Cash customers (credit term 0) must pay before shipping. Credit customers
- * ship first; a PromptPay voucher for the full amount opens with the tax
- * invoice and the due date is shipped date + credit term.
- * Refundable container deposits are tracked in the drum ledger, not in the
- * VAT-able order total.
+ * ship first; one PromptPay voucher tracks invoiced-but-unpaid goods and each
+ * delivery note's due date is shipped date + credit term.
+ *
+ * Refundable container deposits stay outside the VAT base: each delivery note
+ * with drums / IBC opens a deposit charge (DP-…), a container return opens a
+ * refund (RF-…) — after cancelling any charge that was never collected — and
+ * settling either posts to account 2150 (container deposits held).
  */
 
 import { randomBytes } from "node:crypto";
@@ -19,7 +26,8 @@ import { getDb } from "@/lib/database";
 import { withTransaction } from "@/lib/db-transaction";
 import { bangkokDateYmd } from "@/lib/bangkok-date";
 import { getCustomerById, recomputeCustomerRollups } from "@/lib/customer-repository";
-import { postRevenueRecognition } from "@/lib/ledger-service";
+import { postRevenueRecognition, upsertJournal } from "@/lib/ledger-service";
+import { ACCOUNT_CODES } from "@/lib/ledger-types";
 import { getOrderRepository } from "@/lib/order-repository";
 import { issueOrderDocument, openOrderPayment } from "@/lib/order-service";
 import type { OrderRecord } from "@/lib/order-types";
@@ -28,6 +36,7 @@ import { getGrade, getPack, type EtohGradeCode, type EtohPackCode } from "@/lib/
 import {
   bangkokToday,
   buddhistPeriod,
+  drumBalances,
   EtohValidationError,
   getCustomerTerms,
   getQuote,
@@ -300,7 +309,8 @@ export function getEtohOrder(orderId: string): EtohOrderMeta | null {
 export type EtohOrderListItem = {
   order: OrderRecord;
   meta: EtohOrderMeta;
-  shipment: EtohShipment | null;
+  shipments: EtohShipment[];
+  progress: EtohOrderProgress;
 };
 
 export function listEtohOrders(limit = 200): EtohOrderListItem[] {
@@ -312,7 +322,10 @@ export function listEtohOrders(limit = 200): EtohOrderListItem[] {
   for (const r of rows) {
     const order = repo.getOrderByOrderId(r.order_id);
     const meta = getEtohOrder(r.order_id);
-    if (order && meta) out.push({ order, meta, shipment: getShipmentByOrder(r.order_id) });
+    if (order && meta) {
+      const shipments = listShipmentsByOrder(r.order_id);
+      out.push({ order, meta, shipments, progress: orderProgress(meta, shipments) });
+    }
   }
   return out;
 }
@@ -383,12 +396,19 @@ export function planLotAllocation(grade: EtohGradeCode, litres: number): LotAllo
 
 /* ---------------------------------------------------------- shipments */
 
+export type EtohShipmentItem = {
+  lineIndex: number;
+  qty: number;
+  litres: number;
+  lineTotalThb: number;
+  depositThb: number;
+};
+
 export type EtohShipmentLot = {
   lineIndex: number;
   sku: string;
   grade: EtohGradeCode;
   pack: EtohPackCode;
-  qty: number;
   lotId: number;
   lotNo: string;
   litres: number;
@@ -405,11 +425,16 @@ export type EtohShipment = {
   vehicle: string | null;
   driver: string | null;
   taxInvoiceId: string | null;
+  subtotalExVat: number;
+  vatAmount: number;
+  grandTotal: number;
+  depositThb: number;
   dueDate: string | null;
   shippedAt: string;
   deliveredAt: string | null;
   receivedBy: string | null;
   createdBy: string;
+  items: EtohShipmentItem[];
   lots: EtohShipmentLot[];
 };
 
@@ -423,6 +448,10 @@ type ShipmentRow = {
   vehicle: string | null;
   driver: string | null;
   tax_invoice_id: string | null;
+  subtotal_ex_vat: number;
+  vat_amount: number;
+  grand_total: number;
+  deposit_thb: number;
   due_date: string | null;
   shipped_at: string;
   delivered_at: string | null;
@@ -431,7 +460,11 @@ type ShipmentRow = {
 };
 
 function mapShipment(row: ShipmentRow): EtohShipment {
-  const lots = getDb()
+  const db = getDb();
+  const items = db
+    .prepare(`SELECT * FROM etoh_shipment_items WHERE shipment_id = ? ORDER BY line_index`)
+    .all(row.id) as { line_index: number; qty: number; litres: number; line_total_thb: number; deposit_thb: number }[];
+  const lots = db
     .prepare(
       `SELECT s.*, l.lot_no, l.coa_purity_pct FROM etoh_shipment_lots s JOIN etoh_lots l ON l.id = s.lot_id
        WHERE s.shipment_id = ? ORDER BY s.line_index, s.id`,
@@ -441,7 +474,6 @@ function mapShipment(row: ShipmentRow): EtohShipment {
     sku: string;
     grade_code: EtohGradeCode;
     pack_code: EtohPackCode;
-    qty: number;
     lot_id: number;
     lot_no: string;
     litres: number;
@@ -457,17 +489,27 @@ function mapShipment(row: ShipmentRow): EtohShipment {
     vehicle: row.vehicle,
     driver: row.driver,
     taxInvoiceId: row.tax_invoice_id,
+    subtotalExVat: Number(row.subtotal_ex_vat),
+    vatAmount: Number(row.vat_amount),
+    grandTotal: Number(row.grand_total),
+    depositThb: Number(row.deposit_thb),
     dueDate: row.due_date,
     shippedAt: row.shipped_at,
     deliveredAt: row.delivered_at,
     receivedBy: row.received_by,
     createdBy: row.created_by,
+    items: items.map((i) => ({
+      lineIndex: i.line_index,
+      qty: i.qty,
+      litres: Number(i.litres),
+      lineTotalThb: Number(i.line_total_thb),
+      depositThb: Number(i.deposit_thb),
+    })),
     lots: lots.map((l) => ({
       lineIndex: l.line_index,
       sku: l.sku,
       grade: l.grade_code,
       pack: l.pack_code,
-      qty: l.qty,
       lotId: l.lot_id,
       lotNo: l.lot_no,
       litres: Number(l.litres),
@@ -476,9 +518,17 @@ function mapShipment(row: ShipmentRow): EtohShipment {
   };
 }
 
+export function listShipmentsByOrder(orderId: string): EtohShipment[] {
+  const rows = getDb()
+    .prepare(`SELECT * FROM etoh_shipments WHERE order_id = ? ORDER BY shipped_at, id`)
+    .all(orderId) as ShipmentRow[];
+  return rows.map(mapShipment);
+}
+
+/** Latest delivery note of an order (kept for callers that show one). */
 export function getShipmentByOrder(orderId: string): EtohShipment | null {
-  const row = getDb().prepare(`SELECT * FROM etoh_shipments WHERE order_id = ?`).get(orderId) as ShipmentRow | undefined;
-  return row ? mapShipment(row) : null;
+  const list = listShipmentsByOrder(orderId);
+  return list.length ? list[list.length - 1]! : null;
 }
 
 export function getShipment(id: number): EtohShipment | null {
@@ -486,16 +536,57 @@ export function getShipment(id: number): EtohShipment | null {
   return row ? mapShipment(row) : null;
 }
 
-function allocateDnNo(now: Date): string {
+export function getShipmentByDn(dnNo: string): EtohShipment | null {
+  const row = getDb().prepare(`SELECT * FROM etoh_shipments WHERE dn_no = ?`).get(dnNo) as ShipmentRow | undefined;
+  return row ? mapShipment(row) : null;
+}
+
+export type EtohLineProgress = {
+  lineIndex: number;
+  ordered: number;
+  shipped: number;
+  remaining: number;
+};
+
+export type EtohOrderProgress = {
+  lines: EtohLineProgress[];
+  fullyShipped: boolean;
+  anyShipped: boolean;
+  allDelivered: boolean;
+  invoicedTotal: number;
+  invoicedSubtotal: number;
+  invoicedVat: number;
+};
+
+export function orderProgress(meta: EtohOrderMeta, shipments: EtohShipment[]): EtohOrderProgress {
+  const lines = meta.lines.map((line, index) => {
+    const shipped = shipments.reduce(
+      (sum, s) => sum + (s.items.find((i) => i.lineIndex === index)?.qty ?? 0),
+      0,
+    );
+    return { lineIndex: index, ordered: line.qty, shipped, remaining: Math.max(0, line.qty - shipped) };
+  });
+  return {
+    lines,
+    fullyShipped: lines.every((l) => l.remaining === 0),
+    anyShipped: shipments.length > 0,
+    allDelivered: shipments.length > 0 && shipments.every((s) => s.status === "delivered"),
+    invoicedTotal: roundSatang(shipments.reduce((s, x) => s + x.grandTotal, 0)),
+    invoicedSubtotal: roundSatang(shipments.reduce((s, x) => s + x.subtotalExVat, 0)),
+    invoicedVat: roundSatang(shipments.reduce((s, x) => s + x.vatAmount, 0)),
+  };
+}
+
+function nextDocNo(kind: string, now: Date): string {
   const db = getDb();
   const period = buddhistPeriod(now);
-  const row = db.prepare(`SELECT last_value FROM document_sequences WHERE kind = 'DN' AND period = ?`).get(period) as
+  const row = db.prepare(`SELECT last_value FROM document_sequences WHERE kind = ? AND period = ?`).get(kind, period) as
     | { last_value: number }
     | undefined;
   const next = (row?.last_value ?? 0) + 1;
-  if (row) db.prepare(`UPDATE document_sequences SET last_value = ? WHERE kind = 'DN' AND period = ?`).run(next, period);
-  else db.prepare(`INSERT INTO document_sequences (kind, period, last_value) VALUES ('DN', ?, ?)`).run(period, next);
-  return `DN-${period.slice(2)}-${String(next).padStart(4, "0")}`;
+  if (row) db.prepare(`UPDATE document_sequences SET last_value = ? WHERE kind = ? AND period = ?`).run(next, kind, period);
+  else db.prepare(`INSERT INTO document_sequences (kind, period, last_value) VALUES (?, ?, ?)`).run(kind, period, next);
+  return `${kind}-${period.slice(2)}-${String(next).padStart(4, "0")}`;
 }
 
 function addDays(ymd: string, days: number): string {
@@ -504,8 +595,30 @@ function addDays(ymd: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Credit customers: keep one open PromptPay voucher equal to what has been
+ * invoiced (delivered) but not paid. A voucher the customer already submitted
+ * a slip for is left alone; the next refresh after approval covers the rest.
+ */
+function refreshCreditVoucher(order: OrderRecord, invoicedTotal: number): void {
+  const repo = getOrderRepository();
+  const fresh = repo.getOrderByOrderId(order.orderId) ?? order;
+  const due = roundSatang(invoicedTotal - fresh.paidAmount);
+  const open = repo.findOpenPayment(fresh.orderId, "remaining");
+  if (open && open.status === "submitted") return;
+  if (open) {
+    if (Math.abs(open.amount - due) < 0.005) return;
+    getDb()
+      .prepare(`UPDATE payments SET status = 'expired', updated_at = ? WHERE payment_id = ?`)
+      .run(nowIso(), open.paymentId);
+  }
+  if (due > 0.004) openOrderPayment(fresh, "remaining", due);
+}
+
 export type ShipOrderInput = {
   orderId: string;
+  /** Quantities to ship per order line; omitted = everything still open. */
+  items?: { lineIndex: number; qty: number }[];
   shipTo?: string;
   vehicle?: string;
   driver?: string;
@@ -518,29 +631,61 @@ export function shipOrder(input: ShipOrderInput): EtohShipment {
   const meta = getEtohOrder(input.orderId);
   if (!order || !meta) throw new EtohValidationError("ไม่พบออเดอร์เอทานอล");
   if (order.fulfillmentStatus === "cancelled") throw new EtohValidationError("ออเดอร์ถูกยกเลิก");
-  if (getShipmentByOrder(order.orderId)) throw new EtohValidationError("ออเดอร์นี้ออกใบส่งของแล้ว");
   if (meta.creditTermDays <= 0 && order.paymentStatus !== "paid") {
     throw new EtohValidationError("ลูกค้าเงินสด — ต้องรับชำระครบก่อนส่งของ");
   }
 
-  // Plan every line before writing anything so a shortage aborts cleanly.
-  const plans = meta.lines.map((line, index) => ({
-    index,
-    line,
-    allocation: planLotAllocation(line.grade, line.litres),
-  }));
+  const before = orderProgress(meta, listShipmentsByOrder(order.orderId));
+  if (before.fullyShipped) throw new EtohValidationError("ส่งครบทุกรายการแล้ว");
 
-  // Same grade on two lines must not double-book a lot: re-plan cumulatively.
+  const wanted = new Map<number, number>();
+  if (input.items && input.items.length) {
+    for (const it of input.items) {
+      if (!Number.isInteger(it.qty) || it.qty < 0) throw new EtohValidationError("จำนวนส่งต้องเป็นจำนวนเต็ม");
+      if (it.qty > 0) wanted.set(it.lineIndex, it.qty);
+    }
+  } else {
+    for (const l of before.lines) if (l.remaining > 0) wanted.set(l.lineIndex, l.remaining);
+  }
+  if (wanted.size === 0) throw new EtohValidationError("ระบุจำนวนที่จะส่งอย่างน้อย 1 รายการ");
+  for (const [idx, qty] of wanted) {
+    const prog = before.lines[idx];
+    if (!prog) throw new EtohValidationError("รายการไม่ถูกต้อง");
+    if (qty > prog.remaining) {
+      throw new EtohValidationError(`รายการที่ ${idx + 1} ส่งได้อีกไม่เกิน ${prog.remaining}`);
+    }
+  }
+
+  const picks = [...wanted].map(([lineIndex, qty]) => {
+    const line = meta.lines[lineIndex]!;
+    const litres = roundSatang(getPack(line.pack).litres * qty);
+    return { lineIndex, qty, line, litres, lineTotal: roundSatang(line.unitPriceThb * qty), deposit: roundSatang(line.depositPerUnitThb * qty) };
+  });
+
+  // Check stock for the whole shipment (same grade on several lines adds up).
   const byGrade = new Map<EtohGradeCode, number>();
-  for (const p of plans) byGrade.set(p.line.grade, (byGrade.get(p.line.grade) ?? 0) + p.line.litres);
+  for (const p of picks) byGrade.set(p.line.grade, (byGrade.get(p.line.grade) ?? 0) + p.litres);
   for (const [grade, litres] of byGrade) planLotAllocation(grade, litres);
+
+  const willBeComplete = before.lines.every((l) => l.remaining - (wanted.get(l.lineIndex) ?? 0) === 0);
+
+  // Invoice amount: goods shipped now; the final delivery takes the exact
+  // remainder so delivery fee / header discount and rounding reconcile to the order.
+  let subtotal = roundSatang(picks.reduce((s, p) => s + p.lineTotal, 0));
+  let vat = roundSatang(subtotal * (order.vatRate / 100));
+  if (willBeComplete) {
+    subtotal = roundSatang(order.subtotalExVat - before.invoicedSubtotal);
+    vat = roundSatang(order.vatAmount - before.invoicedVat);
+  }
+  const grand = roundSatang(subtotal + vat);
+  const depositTotal = roundSatang(picks.reduce((s, p) => s + p.deposit, 0));
 
   const now = new Date();
   const nowStr = now.toISOString();
   const today = bangkokToday(now);
 
   return tx(() => {
-    const dnNo = allocateDnNo(now);
+    const dnNo = nextDocNo("DN", now);
     const dueDate = meta.creditTermDays > 0 ? addDays(today, meta.creditTermDays) : null;
     const shipTo =
       input.shipTo?.trim() ||
@@ -548,83 +693,125 @@ export function shipOrder(input: ShipOrderInput): EtohShipment {
       null;
     const res = getDb()
       .prepare(
-        `INSERT INTO etoh_shipments (dn_no, order_id, customer_id, status, ship_to, vehicle, driver, due_date, shipped_at, created_by)
-         VALUES (?, ?, ?, 'shipped', ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO etoh_shipments
+          (dn_no, order_id, customer_id, status, ship_to, vehicle, driver, subtotal_ex_vat, vat_amount, grand_total, deposit_thb, due_date, shipped_at, created_by)
+         VALUES (?, ?, ?, 'shipped', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(dnNo, order.orderId, meta.customerId, shipTo, input.vehicle?.trim() || null, input.driver?.trim() || null, dueDate, nowStr, input.actor);
+      .run(
+        dnNo,
+        order.orderId,
+        meta.customerId,
+        shipTo,
+        input.vehicle?.trim() || null,
+        input.driver?.trim() || null,
+        subtotal,
+        vat,
+        grand,
+        depositTotal,
+        dueDate,
+        nowStr,
+        input.actor,
+      );
     const shipmentId = Number(res.lastInsertRowid);
 
+    const insertItem = getDb().prepare(
+      `INSERT INTO etoh_shipment_items (shipment_id, line_index, qty, litres, line_total_thb, deposit_thb) VALUES (?, ?, ?, ?, ?, ?)`,
+    );
     const insertLot = getDb().prepare(
       `INSERT INTO etoh_shipment_lots (shipment_id, line_index, sku, grade_code, pack_code, qty, lot_id, litres)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     );
-    for (const p of plans) {
-      // Re-plan inside the transaction so earlier lines' allocations are seen.
-      const allocation = planLotAllocation(p.line.grade, p.line.litres);
-      for (const a of allocation) {
-        insertLot.run(shipmentId, p.index, p.line.sku, p.line.grade, p.line.pack, p.line.qty, a.lotId, a.litres);
+    for (const p of picks) {
+      insertItem.run(shipmentId, p.lineIndex, p.qty, p.litres, p.lineTotal, p.deposit);
+      for (const a of planLotAllocation(p.line.grade, p.litres)) {
+        insertLot.run(shipmentId, p.lineIndex, p.line.sku, p.line.grade, p.line.pack, p.qty, a.lotId, a.litres);
         if (lotRemainingLitres(a.lotId) <= 0) {
           getDb().prepare(`UPDATE etoh_lots SET status = 'depleted', updated_at = ? WHERE id = ?`).run(nowStr, a.lotId);
         }
       }
     }
 
-    // Tax point for goods = delivery: issue ใบกำกับภาษี now.
+    const totalLitres = roundSatang(picks.reduce((s, p) => s + p.litres, 0));
+    const summary = picks.map((p) => `${getGrade(p.line.grade).nameTh} ${getPack(p.line.pack).nameTh} × ${p.qty}`).join(", ");
+    // Tax point for goods = delivery: one ใบกำกับภาษี per delivery note.
     const taxDoc = issueOrderDocument({
       type: "tax_invoice",
       order,
       paymentId: null,
-      subtotalExVat: order.subtotalExVat,
-      vatAmount: order.vatAmount,
-      grandTotal: order.totalAmount,
-      lineDescription: `${order.productSummary} · รวม ${meta.totalLitres.toLocaleString("th-TH")} ลิตร · ใบส่งของ ${dnNo}`,
+      subtotalExVat: subtotal,
+      vatAmount: vat,
+      grandTotal: grand,
+      lineDescription: `${summary} · รวม ${totalLitres.toLocaleString("th-TH")} ลิตร · ใบส่งของ ${dnNo}`,
       now: nowStr,
     });
     getDb().prepare(`UPDATE etoh_shipments SET tax_invoice_id = ? WHERE id = ?`).run(taxDoc.documentId, shipmentId);
 
+    const invoicedSubtotal = roundSatang(before.invoicedSubtotal + subtotal);
+    const invoicedVat = roundSatang(before.invoicedVat + vat);
+    // Revenue journal is keyed per order and re-posted with the cumulative delivered amount.
     postRevenueRecognition({
       orderId: order.orderId,
-      subtotalExVat: order.subtotalExVat,
-      vatAmount: order.vatAmount,
-      grandTotal: order.totalAmount,
+      subtotalExVat: invoicedSubtotal,
+      vatAmount: invoicedVat,
+      grandTotal: roundSatang(invoicedSubtotal + invoicedVat),
       at: nowStr,
       actor: input.actor,
     });
 
     if (order.paymentStatus !== "paid") {
-      openOrderPayment(order, "remaining", order.remainingAmount);
+      refreshCreditVoucher(order, roundSatang(invoicedSubtotal + invoicedVat));
     }
 
     repo.updateFulfillment(order.orderId, "out_for_delivery");
     repo.insertEvent({
       orderId: order.orderId,
       eventType: "fulfillment",
-      message: `ออกใบส่งของ ${dnNo} และใบกำกับภาษี ${taxDoc.documentId}${dueDate ? ` · ครบกำหนดชำระ ${dueDate}` : ""}`,
+      message: `ออกใบส่งของ ${dnNo} และใบกำกับภาษี ${taxDoc.documentId} (${grand.toFixed(2)} บาท)${
+        willBeComplete ? " · ส่งครบทุกรายการ" : " · ส่งบางส่วน"
+      }${dueDate ? ` · ครบกำหนดชำระ ${dueDate}` : ""}`,
       actor: input.actor,
       createdAt: nowStr,
     });
 
     if (meta.customerId) {
-      for (const line of meta.lines) {
-        if (getPack(line.pack).kind === "returnable") {
+      for (const p of picks) {
+        if (getPack(p.line.pack).kind === "returnable") {
           recordDrumMovement({
             customerId: meta.customerId,
-            packCode: line.pack,
-            qtyDelta: line.qty,
-            depositPerUnitThb: line.depositPerUnitThb,
+            packCode: p.line.pack,
+            qtyDelta: p.qty,
+            depositPerUnitThb: p.line.depositPerUnitThb,
             refType: "DN",
             refId: dnNo,
             actor: input.actor,
           });
         }
       }
+      if (depositTotal > 0) {
+        const returnableQty = picks.filter((p) => p.deposit > 0).reduce((s, p) => s + p.qty, 0);
+        createDepositDoc({
+          kind: "charge",
+          customerId: meta.customerId,
+          shipmentId,
+          qty: returnableQty,
+          amountThb: depositTotal,
+          note: `มัดจำภาชนะตามใบส่งของ ${dnNo}`,
+          actor: input.actor,
+          now,
+        });
+      }
     }
 
     enqueue("shipment", dnNo, "shipment.shipped", {
       orderId: order.orderId,
       taxInvoiceId: taxDoc.documentId,
+      subtotalExVat: subtotal,
+      vatAmount: vat,
+      grandTotal: grand,
+      depositThb: depositTotal,
       dueDate,
-      totalLitres: meta.totalLitres,
+      totalLitres,
+      complete: willBeComplete,
     });
     return getShipment(shipmentId)!;
   });
@@ -642,11 +829,17 @@ export function markDelivered(shipmentId: number, receivedBy: string, actor: str
       .prepare(`UPDATE etoh_shipments SET status = 'delivered', delivered_at = ?, received_by = ? WHERE id = ?`)
       .run(now, name, shipmentId);
     const repo = getOrderRepository();
-    repo.updateFulfillment(shipment.orderId, "delivered");
+    const meta = getEtohOrder(shipment.orderId);
+    const progress = meta ? orderProgress(meta, listShipmentsByOrder(shipment.orderId)) : null;
+    if (progress?.fullyShipped && progress.allDelivered) {
+      repo.updateFulfillment(shipment.orderId, "delivered");
+    }
     repo.insertEvent({
       orderId: shipment.orderId,
       eventType: "fulfillment",
-      message: `ส่งถึงลูกค้าแล้ว (${shipment.dnNo}) · ผู้รับ ${name}`,
+      message: `ส่งถึงลูกค้าแล้ว (${shipment.dnNo}) · ผู้รับ ${name}${
+        progress?.fullyShipped && progress.allDelivered ? " · ส่งครบทั้งออเดอร์" : ""
+      }`,
       actor,
       createdAt: now,
     });
@@ -655,7 +848,7 @@ export function markDelivered(shipmentId: number, receivedBy: string, actor: str
   });
 }
 
-/** Credit invoices past due date and still unpaid. */
+/** Credit tax invoices past due date while the order still has an unpaid balance. */
 export function overdueInvoices(asOf = bangkokToday()): {
   shipment: EtohShipment;
   order: OrderRecord;
@@ -672,7 +865,256 @@ export function overdueInvoices(asOf = bangkokToday()): {
   return rows.flatMap((row) => {
     const order = repo.getOrderByOrderId(row.order_id);
     if (!order) return [];
+    // Oldest invoices are considered paid first.
+    const earlier = getDb()
+      .prepare(`SELECT COALESCE(SUM(grand_total), 0) AS t FROM etoh_shipments WHERE order_id = ? AND (shipped_at < ? OR (shipped_at = ? AND id <= ?))`)
+      .get(row.order_id, row.shipped_at, row.shipped_at, row.id) as { t: number };
+    if (order.paidAmount + 0.004 >= Number(earlier.t)) return [];
     const days = Math.round((Date.parse(`${asOf}T00:00:00Z`) - Date.parse(`${row.due_date}T00:00:00Z`)) / 86400000);
     return [{ shipment: mapShipment(row), order, daysOverdue: days }];
+  });
+}
+
+/* --------------------------------------------------- container deposits */
+
+export const DEPOSIT_METHODS = ["transfer", "cash", "cheque", "offset"] as const;
+export type DepositMethod = (typeof DEPOSIT_METHODS)[number];
+export const DEPOSIT_METHOD_LABELS: Record<DepositMethod, string> = {
+  transfer: "โอนเงิน",
+  cash: "เงินสด",
+  cheque: "เช็ค",
+  offset: "หักกลบกับยอดค้าง",
+};
+
+export type EtohDepositDoc = {
+  id: number;
+  docNo: string;
+  kind: "charge" | "refund";
+  customerId: number;
+  shipmentId: number | null;
+  packCode: EtohPackCode | null;
+  qty: number;
+  amountThb: number;
+  status: "open" | "settled" | "void";
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  createdBy: string;
+  createdAt: string;
+  settledBy: string | null;
+  settledAt: string | null;
+};
+
+type DepositRow = {
+  id: number;
+  doc_no: string;
+  kind: "charge" | "refund";
+  customer_id: number;
+  shipment_id: number | null;
+  pack_code: string | null;
+  qty: number;
+  amount_thb: number;
+  status: "open" | "settled" | "void";
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  created_by: string;
+  created_at: string;
+  settled_by: string | null;
+  settled_at: string | null;
+};
+
+function mapDeposit(r: DepositRow): EtohDepositDoc {
+  return {
+    id: r.id,
+    docNo: r.doc_no,
+    kind: r.kind,
+    customerId: r.customer_id,
+    shipmentId: r.shipment_id,
+    packCode: (r.pack_code as EtohPackCode | null) ?? null,
+    qty: r.qty,
+    amountThb: Number(r.amount_thb),
+    status: r.status,
+    method: r.method,
+    reference: r.reference,
+    note: r.note,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+    settledBy: r.settled_by,
+    settledAt: r.settled_at,
+  };
+}
+
+function createDepositDoc(p: {
+  kind: "charge" | "refund";
+  customerId: number;
+  shipmentId?: number | null;
+  packCode?: EtohPackCode | null;
+  qty: number;
+  amountThb: number;
+  note: string;
+  actor: string;
+  now?: Date;
+}): EtohDepositDoc {
+  const now = p.now ?? new Date();
+  const docNo = nextDocNo(p.kind === "charge" ? "DP" : "RF", now);
+  const res = getDb()
+    .prepare(
+      `INSERT INTO etoh_deposit_docs (doc_no, kind, customer_id, shipment_id, pack_code, qty, amount_thb, status, note, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)`,
+    )
+    .run(docNo, p.kind, p.customerId, p.shipmentId ?? null, p.packCode ?? null, p.qty, roundSatang(p.amountThb), p.note, p.actor, now.toISOString());
+  const doc = mapDeposit(getDb().prepare(`SELECT * FROM etoh_deposit_docs WHERE id = ?`).get(Number(res.lastInsertRowid)) as DepositRow);
+  enqueue("deposit", doc.docNo, `deposit.${p.kind}_created`, { customerId: p.customerId, amountThb: doc.amountThb, qty: p.qty });
+  return doc;
+}
+
+export function listDepositDocs(filter: { customerId?: number; status?: "open" | "settled" | "void"; kind?: "charge" | "refund" } = {}, limit = 200): EtohDepositDoc[] {
+  const where: string[] = [];
+  const args: (string | number)[] = [];
+  if (filter.customerId) {
+    where.push("customer_id = ?");
+    args.push(filter.customerId);
+  }
+  if (filter.status) {
+    where.push("status = ?");
+    args.push(filter.status);
+  }
+  if (filter.kind) {
+    where.push("kind = ?");
+    args.push(filter.kind);
+  }
+  args.push(limit);
+  return (
+    getDb()
+      .prepare(`SELECT * FROM etoh_deposit_docs ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY id DESC LIMIT ?`)
+      .all(...args) as DepositRow[]
+  ).map(mapDeposit);
+}
+
+export function getDepositDoc(id: number): EtohDepositDoc | null {
+  const r = getDb().prepare(`SELECT * FROM etoh_deposit_docs WHERE id = ?`).get(id) as DepositRow | undefined;
+  return r ? mapDeposit(r) : null;
+}
+
+/**
+ * Collect a deposit charge (DR cash / CR container deposits held) or pay out a
+ * refund (DR container deposits held / CR cash). "offset" keeps cash untouched
+ * and moves the amount against AR instead.
+ */
+export function settleDepositDoc(p: { id: number; method: string; reference?: string | null; actor: string }): EtohDepositDoc {
+  const doc = getDepositDoc(p.id);
+  if (!doc) throw new EtohValidationError("ไม่พบเอกสารมัดจำ");
+  if (doc.status !== "open") throw new EtohValidationError("เอกสารนี้ปิดแล้ว");
+  if (!(DEPOSIT_METHODS as readonly string[]).includes(p.method)) throw new EtohValidationError("เลือกวิธีรับ/จ่ายเงิน");
+  const now = nowIso();
+  const counter = p.method === "offset" ? ACCOUNT_CODES.ar : ACCOUNT_CODES.cash;
+  return tx(() => {
+    getDb()
+      .prepare(`UPDATE etoh_deposit_docs SET status = 'settled', method = ?, reference = ?, settled_by = ?, settled_at = ? WHERE id = ?`)
+      .run(p.method, (p.reference || "").trim() || null, p.actor, now, p.id);
+    upsertJournal({
+      sourceKey: `deposit:${doc.docNo}`,
+      bookType: doc.kind === "charge" ? "cash_in" : "cash_out",
+      memo:
+        doc.kind === "charge"
+          ? `รับเงินมัดจำภาชนะ ${doc.docNo} ${doc.amountThb.toFixed(2)} บาท`
+          : `คืนเงินมัดจำภาชนะ ${doc.docNo} ${doc.amountThb.toFixed(2)} บาท`,
+      postedBy: p.actor,
+      at: now,
+      lines:
+        doc.kind === "charge"
+          ? [
+              { accountCode: counter, debit: doc.amountThb, credit: 0, memo: DEPOSIT_METHOD_LABELS[p.method as DepositMethod] },
+              { accountCode: ACCOUNT_CODES.containerDeposit, debit: 0, credit: doc.amountThb, memo: "มัดจำภาชนะ" },
+            ]
+          : [
+              { accountCode: ACCOUNT_CODES.containerDeposit, debit: doc.amountThb, credit: 0, memo: "คืนมัดจำภาชนะ" },
+              { accountCode: counter, debit: 0, credit: doc.amountThb, memo: DEPOSIT_METHOD_LABELS[p.method as DepositMethod] },
+            ],
+    });
+    enqueue("deposit", doc.docNo, `deposit.${doc.kind}_settled`, { amountThb: doc.amountThb, method: p.method });
+    return getDepositDoc(p.id)!;
+  });
+}
+
+export function voidDepositDoc(id: number, actor: string): EtohDepositDoc {
+  const doc = getDepositDoc(id);
+  if (!doc) throw new EtohValidationError("ไม่พบเอกสารมัดจำ");
+  if (doc.status !== "open") throw new EtohValidationError("ยกเลิกได้เฉพาะเอกสารที่ยังไม่รับ/จ่ายเงิน");
+  getDb().prepare(`UPDATE etoh_deposit_docs SET status = 'void', settled_by = ?, settled_at = ? WHERE id = ?`).run(actor, nowIso(), id);
+  enqueue("deposit", doc.docNo, "deposit.voided", { actor });
+  return getDepositDoc(id)!;
+}
+
+/**
+ * Customer returns drums / IBCs: records the return in the drum ledger at the
+ * average deposit they hold for that pack and opens a refund document.
+ */
+export function returnContainers(p: {
+  customerId: number;
+  packCode: EtohPackCode;
+  qty: number;
+  memo?: string | null;
+  actor: string;
+}): { refund: EtohDepositDoc | null } {
+  if (!Number.isInteger(p.qty) || p.qty <= 0) throw new EtohValidationError("จำนวนคืนต้องเป็นจำนวนเต็มบวก");
+  const bal = drumBalances(p.customerId).find((b) => b.packCode === p.packCode);
+  if (!bal || bal.outstanding < p.qty) throw new EtohValidationError("คืนถังเกินจำนวนที่ลูกค้าถืออยู่");
+  const perUnit = bal.outstanding > 0 ? roundSatang(bal.depositHeldThb / bal.outstanding) : 0;
+  return tx(() => {
+    recordDrumMovement({
+      customerId: p.customerId,
+      packCode: p.packCode,
+      qtyDelta: -p.qty,
+      depositPerUnitThb: perUnit,
+      refType: "RETURN",
+      memo: p.memo ?? null,
+      actor: p.actor,
+    });
+    // Deposit billed but never collected must not be paid back: cancel open
+    // charges first (oldest first), refund only what was actually received.
+    let amount = roundSatang(perUnit * p.qty);
+    const openCharges = getDb()
+      .prepare(
+        `SELECT * FROM etoh_deposit_docs WHERE customer_id = ? AND kind = 'charge' AND status = 'open' ORDER BY id`,
+      )
+      .all(p.customerId) as DepositRow[];
+    const nowStr = nowIso();
+    for (const charge of openCharges) {
+      if (amount <= 0) break;
+      const chargeAmt = Number(charge.amount_thb);
+      if (chargeAmt <= amount + 0.004) {
+        getDb()
+          .prepare(
+            `UPDATE etoh_deposit_docs SET status = 'void', settled_by = ?, settled_at = ?,
+               note = COALESCE(note, '') || ' · ยกเลิก: หักกับการคืนถัง' WHERE id = ?`,
+          )
+          .run(p.actor, nowStr, charge.id);
+        enqueue("deposit", charge.doc_no, "deposit.voided", { reason: "container_return" });
+        amount = roundSatang(amount - chargeAmt);
+      } else {
+        getDb()
+          .prepare(
+            `UPDATE etoh_deposit_docs SET amount_thb = ?, note = COALESCE(note, '') || ? WHERE id = ?`,
+          )
+          .run(roundSatang(chargeAmt - amount), ` · ลดยอด ${amount.toFixed(2)} จากการคืนถัง`, charge.id);
+        enqueue("deposit", charge.doc_no, "deposit.reduced", { byThb: amount, reason: "container_return" });
+        amount = 0;
+      }
+    }
+    const refund =
+      amount > 0
+        ? createDepositDoc({
+            kind: "refund",
+            customerId: p.customerId,
+            packCode: p.packCode,
+            qty: p.qty,
+            amountThb: amount,
+            note: `คืน${getPack(p.packCode).nameTh} ${p.qty} ใบ`,
+            actor: p.actor,
+          })
+        : null;
+    return { refund };
   });
 }

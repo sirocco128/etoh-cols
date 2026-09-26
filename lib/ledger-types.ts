@@ -85,6 +85,7 @@ export const ACCOUNT_CODES = {
   outputVat: "2120",
   factoryPayable: "2130",
   freightPayable: "2140",
+  containerDeposit: "2150",
   capital: "3100",
   retainedEarnings: "3200",
   sales: "4100",

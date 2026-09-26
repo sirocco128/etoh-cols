@@ -119,7 +119,7 @@ describe("etoh sales flow: quote → order → delivery note → tax invoice", (
     assert.equal(drums?.outstanding, 5);
     assert.equal(drums?.depositHeldThb, 4000);
 
-    assert.throws(() => sales.shipOrder({ orderId: order.orderId, actor: "wh" }), /ออกใบส่งของแล้ว/);
+    assert.throws(() => sales.shipOrder({ orderId: order.orderId, actor: "wh" }), /ส่งครบทุกรายการแล้ว/);
     const delivered = sales.markDelivered(shipment.id, "คุณสมศรี", "wh");
     assert.equal(delivered.status, "delivered");
 
@@ -177,6 +177,74 @@ describe("etoh sales flow: quote → order → delivery note → tax invoice", (
     assert.throws(() => sales.shipOrder({ orderId: order.orderId, actor: "wh" }), /ไม่พอ/);
     assert.equal(sales.getShipmentByOrder(order.orderId), null);
   });
+  it("ships in parts: one tax invoice per delivery note, last one reconciles the order", async () => {
+    const sales = await import("../lib/etoh/sales");
+    const { getOrderBundle } = await import("../lib/order-service");
+    const { quote } = await setup(30); // 5 drums
+    const order = sales.convertQuoteToOrder({ quoteId: quote.id, actor: "sales" });
+    assert.throws(() => sales.shipOrder({ orderId: order.orderId, items: [{ lineIndex: 0, qty: 6 }], actor: "wh" }), /ไม่เกิน 5/);
+    const first = sales.shipOrder({ orderId: order.orderId, items: [{ lineIndex: 0, qty: 2 }], actor: "wh" });
+    assert.equal(first.items[0]!.qty, 2);
+    assert.equal(first.subtotalExVat, 11700);
+    assert.equal(first.depositThb, 1600);
+    let bundle = getOrderBundle(order.orderId)!;
+    assert.equal(bundle.order.fulfillmentStatus, "out_for_delivery");
+    assert.equal(bundle.payments.find((p) => p.status === "pending")!.amount, first.grandTotal, "voucher = invoiced so far");
+
+    const second = sales.shipOrder({ orderId: order.orderId, actor: "wh" }); // rest
+    assert.equal(second.items[0]!.qty, 3);
+    assert.equal(
+      Math.round((first.grandTotal + second.grandTotal) * 100),
+      Math.round(order.totalAmount * 100),
+      "invoices add up to the order",
+    );
+    bundle = getOrderBundle(order.orderId)!;
+    assert.equal(bundle.documents.filter((d) => d.documentType === "tax_invoice").length, 2);
+    assert.equal(bundle.payments.filter((p) => p.status === "pending").length, 1);
+    assert.equal(bundle.payments.find((p) => p.status === "pending")!.amount, order.totalAmount);
+    const items = sales.listEtohOrders().find((i) => i.order.orderId === order.orderId)!;
+    assert.equal(items.progress.fullyShipped, true);
+
+    sales.markDelivered(first.id, "A", "wh");
+    assert.equal(getOrderBundle(order.orderId)!.order.fulfillmentStatus, "out_for_delivery", "not all delivered yet");
+    sales.markDelivered(second.id, "B", "wh");
+    assert.equal(getOrderBundle(order.orderId)!.order.fulfillmentStatus, "delivered");
+  });
+
+  it("deposit cycle: charge per delivery note, settle to 2150, returns cancel uncollected charges and refund the rest", async () => {
+    const sales = await import("../lib/etoh/sales");
+    const repo = await import("../lib/etoh/repository");
+    const { listJournals } = await import("../lib/ledger-repository");
+    const { customer, quote } = await setup(30); // 5 drums × 800
+    const order = sales.convertQuoteToOrder({ quoteId: quote.id, actor: "sales" });
+    const s1 = sales.shipOrder({ orderId: order.orderId, items: [{ lineIndex: 0, qty: 3 }], actor: "wh" });
+    sales.shipOrder({ orderId: order.orderId, actor: "wh" });
+    const charges = sales.listDepositDocs({ customerId: customer.id, kind: "charge" });
+    assert.deepEqual(charges.map((c) => c.amountThb).sort(), [1600, 2400]);
+    assert.ok(charges.every((c) => /^DP-\d{4}-\d{4}$/.test(c.docNo)));
+
+    // Collect the first (3 drums, 2,400) only.
+    const firstCharge = charges.find((c) => c.shipmentId === s1.id)!;
+    sales.settleDepositDoc({ id: firstCharge.id, method: "transfer", reference: "TRX", actor: "acc" });
+    assert.throws(() => sales.settleDepositDoc({ id: firstCharge.id, method: "cash", actor: "acc" }), /ปิดแล้ว/);
+    const j = listJournals().find((x: { sourceKey: string }) => x.sourceKey === `deposit:${firstCharge.docNo}`);
+    assert.ok(j, "deposit journal posted");
+    assert.ok(j!.lines.some((l: { accountCode: string; credit: number }) => l.accountCode === "2150" && l.credit === 2400));
+
+    // Return 3 drums (2,400 of deposit): first cancels the uncollected 1,600, refunds 800.
+    const { refund } = sales.returnContainers({ customerId: customer.id, packCode: "DRUM200", qty: 3, actor: "wh" });
+    assert.equal(refund?.amountThb, 800);
+    assert.match(refund!.docNo, /^RF-/);
+    const second = sales.listDepositDocs({ customerId: customer.id, kind: "charge" }).find((c) => c.id !== firstCharge.id)!;
+    assert.equal(second.status, "void");
+    sales.settleDepositDoc({ id: refund!.id, method: "transfer", actor: "acc" });
+    const rj = listJournals().find((x: { sourceKey: string }) => x.sourceKey === `deposit:${refund!.docNo}`);
+    assert.ok(rj!.lines.some((l: { accountCode: string; debit: number }) => l.accountCode === "2150" && l.debit === 800));
+
+    const [bal] = repo.drumBalances(customer.id);
+    assert.equal(bal?.outstanding, 2);
+    assert.throws(() => sales.returnContainers({ customerId: customer.id, packCode: "DRUM200", qty: 3, actor: "wh" }), /เกินจำนวน/);
+  });
 });
 
 describe("etoh reorder follow-ups", () => {
@@ -184,5 +252,41 @@ describe("etoh reorder follow-ups", () => {
     const { inferCycleDays } = await import("../lib/etoh/followups");
     assert.equal(inferCycleDays(["2026-08-01T03:00:00Z"]), null);
     assert.equal(inferCycleDays(["2026-08-01T03:00:00Z", "2026-08-15T03:00:00Z", "2026-08-29T03:00:00Z"]), 14);
+  });
+});
+
+describe("etoh LINE notify + dashboard helpers", () => {
+  it("pushes to every configured recipient and skips when unconfigured", async () => {
+    const { pushLineText, formatRfqNotice, clampLineText } = await import("../lib/etoh/line-notify");
+    const calls: { to: string; auth: string }[] = [];
+    const fake = (async (_u: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      calls.push({ to: body.to, auth: String((init.headers as Record<string, string>).authorization) });
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+    const cfg = { token: "t".repeat(40), recipients: ["C" + "a".repeat(32), "U" + "b".repeat(32)], baseUrl: "https://x.test", enabled: true };
+    const text = formatRfqNotice({
+      inquiryId: "CT-1",
+      name: "สมชาย",
+      company: "บริษัท ก",
+      phone: "0812345678",
+      email: "a@b.test",
+      summary: "[ขอใบเสนอราคาเอทานอล] | เกรด: เอทานอล 95% | จำนวน: 10 ถัง",
+      baseUrl: cfg.baseUrl,
+    });
+    assert.match(text, /เกรด: เอทานอล 95%\nจำนวน: 10 ถัง/);
+    assert.deepEqual(await pushLineText(text, fake, cfg), { sent: 2, failed: 0 });
+    assert.equal(calls[0]!.auth, `Bearer ${cfg.token}`);
+    const down = (async () => new Response("x", { status: 500 })) as unknown as typeof fetch;
+    assert.deepEqual(await pushLineText("x", down, cfg), { sent: 0, failed: 2 });
+    assert.ok((await pushLineText("x", fake, { ...cfg, enabled: false })).skipped);
+    assert.ok(clampLineText("ก".repeat(6000)).length <= 4900);
+  });
+
+  it("computes Bangkok month windows", async () => {
+    const { monthBounds, shiftMonth } = await import("../lib/etoh/dashboard");
+    assert.deepEqual(monthBounds("2026-09"), { from: "2026-08-31T17:00:00.000Z", to: "2026-09-30T17:00:00.000Z" });
+    assert.equal(shiftMonth("2026-01", -1), "2025-12");
+    assert.equal(shiftMonth("2026-12", 1), "2027-01");
   });
 });

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { parseContactInquiryFormData } from "@/lib/contact-inquiry-schema";
 import { submitContactInquiryPayload } from "@/lib/contact-inquiry-service";
 import { composeEtohRfqMessage } from "@/lib/etoh/rfq";
+import { formatRfqNotice, getLineNotifyConfig, pushLineText } from "@/lib/etoh/line-notify";
 import { cleanText } from "@/lib/sanitize";
 
 export type EtohRfqState = {
@@ -59,7 +60,27 @@ export async function submitEtohRfq(_prev: EtohRfqState, formData: FormData): Pr
       headers: headerList,
       userAgent: headerList.get("user-agent"),
     });
-    if (result.ok) return { ok: true, inquiryId: result.inquiryId };
+    if (result.ok) {
+      // Honeypot hits return a neutral success — never alert sales for those.
+      if (!("neutral" in result && result.neutral)) {
+        const cfg = getLineNotifyConfig();
+        if (cfg.enabled) {
+          // Fire-and-forget: LINE being slow or down must not delay the buyer.
+          void pushLineText(
+            formatRfqNotice({
+              inquiryId: result.inquiryId,
+              name: parsed.data.name,
+              company: parsed.data.company,
+              phone: parsed.data.phone,
+              email: parsed.data.email,
+              summary: parsed.data.message,
+              baseUrl: cfg.baseUrl,
+            }),
+          ).catch(() => undefined);
+        }
+      }
+      return { ok: true, inquiryId: result.inquiryId };
+    }
     const flat: Record<string, string> = {};
     for (const [k, v] of Object.entries(result.fieldErrors ?? {})) flat[k] = Array.isArray(v) ? v[0] ?? "" : String(v);
     return { ok: false, fieldErrors: flat, formError: result.formError || "ส่งคำขอไม่สำเร็จ กรุณาลองใหม่", values };
