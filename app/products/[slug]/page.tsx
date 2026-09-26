@@ -1,246 +1,162 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { GiftSetBreakdown } from "@/components/GiftSetBreakdown";
-import { CatalogImage } from "@/components/CatalogImage";
 import { JsonLd } from "@/components/JsonLd";
-import { ProductPriceOptions } from "@/components/ProductPriceOptions";
-import { ProductMockupStudio } from "@/components/ProductMockupStudio";
-import { ChinaOrderSteps } from "@/components/ChinaOrderSteps";
-import { LogoDecorationPanel } from "@/components/LogoDecorationPanel";
-import { LogoReadyBadge } from "@/components/LogoReadyBadge";
-import { QuoteForm } from "@/components/QuoteForm";
-import { isP2QuoteToolsEnabled } from "@/lib/feature-flags";
-import { resolveMockupSurfaces } from "@/lib/mockup-studio";
+import { CtaBand, EndUseCard, PackCard, SectionHeading } from "@/components/site/EtohBlocks";
+import { GradeIcon, PillarIcon } from "@/components/site/EtohIllustrations";
+import { findEndUse } from "@/lib/etoh/brand";
+import { ETOH_DOCUMENT_LABELS, getGrade } from "@/lib/etoh/catalog";
 import {
-  buildBreadcrumbJsonLd,
-  buildProductJsonLd,
-} from "@/lib/seo";
-import { metadataFromSeo } from "@/lib/metadata";
-import { resolveSeoFields } from "@/lib/page-seo";
-import { getProductBySlug, getProducts } from "@/lib/strapi";
-import { productCoverImage } from "@/lib/product-media";
-import { catalogHrefForProduct } from "@/lib/product-compare";
+  ETOH_FAMILY_END_USES,
+  ETOH_FAMILY_GRADES,
+  ETOH_PACK_STORIES,
+  ETOH_PRODUCT_FAMILIES,
+  findFamilyBySlug,
+} from "@/lib/etoh/storefront";
+import { metadataForPath } from "@/lib/page-seo";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
+import { site } from "@/lib/site";
 
-export const revalidate = 300;
-export const dynamicParams = true;
+type PageProps = { params: Promise<{ slug: string }> };
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-};
+export const dynamicParams = false;
 
-export async function generateStaticParams() {
-  if (process.env.NODE_ENV === "development") return [];
-  const products = await getProducts();
-  return products.map((product) => ({ slug: product.slug }));
+export function generateStaticParams() {
+  return ETOH_PRODUCT_FAMILIES.map((f) => ({ slug: f.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) notFound();
-  return metadataFromSeo(
-    resolveSeoFields(product.seo.canonicalPath, product.seo),
-    {
-      openGraphType: "website",
-    },
-  );
+  return metadataForPath(`/products/${slug}`);
 }
 
-export default async function ProductDetailPage({ params }: PageProps) {
+export default async function ProductFamilyPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) notFound();
+  const family = findFamilyBySlug(slug);
+  if (!family) notFound();
+  const grades = (ETOH_FAMILY_GRADES[slug] ?? [family.code]).map(getGrade);
+  const uses = (ETOH_FAMILY_END_USES[slug] ?? []).map(findEndUse).filter((u) => u != null);
+  const documents = Array.from(new Set(grades.flatMap((g) => g.documents)));
 
-  const cover = productCoverImage(product.images, product.categorySlug);
-  const thumbnails = product.images.filter(Boolean).slice(0, 4);
-  const enableP2QuoteTools = isP2QuoteToolsEnabled();
-  const mockupSurfaces = resolveMockupSurfaces(product);
-  const breadcrumbs = buildBreadcrumbJsonLd([
-    { name: "หน้าแรก", path: "/" },
-    { name: "สินค้าพรีเมียม", path: "/products" },
-    { name: product.name, path: `/products/${product.slug}` },
-  ]);
-  const productLd = buildProductJsonLd(product);
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `${family.title} (${family.titleTh})`,
+    brand: { "@type": "Brand", name: site.name },
+    category: "Industrial Ethanol",
+    description: grades.map((g) => `${g.nameEn} ${g.purity}: ${g.suitableFor}`).join(" · "),
+    image: `${site.url.replace(/\/$/, "")}/images/etoh/truck.jpg`,
+  };
 
   return (
     <>
-      <JsonLd data={breadcrumbs} />
-      <JsonLd data={productLd} />
-
-      <div className="mx-auto max-w-content px-page py-10 sm:py-14">
-        <Breadcrumbs
-          items={[
-            { href: "/products", label: "สินค้าพรีเมียม" },
-            { label: product.name },
-          ]}
-        />
-
-        <div className="mt-8 grid gap-10 lg:grid-cols-2">
-          <div>
-            <div className="media-frame media-frame--product rounded-3xl">
-              <CatalogImage
-                src={cover}
-                alt={product.name}
-                priority
-                objectFit="contain"
-                sizes="(max-width:1024px) 100vw, 50vw"
-              />
-            </div>
-            {thumbnails.length > 1 ? (
-              <ul className="mt-4 grid grid-cols-4 gap-3">
-                {thumbnails.map((src, index) => (
-                  <li key={`${src}-${index}`} className="media-frame media-frame--thumb rounded-xl">
-                    <CatalogImage
-                      src={src}
-                      alt={`${product.name} มุมที่ ${index + 1}`}
-                      objectFit="contain"
-                      sizes="120px"
-                    />
+      <JsonLd data={productJsonLd} />
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: "หน้าแรก", path: "/" },
+          { name: "ผลิตภัณฑ์", path: "/products" },
+          { name: family.title, path: `/products/${slug}` },
+        ])}
+      />
+      <section className="border-b border-forest/10 bg-gradient-to-b from-[#eaf2fc] to-[#f6f9fe] dark:from-[#0f1b34] dark:to-[#081022]">
+        <div className="mx-auto max-w-content px-page pb-14 pt-8">
+          <Breadcrumbs items={[{ href: "/products", label: "ผลิตภัณฑ์" }, { label: family.title }]} />
+          <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold text-brass">{family.titleTh}</p>
+              <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-forest sm:text-5xl">{family.title}</h1>
+              <ul className="mt-6 space-y-2.5">
+                {family.highlights.map((h) => (
+                  <li key={h} className="flex items-center gap-2.5 text-ink/80">
+                    <PillarIcon name="check" className="h-5 w-5 text-leaf" />
+                    {h}
                   </li>
                 ))}
               </ul>
-            ) : null}
-          </div>
-
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <LogoReadyBadge />
-              {product.isClearance ? (
-                <span className="rounded-full bg-brass/20 px-3 py-1 text-xs font-medium text-forest">
-                  เคลียร์สต็อก{product.clearanceReason ? ` · ${product.clearanceReason}` : ""}
-                </span>
-              ) : (
-                <span className="text-xs font-medium text-ink/55">
-                  {product.stockClass === "A"
-                    ? "มีของในคลัง พร้อมส่ง"
-                    : "สั่งผลิตตามออเดอร์ · ไม่ใช่ของพร้อมส่ง"}
-                </span>
-              )}
-              {product.isBundle ? (
-                <span className="text-xs font-medium text-ink/55">
-                  ราคาเป็นราคาชุด ไม่แยกราคาชิ้น
-                </span>
-              ) : null}
-              {product.productId ? (
-                <span className="font-mono text-xs text-ink/45">{product.productId}</span>
-              ) : null}
-            </div>
-            <h1 className="mt-4 text-3xl font-bold text-forest sm:text-4xl">
-              {product.name}
-            </h1>
-            <p className="mt-4 whitespace-pre-line text-ink/80 leading-relaxed">
-              {product.description}
-            </p>
-            <dl className="mt-8 space-y-3 text-sm">
-              {product.material ? (
-                <div className="flex gap-3 border-b border-forest/10 pb-3">
-                  <dt className="w-28 shrink-0 font-semibold text-forest">วัสดุ</dt>
-                  <dd className="text-ink/80">{product.material}</dd>
-                </div>
-              ) : null}
-              <div className="flex gap-3 border-b border-forest/10 pb-3">
-                <dt className="w-28 shrink-0 font-semibold text-forest">สั่งขั้นต่ำ</dt>
-                <dd className="text-ink/80">{product.minOrder} เซ็ต</dd>
-              </div>
-              {product.leadDays != null ? (
-                <div className="flex gap-3 border-b border-forest/10 pb-3">
-                  <dt className="w-28 shrink-0 font-semibold text-forest">เวลาผลิต</dt>
-                  <dd className="text-ink/80">ประมาณ {product.leadDays} วัน</dd>
-                </div>
-              ) : null}
-              {product.colors && product.colors.length > 0 ? (
-                <div className="flex gap-3 border-b border-forest/10 pb-3">
-                  <dt className="w-28 shrink-0 font-semibold text-forest">สีที่มี</dt>
-                  <dd className="text-ink/80">
-                    {product.colors.map((color) => color.name).join(" · ")}
-                  </dd>
-                </div>
-              ) : null}
-            </dl>
-            <GiftSetBreakdown product={product} />
-            <ProductPriceOptions
-              productSlug={product.slug}
-              productName={product.name}
-              minOrder={product.minOrder}
-              skuCode={product.productId || product.slug}
-              priceMin={product.priceMin}
-              priceMax={product.priceMax}
-              priceExFreightMin={product.priceExFreightMin}
-              priceExFreightMax={product.priceExFreightMax}
-              packagingMin={product.packagingMin}
-              packagingMax={product.packagingMax}
-              enableP2QuoteTools={enableP2QuoteTools}
-            />
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="#quote"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-brass px-6 text-sm font-semibold text-[color:var(--accent-foreground)]"
-              >
-                ขอราคาเซ็ตนี้
-              </Link>
-              <Link
-                href={catalogHrefForProduct(product.slug)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                ดูในสมุดพลิก
-              </Link>
-              <Link
-                href="#logo"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                วิธีใส่โลโก้
-              </Link>
-              {mockupSurfaces ? (
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="#mockup"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
+                  href={`/contact?grade=${family.code}`}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brass px-7 text-sm font-semibold text-white shadow-lg transition hover:bg-brass-soft"
                 >
-                  ลองวางโลโก้ · หมุน 360°
+                  ขอราคา {family.title}
+                  <PillarIcon name="arrow" className="h-4 w-4" />
                 </Link>
-              ) : null}
-              <Link
-                href="#china-flow"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                ขั้นตอนสั่งผลิต
-              </Link>
-              <Link
-                href="/products"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-forest/20 px-6 text-sm font-semibold text-forest"
-              >
-                ดูเซ็ตอื่น
-              </Link>
+                <Link href="/documents" className="inline-flex min-h-12 items-center rounded-full border border-forest/15 bg-white px-6 text-sm font-semibold text-forest dark:bg-white/5">
+                  ขอ Specification / SDS
+                </Link>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="flex h-56 w-56 items-center justify-center rounded-[2.5rem] bg-white shadow-[0_40px_80px_-40px_rgba(10,42,102,0.6)] dark:bg-white/5">
+                <GradeIcon accent={family.accent} className="h-32 w-32" />
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        <LogoDecorationPanel
-          productSlug={product.slug}
-          hasMockup={Boolean(mockupSurfaces)}
-        />
-
-        <ChinaOrderSteps className="mt-16" />
-
-        {mockupSurfaces ? (
-          <div id="mockup" className="mt-16 scroll-mt-28">
-            <ProductMockupStudio
-              productName={product.name}
-              surfaces={mockupSurfaces}
-            />
-          </div>
-        ) : null}
-
-        <div id="quote" className="mt-16 scroll-mt-28">
-          <QuoteForm
-            heading={`ขอใบเสนอราคา: ${product.name}`}
-            productInterest={product.name}
-            productSlug={product.slug}
-            minOrder={product.minOrder}
-          />
+      <section className="mx-auto max-w-content px-page py-14">
+        <SectionHeading eyebrow="Specification" title="ข้อมูลเกรด" />
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {grades.map((g) => (
+            <div key={g.code} className="rounded-2xl border border-forest/10 bg-white p-6 dark:bg-[#0f1b34]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-display text-xl font-bold text-forest">{g.nameEn}</p>
+                  <p className="text-sm text-ink/60">{g.nameTh}</p>
+                </div>
+                <span className="rounded-full bg-forest px-3 py-1 text-sm font-bold text-white">{g.purity}</span>
+              </div>
+              <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt className="text-ink/55">เหมาะสำหรับ</dt>
+                  <dd className="mt-0.5 font-medium text-ink/85">{g.suitableFor}</dd>
+                </div>
+                <div>
+                  <dt className="text-ink/55">ความหนาแน่นโดยประมาณ</dt>
+                  <dd className="mt-0.5 font-medium text-ink/85">{g.densityKgPerL.toFixed(2)} กก./ลิตร</dd>
+                </div>
+              </dl>
+              {g.requiresFdaDocs ? (
+                <p className="mt-4 rounded-xl bg-leaf/10 px-3 py-2 text-sm text-leaf">จัดส่งจากล็อตที่มีเอกสาร อย. เท่านั้น</p>
+              ) : null}
+            </div>
+          ))}
         </div>
-      </div>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {documents.map((d) => (
+            <span key={d} className="inline-flex items-center gap-1.5 rounded-full border border-forest/10 bg-white px-3 py-1.5 text-sm text-forest dark:bg-white/5">
+              <PillarIcon name="doc" className="h-4 w-4 text-forest-light" />
+              {ETOH_DOCUMENT_LABELS[d]}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-[#f6f9fe] py-14 dark:bg-[#0b1428]">
+        <div className="mx-auto max-w-content px-page">
+          <SectionHeading eyebrow="Packaging" title="ขนาดบรรจุที่สั่งได้" />
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {ETOH_PACK_STORIES.map((p) => (
+              <PackCard key={p.code} pack={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {uses.length ? (
+        <section className="mx-auto max-w-content px-page py-14">
+          <SectionHeading eyebrow="End Use" title={`${family.title} ใช้ในอุตสาหกรรมไหนบ้าง`} />
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {uses.map((u) => (
+              <EndUseCard key={u.slug} use={u} compact />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <CtaBand title={`สนใจ ${family.title}?`} />
     </>
   );
 }

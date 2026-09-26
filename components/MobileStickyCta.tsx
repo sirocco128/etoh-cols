@@ -30,7 +30,7 @@ export function MobileStickyCta() {
       <div className="mx-auto flex max-w-content gap-2">
         <Link
           href="/contact"
-          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-brass px-4 text-sm font-semibold text-forest transition hover:bg-brass-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-brass px-4 text-sm font-semibold text-white transition hover:bg-brass-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
         >
           ขอใบเสนอราคา
         </Link>

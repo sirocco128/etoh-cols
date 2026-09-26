@@ -25,10 +25,10 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     id: "forest",
     option: "default",
-    label: "Smart Gift",
-    hint: "พื้นอ่อน ตัวอักษรเข้ม ปุ่มส้ม ตามแบบแคตตาล็อก",
-    swatchPrimary: "#1c1c1c",
-    swatchAccent: "#e65312",
+    label: "Etoh Cols",
+    hint: "น้ำเงินกรมท่า ฟ้า และส้ม ตามโปสเตอร์บริษัท",
+    swatchPrimary: "#0a2a66",
+    swatchAccent: "#e8611a",
   },
   {
     id: "navy",

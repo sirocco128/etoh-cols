@@ -1,5 +1,6 @@
 /*
- * UI/UX Design Brief — Premium Gift Set storefront + ops
+ * UI/UX Design Brief — Etoh Cols industrial ethanol storefront + ops
+ * (palette from the company poster: navy / process blue / leaf green / orange)
  * ──────────────────────────────────────────────
  * User:        ผู้จัดซื้อองค์กรที่ต้องการของขวัญพรีเมียม — ต้องการความเชื่อมั่นและภาพลักษณ์หรู
  * Tension:     Luxury editorial BUT operational density
@@ -15,29 +16,32 @@
 
 :root {
   color-scheme: light;
-  --color-forest: #1c1c1c;
-  --color-forest-rgb: 28 28 28;
-  --color-forest-light: #333333;
-  --color-forest-light-rgb: 51 51 51;
-  --color-forest-mist: #fff3eb;
-  --color-forest-mist-rgb: 255 243 235;
-  --color-brass: #e65312;
-  --color-brass-rgb: 230 83 18;
-  --color-brass-soft: #ff7a3c;
-  --color-brass-soft-rgb: 255 122 60;
-  --color-ink: #2a2a2a;
-  --color-ink-rgb: 42 42 42;
+  /* Etoh Cols: navy wordmark, process blue, leaf green, delivery orange */
+  --color-forest: #0a2a66;
+  --color-forest-rgb: 10 42 102;
+  --color-forest-light: #1553b7;
+  --color-forest-light-rgb: 21 83 183;
+  --color-forest-mist: #eaf2fc;
+  --color-forest-mist-rgb: 234 242 252;
+  --color-brass: #e8611a;
+  --color-brass-rgb: 232 97 26;
+  --color-brass-soft: #ff8a45;
+  --color-brass-soft-rgb: 255 138 69;
+  --color-leaf: #1f9d55;
+  --color-leaf-rgb: 31 157 85;
+  --color-ink: #1b2436;
+  --color-ink-rgb: 27 36 54;
   --color-paper: #ffffff;
   --color-paper-rgb: 255 255 255;
-  --background: #fff8f4;
-  --foreground: #1c1c1c;
+  --background: #f6f9fe;
+  --foreground: #0a2a66;
   --card: #ffffff;
-  --muted: #fff3eb;
-  --border: rgba(28, 28, 28, 0.1);
-  --ring: #e65312;
-  --primary: #e65312;
+  --muted: #eaf2fc;
+  --border: rgba(10, 42, 102, 0.1);
+  --ring: #1553b7;
+  --primary: #e8611a;
   --primary-foreground: #ffffff;
-  --accent: #e65312;
+  --accent: #1553b7;
   --accent-foreground: #ffffff;
   --font-size-base: 1.0625rem;
   --line-height-body: 1.65;
@@ -130,20 +134,20 @@ html[data-theme="teal"] {
 
 .dark {
   color-scheme: dark;
-  --color-forest-mist: #2a211c;
-  --color-forest-mist-rgb: 42 33 28;
-  --color-ink: #f6f1ec;
-  --color-ink-rgb: 246 241 236;
-  --color-paper: #14110f;
-  --color-paper-rgb: 20 17 15;
-  --background: #100e0c;
-  --foreground: #f6f1ec;
-  --card: #241c18;
-  --muted: #2a211c;
+  --color-forest-mist: #13223f;
+  --color-forest-mist-rgb: 19 34 63;
+  --color-ink: #e8eefb;
+  --color-ink-rgb: 232 238 251;
+  --color-paper: #0b1428;
+  --color-paper-rgb: 11 20 40;
+  --background: #081022;
+  --foreground: #e8eefb;
+  --card: #0f1b34;
+  --muted: #13223f;
   --border: rgba(255, 255, 255, 0.1);
-  --primary: #ff7a3c;
-  --primary-foreground: #1c1c1c;
-  --accent-foreground: #1c1c1c;
+  --primary: #ff8a45;
+  --primary-foreground: #0b1428;
+  --accent-foreground: #0b1428;
 }
 
 html.dark[data-theme="navy"] {
@@ -475,7 +479,11 @@ html[data-theme="teal"] .ops-shell {
 html.dark .hover\:text-forest:hover,
 html.dark .group-hover\:text-forest:hover,
 html.dark .group:hover .group-hover\:text-forest {
-  color: #ffd8c4;
+  color: #ffd2b8;
+}
+
+html.dark .text-forest {
+  color: #cfe0ff;
 }
 
 html.dark[data-theme="navy"] .text-forest {

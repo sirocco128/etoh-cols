@@ -1,29 +1,21 @@
 import { site } from "@/lib/site";
 
-export function BrandLogo() {
+/** Etoh Cols wordmark: navy "Etoh", process-blue "Cols", leaf accent (from the company poster). */
+export function BrandLogo({ tone = "default" }: { tone?: "default" | "inverse" }) {
+  const etoh = tone === "inverse" ? "text-white" : "text-forest dark:text-white";
+  const cols = tone === "inverse" ? "text-[#8fb8ff]" : "text-forest-light dark:text-[#8fb8ff]";
   return (
-    <span className="inline-flex items-center gap-2.5">
-      <svg
-        viewBox="0 0 36 36"
-        className="h-9 w-9 shrink-0"
-        aria-hidden
-      >
-        <rect width="36" height="36" rx="11" className="fill-forest dark:fill-paper" />
-        <path
-          d="M18 8.2c-1.7 0-3.1 1.1-3.7 2.6-.6-1.5-2-2.6-3.7-2.6-2.2 0-3.8 1.7-3.8 3.7 0 2.6 2.4 4.4 7.5 7.4 5.1-3 7.5-4.8 7.5-7.4 0-2-1.6-3.7-3.8-3.7Z"
-          className="fill-brass"
-        />
-        <rect x="9" y="18.2" width="18" height="10.2" rx="2.2" className="fill-paper dark:fill-forest" />
-        <path d="M17.1 18.2h1.8v10.2h-1.8z" className="fill-brass" />
-        <path d="M9 21.4h18v1.6H9z" className="fill-brass/80" />
-      </svg>
-      <span className="leading-none">
-        <span className="block text-[10px] font-medium uppercase tracking-[0.28em] text-ink/55 dark:text-paper/60">
-          Smart
-        </span>
-        <span className="mt-0.5 block text-[1.15rem] font-semibold tracking-tight text-forest dark:text-paper">
-          Gift
-        </span>
+    <span className="inline-flex items-center gap-2">
+      <span className="relative inline-flex items-baseline font-display text-[1.55rem] font-extrabold leading-none tracking-[-0.04em]">
+        <span className={etoh}>Etoh</span>
+        <span className={`ml-1.5 ${cols}`}>Cols</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden
+          className="absolute -right-3 -top-2.5 h-4 w-4 rotate-12"
+        >
+          <path d="M20 3C10 3 4 8.5 4 16c0 1.8.4 3.4 1 5 1-5 4.5-9 10-11-4 3-7 6.5-8.5 11 9 .5 13.5-6 13.5-18Z" className="fill-leaf" />
+        </svg>
       </span>
       <span className="sr-only">{site.name}</span>
     </span>

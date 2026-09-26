@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
-import {
-  articles,
-  categories,
-  portfolios,
-  products,
-  type SeoFields,
-} from "@/lib/data";
-import { clampSeoTitle, fitSeoDescription } from "@/lib/seo-limits";
+import type { SeoFields } from "@/lib/data";
+import { etohSeoPages } from "@/lib/etoh/seo-pages";
 import { metadataFromSeo } from "@/lib/seo";
 import { normalizeSeoPath } from "@/lib/seo-path";
 import { getSeoOverride } from "@/lib/seo-repository";
-import {
-  IDEA_THEMES,
-  ideaThemePath,
-} from "@/lib/seo-themes";
 
 export { normalizeSeoPath } from "@/lib/seo-path";
 
@@ -33,139 +23,6 @@ export type CatalogSeoPage = {
   keywords: string[];
 };
 
-const INDEXABLE_STATICS: CatalogSeoPage[] = [
-  {
-    path: "/",
-    label: "หน้าแรก",
-    kind: "static",
-    keywords: ["ของขวัญองค์กร", "gift set", "สกรีนโลโก้", "สั่งผลิตจากจีน"],
-    seo: {
-      seoTitle: "Smart Gift ของพรีเมียมครบทุกหมวด",
-      metaDescription:
-        "Smart Gift รวมของพรีเมียมสำหรับทุกแบรนด์และทุกแคมเปญ สกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน ขอใบเสนอราคาได้โดยไม่ต้องชำระเงินบนเว็บ",
-      canonicalPath: "/",
-      ogImage: "/images/hero-giftset.jpg",
-    },
-  },
-  {
-    path: "/premium-giftset",
-    label: "ชุดของขวัญองค์กร",
-    kind: "static",
-    keywords: ["premium gift set", "ของขวัญองค์กรพรีเมียม", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "ชุดของขวัญพรีเมียม สกรีนโลโก้",
-      metaDescription:
-        "รับทำชุดของขวัญพรีเมียมสำหรับองค์กร กล่องและของในเซ็ตสกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน ดูขั้นตอน วัสดุ แล้วขอใบเสนอราคาได้โดยไม่ชำระเงินบนเว็บ",
-      canonicalPath: "/premium-giftset",
-      ogImage: "/images/hero-giftset.jpg",
-    },
-  },
-  {
-    path: "/products",
-    label: "สินค้าพรีเมียม",
-    kind: "static",
-    keywords: ["สินค้าพรีเมียม", "แคตตาล็อก gift set", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "สินค้าพรีเมียม สกรีนโลโก้ได้",
-      metaDescription:
-        "แคตตาล็อกของพรีเมียม สกรีนโลโก้ได้ สั่งผลิตตามแบบแล้วผลิตจากจีน ไม่ใช่ของพร้อมส่ง ดูช่วงราคาโดยประมาณ แล้วขอใบเสนอราคาเมื่อพร้อมสั่ง",
-      canonicalPath: "/products",
-      ogImage: "/images/og-default.jpg",
-    },
-  },
-  {
-    path: "/catalog",
-    label: "สมุดแคตตาล็อก",
-    kind: "static",
-    keywords: ["สมุดแคตตาล็อก", "พลิกดูสินค้า", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "สมุดแคตตาล็อกของขวัญองค์กร",
-      metaDescription:
-        "พลิกดูแคตตาล็อกของขวัญองค์กรจากสินค้าบนเว็บ จัดตามกลุ่มเดียวกัน ทุกชิ้นสกรีนโลโก้ใส่ได้ สั่งผลิตตามออเดอร์จากจีน ขอใบเสนอราคาได้โดยไม่ชำระเงินบนเว็บ",
-      canonicalPath: "/catalog",
-      ogImage: "/images/hero-giftset.jpg",
-    },
-  },
-  {
-    path: "/customize-gift-set",
-    label: "ออกแบบเซ็ตเอง",
-    kind: "static",
-    keywords: ["ออกแบบ gift set", "ชุดของขวัญตามโจทย์", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "ออกแบบชุดของขวัญตามโจทย์",
-      metaDescription:
-        "ออกแบบชุดของขวัญตามงบ จำนวน และโลโก้ คัดสินค้า บรรจุภัณฑ์ และการแพ็ก สั่งผลิตจากจีนหลังยืนยันแบบ ขอใบเสนอราคาได้โดยไม่ชำระเงินบนเว็บ",
-      canonicalPath: "/customize-gift-set",
-      ogImage: "/images/og-default.jpg",
-    },
-  },
-  {
-    path: "/about",
-    label: "เกี่ยวกับเรา",
-    kind: "static",
-    keywords: ["Smart Gift", "ของพรีเมียมองค์กร", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "เกี่ยวกับ Smart Gift ของพรีเมียมองค์กร",
-      metaDescription:
-        "Smart Gift รับทำของพรีเมียมให้ทุกแบรนด์และทุกแคมเปญ สกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน จัดส่งในไทย ขอใบเสนอราคาได้จากแบบฟอร์มโดยไม่ชำระเงิน",
-      canonicalPath: "/about",
-      ogImage: "/images/about-facility.jpg",
-    },
-  },
-  {
-    path: "/portfolio",
-    label: "ผลงาน",
-    kind: "static",
-    keywords: ["ผลงานของขวัญองค์กร", "ตัวอย่าง gift set"],
-    seo: {
-      seoTitle: "ผลงานของพรีเมียมองค์กร สกรีนโลโก้",
-      metaDescription:
-        "ตัวอย่างแนวทางผลิตของพรีเมียมองค์กร สกรีนโลโก้ แพ็กแยกคน และจัดส่งตามจุด สั่งผลิตตามแบบจากจีน ดูผลงานแล้วขอใบเสนอราคาได้โดยไม่ชำระเงินบนเว็บ",
-      canonicalPath: "/portfolio",
-      ogImage: "/images/portfolio-welcome.jpg",
-    },
-  },
-  {
-    path: "/blog",
-    label: "บทความ",
-    kind: "static",
-    keywords: ["บทความของขวัญองค์กร", "คู่มือ gift set"],
-    seo: {
-      seoTitle: "บทความของขวัญองค์กร สกรีนโลโก้",
-      metaDescription:
-        "บทความเลือกของพรีเมียมและของขวัญองค์กร ธีมธรรมชาติ วัฒนธรรม ท่องเที่ยว และสุขภาพ สกรีนโลโก้ได้ สั่งผลิตจากจีน อ่านแล้วขอใบเสนอราคาได้ทันที",
-      canonicalPath: "/blog",
-      ogImage: "/images/article-guide.jpg",
-    },
-  },
-  {
-    path: "/contact",
-    label: "ติดต่อขอใบเสนอราคา",
-    kind: "static",
-    keywords: ["ขอใบเสนอราคา", "ติดต่อ Smart Gift", "สกรีนโลโก้"],
-    seo: {
-      seoTitle: "ขอใบเสนอราคาของพรีเมียมองค์กร",
-      metaDescription:
-        "ติดต่อ Smart Gift เพื่อปรึกษาหรือขอใบเสนอราคาของพรีเมียมองค์กร สกรีนโลโก้ได้ สั่งผลิตตามแบบจากจีน แบบฟอร์มไม่มีการชำระเงิน และยังไม่ใช่การยืนยันสั่งซื้อ",
-      canonicalPath: "/contact",
-      ogImage: "/images/og-default.jpg",
-    },
-  },
-  {
-    path: "/ideas",
-    label: "ไอเดียชุดของขวัญ",
-    kind: "static",
-    keywords: ["ไอเดียของขวัญองค์กร", "ธีม gift set"],
-    seo: {
-      seoTitle: "ไอเดียชุดของขวัญองค์กร 4 ธีม",
-      metaDescription:
-        "ไอเดียชุดของขวัญองค์กรธีมธรรมชาติ วัฒนธรรม ท่องเที่ยว และสุขภาพ สกรีนโลโก้ได้ สั่งผลิตตามออเดอร์จากจีน เลือกธีมแล้วขอใบเสนอราคาได้โดยไม่ชำระเงินบนเว็บ",
-      canonicalPath: "/ideas",
-      ogImage: "/images/hero-giftset.jpg",
-    },
-  },
-];
-
 const NOINDEX_STATICS: CatalogSeoPage[] = [
   {
     path: "/privacy",
@@ -175,7 +32,7 @@ const NOINDEX_STATICS: CatalogSeoPage[] = [
     seo: {
       seoTitle: "นโยบายความเป็นส่วนตัว",
       metaDescription:
-        "นโยบายความเป็นส่วนตัวของ Smart Gift ในนามบริษัท เทราบิส จำกัด ครอบคลุมข้อมูลที่เก็บ วัตถุประสงค์ สิทธิของเจ้าของข้อมูล และการติดต่อกลับ หน้านี้ไม่เปิดให้ค้นหา",
+        "นโยบายความเป็นส่วนตัวของ Etoh Cols ในนามบริษัท อิโตะ คอลส์ จำกัด ครอบคลุมข้อมูลที่เก็บ วัตถุประสงค์ สิทธิของเจ้าของข้อมูล และการติดต่อกลับ ไม่เปิดให้ค้นหา",
       canonicalPath: "/privacy",
       noIndex: true,
     },
@@ -188,7 +45,7 @@ const NOINDEX_STATICS: CatalogSeoPage[] = [
     seo: {
       seoTitle: "ข้อกำหนดการใช้งาน",
       metaDescription:
-        "ข้อกำหนดการใช้งานเว็บขอใบเสนอราคาของ Smart Gift ในนามบริษัท เทราบิส จำกัด ครอบคลุมราคาโดยประมาณ มัดจำ สั่งผลิตตามแบบ และกฎหมายไทย หน้านี้ไม่เปิดให้ค้นหา",
+        "ข้อกำหนดการใช้งานเว็บขอใบเสนอราคาของ Etoh Cols ในนามบริษัท อิโตะ คอลส์ จำกัด ครอบคลุมราคาโดยประมาณ มัดจำภาชนะ การจัดส่ง และกฎหมายไทย หน้านี้ไม่เปิดให้ค้นหา",
       canonicalPath: "/terms",
       noIndex: true,
     },
@@ -208,68 +65,8 @@ const NOINDEX_STATICS: CatalogSeoPage[] = [
   },
 ];
 
-function themePages(): CatalogSeoPage[] {
-  return IDEA_THEMES.map((theme) => ({
-    path: ideaThemePath(theme.slug),
-    label: `ไอเดียธีม${theme.name}`,
-    kind: "theme" as const,
-    keywords: theme.keywords,
-    seo: {
-      seoTitle: theme.seoTitle,
-      metaDescription: theme.metaDescription,
-      canonicalPath: ideaThemePath(theme.slug),
-      ogImage: theme.heroImage,
-      keywords: theme.keywords.join(", "),
-    },
-  }));
-}
-
-function catalogEntityPages(): CatalogSeoPage[] {
-  return [
-    ...categories.map((category) => ({
-      path: category.seo.canonicalPath,
-      label: category.name,
-      kind: "category" as const,
-      keywords: [category.name, "gift set", "สกรีนโลโก้"],
-      seo: category.seo,
-    })),
-    ...products.map((product) => ({
-      path: product.seo.canonicalPath,
-      label: product.name,
-      kind: "product" as const,
-      keywords: [product.name, "สกรีนโลโก้", "ของขวัญองค์กร"],
-      seo: product.seo,
-    })),
-    ...articles.map((article) => ({
-      path: article.seo.canonicalPath,
-      label: article.title,
-      kind: "article" as const,
-      keywords: [article.title],
-      seo: article.seo,
-    })),
-    ...portfolios.map((item) => ({
-      path: `/portfolio/${item.slug}`,
-      label: item.title,
-      kind: "portfolio" as const,
-      keywords: [item.title, "ผลงานองค์กร", "สกรีนโลโก้"],
-      seo: {
-        seoTitle: clampSeoTitle(`${item.title} ผลงานองค์กร`),
-        metaDescription: fitSeoDescription(item.summary),
-        canonicalPath: `/portfolio/${item.slug}`,
-        ogImage: item.image,
-        keywords: `${item.title}, ผลงานองค์กร, สกรีนโลโก้`,
-      },
-    })),
-  ];
-}
-
 export function listDefaultSeoPages(): CatalogSeoPage[] {
-  return [
-    ...INDEXABLE_STATICS,
-    ...themePages(),
-    ...catalogEntityPages(),
-    ...NOINDEX_STATICS,
-  ];
+  return [...etohSeoPages(), ...NOINDEX_STATICS];
 }
 
 export function getDefaultSeoPage(path: string): CatalogSeoPage | null {

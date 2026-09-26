@@ -6,8 +6,7 @@ import { site } from "@/lib/site";
 import { getPublicContact } from "@/lib/public-contact";
 import { NavLink } from "@/components/NavLink";
 import { moreNavLinks, withOptionalBasketLink } from "@/lib/nav";
-import { RecentOrderHint } from "@/components/RecentOrderHint";
-import { NavUtilityCluster } from "@/components/NavUtilityCluster";
+import { BrandLogo } from "@/components/BrandLogo";
 
 type MobileMenuProps = {
   enableP2QuoteTools?: boolean;
@@ -22,7 +21,8 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
 }
 
 export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
-  const navLinks = withOptionalBasketLink(enableP2QuoteTools);
+  void enableP2QuoteTools;
+  const navLinks = withOptionalBasketLink(false);
   const extraLinks = moreNavLinks();
   const contact = getPublicContact(site);
   const [open, setOpen] = useState(false);
@@ -103,10 +103,10 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
             role="dialog"
             aria-modal="true"
             aria-label="เมนูนำทาง"
-            className="absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col border-l border-white/20 bg-paper/95 shadow-lift backdrop-blur-md pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:border-white/10 dark:bg-forest/90"
+            className="absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col border-l border-white/20 bg-paper/95 shadow-lift backdrop-blur-md pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:border-white/10 dark:bg-[#0b1428]/95"
           >
             <div className="flex items-center justify-between border-b border-forest/10 px-4 py-4">
-              <p className="font-semibold text-brass">{site.name}</p>
+              <BrandLogo />
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-forest/20 text-forest dark:border-white/15 dark:text-paper"
@@ -120,9 +120,6 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
               className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
               aria-label="เมนูมือถือ"
             >
-              <div className="mb-3 rounded-2xl border border-forest/10 bg-forest-mist/50 px-2 py-2 dark:border-white/10 dark:bg-forest/30">
-                <NavUtilityCluster layout="drawer" onNavigate={close} />
-              </div>
               {navLinks.map((link) => (
                 <NavLink
                   key={link.href}
@@ -160,15 +157,12 @@ export function MobileMenu({ enableP2QuoteTools = false }: MobileMenuProps) {
                   ) : null}
                 </NavLink>
               ))}
-              <div onClick={close}>
-                <RecentOrderHint variant="menu" />
-              </div>
             </nav>
             <div className="space-y-2 border-t border-forest/10 p-4">
               <NavLink
                 href="/contact"
                 onClick={close}
-                className="flex min-h-11 items-center justify-center rounded-full bg-brass px-4 text-sm font-semibold text-forest"
+                className="flex min-h-11 items-center justify-center rounded-full bg-brass px-4 text-sm font-semibold text-white"
               >
                 ขอใบเสนอราคา
               </NavLink>

@@ -1,23 +1,22 @@
 import Link from "next/link";
-import { RecentOrderHint } from "@/components/RecentOrderHint";
-import { formatOpeningHoursDisplay, formatRegisteredAddress } from "@/lib/company";
+import { BrandLogo } from "@/components/BrandLogo";
+import { PillarIcon } from "@/components/site/EtohIllustrations";
+import { formatOpeningHoursDisplay, formatRegisteredAddress, isPlaceholderTaxId } from "@/lib/company";
+import { ETOH_TAGLINE_TH } from "@/lib/etoh/brand";
+import { ETOH_PRODUCT_FAMILIES } from "@/lib/etoh/storefront";
 import { getPublicContact } from "@/lib/public-contact";
 import { site } from "@/lib/site";
-import { ACCOUNT_HUB_TITLE } from "@/lib/ux-copy";
 
-const SERVICE_LINKS = [
-  { href: "/premium-giftset", label: "ชุดของขวัญองค์กร" },
-  { href: "/products", label: "สินค้าพรีเมียม — เลือกขอราคา" },
-  { href: "/catalog", label: "สมุดแคตตาล็อก — พลิกดู" },
-  { href: "/ideas", label: "ไอเดียชุดของขวัญ" },
-  { href: "/customize-gift-set", label: "ออกแบบเซ็ตเอง" },
-  { href: "/portfolio", label: "ผลงาน" },
+const COMPANY_LINKS = [
+  { href: "/applications", label: "การใช้งานตามอุตสาหกรรม" },
+  { href: "/packaging", label: "บรรจุภัณฑ์และการจัดส่ง" },
+  { href: "/documents", label: "เอกสาร CoA / SDS / Spec" },
+  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/blog", label: "บทความ" },
-  { href: "/contact", label: "ติดต่อขอใบเสนอราคา" },
+  { href: "/contact", label: "ขอใบเสนอราคา" },
 ] as const;
 
 const INFO_LINKS = [
-  { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/privacy", label: "นโยบายความเป็นส่วนตัว" },
   { href: "/terms", label: "ข้อกำหนดการใช้งาน" },
 ] as const;
@@ -30,35 +29,38 @@ export function Footer() {
     locality: site.localBusiness.locality,
     region: site.localBusiness.region,
     postalCode: site.localBusiness.postalCode,
-  });
+  }).trim();
   const hours = formatOpeningHoursDisplay(site.localBusiness.openingHours);
+  const hasStreet = Boolean(site.localBusiness.streetAddress.trim());
 
   return (
-    <footer className="mt-auto border-t border-white/10 bg-forest text-paper">
-      <div className="mx-auto grid max-w-content gap-8 px-page py-10 sm:gap-10 sm:py-12 md:grid-cols-2 lg:grid-cols-3">
+    <footer className="mt-auto bg-[#071d49] text-white">
+      <div className="mx-auto grid max-w-content gap-10 px-page py-12 sm:py-14 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
         <div>
-          <p className="text-xl font-bold text-brass-soft">{site.name}</p>
-          <p className="mt-3 text-sm leading-relaxed text-paper/80">
-            {site.description}
-          </p>
-          {site.legalName ? (
-            <p className="mt-4 text-xs text-paper/60">นิติบุคคล: {site.legalName}</p>
-          ) : null}
-          {site.taxId ? (
-            <p className="mt-1 text-xs text-paper/60">
-              เลขประจำตัวผู้เสียภาษี: {site.taxId}
-            </p>
-          ) : null}
+          <BrandLogo tone="inverse" />
+          <p className="mt-4 text-sm leading-relaxed text-white/75">{site.description}</p>
+          <p className="mt-4 font-display text-lg italic text-[#8fb8ff]">“{ETOH_TAGLINE_TH}”</p>
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brass-soft">
-            บริการ
-          </p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {SERVICE_LINKS.map((link) => (
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brass-soft">ผลิตภัณฑ์</p>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {ETOH_PRODUCT_FAMILIES.map((f) => (
+              <li key={f.slug}>
+                <Link href={`/products/${f.slug}`} className="text-white/80 transition hover:text-white">
+                  {f.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brass-soft">บริษัท</p>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {COMPANY_LINKS.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="text-paper/85 hover:text-brass-soft">
+                <Link href={link.href} className="text-white/80 transition hover:text-white">
                   {link.label}
                 </Link>
               </li>
@@ -67,70 +69,61 @@ export function Footer() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brass-soft">
-            ติดต่อ
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-paper/85">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brass-soft">ติดต่อเรา</p>
+          <p className="mt-4 text-sm font-semibold">{site.legalName}</p>
+          <p className="text-xs text-white/60">{site.name} Co., Ltd.</p>
+          <ul className="mt-4 space-y-3 text-sm text-white/85">
             {contact.showPhone ? (
               <li>
-                <a href={site.phoneHref} className="hover:text-brass-soft">
-                  โทร {site.phoneDisplay}
+                <a href={site.phoneHref} className="inline-flex items-center gap-2 hover:text-white">
+                  <PillarIcon name="phone" className="h-4 w-4 text-brass-soft" />
+                  {site.phoneDisplay}
                 </a>
               </li>
             ) : null}
             {contact.showEmail ? (
               <li>
-                <a href={`mailto:${site.email}`} className="hover:text-brass-soft">
+                <a href={`mailto:${site.email}`} className="inline-flex items-center gap-2 hover:text-white">
+                  <PillarIcon name="mail" className="h-4 w-4 text-brass-soft" />
                   {site.email}
                 </a>
               </li>
             ) : null}
             {contact.showLine ? (
               <li>
-                <a
-                  href={site.lineUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brass-soft"
-                >
-                  แชทไลน์ {site.lineId}
+                <a href={site.lineUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[#06c755] px-3 py-1 text-xs font-semibold text-white hover:opacity-90">
+                  LINE OA {site.lineId}
                 </a>
               </li>
-            ) : (
-              <li>
-                <Link href="/contact?intent=message" className="hover:text-brass-soft">
-                  ส่งข้อความติดต่อ
-                </Link>
-              </li>
-            )}
-            {address ? (
-              <li className="pt-2 text-paper/70">{address}</li>
             ) : null}
-            {hours ? (
-              <li className="text-paper/70">เวลาทำการ: {hours}</li>
+            {hasStreet ? (
+              <li className="flex gap-2 text-white/70">
+                <PillarIcon name="pin" className="mt-0.5 h-4 w-4 shrink-0 text-brass-soft" />
+                {address}
+              </li>
+            ) : null}
+            {hours ? <li className="text-white/60">เวลาทำการ {hours}</li> : null}
+            {!isPlaceholderTaxId(site.taxId) ? (
+              <li className="text-xs text-white/50">เลขประจำตัวผู้เสียภาษี {site.taxId}</li>
             ) : null}
           </ul>
-          <ul className="mt-6 space-y-2 text-sm">
+        </div>
+      </div>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-page py-5 text-xs text-white/55">
+          <p>
+            © {year} {site.name} Co., Ltd. · Industrial Ethanol Supply for All End Users in Thailand
+          </p>
+          <ul className="flex gap-4">
             {INFO_LINKS.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="text-paper/85 hover:text-brass-soft">
+                <Link href={link.href} className="hover:text-white">
                   {link.label}
                 </Link>
               </li>
             ))}
           </ul>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li>
-              <Link href="/account" className="text-paper/85 hover:text-brass-soft">
-                {ACCOUNT_HUB_TITLE}
-              </Link>
-            </li>
-            <RecentOrderHint variant="footer" />
-          </ul>
         </div>
-      </div>
-      <div className="border-t border-paper/10 px-page py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-xs text-paper/55">
-        © {year} {site.legalName || site.name}. สงวนลิขสิทธิ์.
       </div>
     </footer>
   );

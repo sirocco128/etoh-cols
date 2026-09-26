@@ -3,16 +3,12 @@ import { Geist, Noto_Sans_Thai, Sarabun } from "next/font/google";
 import { Suspense } from "react";
 import { AnalyticsConsentBanner } from "@/components/AnalyticsConsentBanner";
 import { CaptureAttribution } from "@/components/CaptureAttribution";
-import { BuyerAssistantWidget } from "@/components/BuyerAssistantWidget";
 import { EnvironmentBanner } from "@/components/EnvironmentBanner";
-import { FloatingQuoteDock } from "@/components/FloatingQuoteDock";
 import { Footer } from "@/components/Footer";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { JsonLd } from "@/components/JsonLd";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { Navbar } from "@/components/Navbar";
-import { ProductCompareTray } from "@/components/ProductCompareTray";
-import { QuoteLaunchModal } from "@/components/QuoteLaunchModal";
 import { SiteChrome } from "@/components/SiteChrome";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -54,8 +50,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1c1c1c" },
-    { media: "(prefers-color-scheme: dark)", color: "#14110f" },
+    { media: "(prefers-color-scheme: light)", color: "#0a2a66" },
+    { media: "(prefers-color-scheme: dark)", color: "#081022" },
   ],
 };
 
@@ -103,16 +99,6 @@ export default function RootLayout({
           </SiteChrome>
           <SiteChrome chrome={<Footer />}>{null}</SiteChrome>
           <SiteChrome chrome={<MobileStickyCta />}>{null}</SiteChrome>
-          <SiteChrome chrome={<FloatingQuoteDock enableP2QuoteTools={enableP2QuoteTools} />}>
-            {null}
-          </SiteChrome>
-          <SiteChrome
-            chrome={<BuyerAssistantWidget />}
-          >
-            {null}
-          </SiteChrome>
-          <SiteChrome chrome={<ProductCompareTray />}>{null}</SiteChrome>
-          <SiteChrome chrome={<QuoteLaunchModal />}>{null}</SiteChrome>
           <SiteChrome chrome={<Toaster />}>{null}</SiteChrome>
           <JsonLd data={organization} />
           {localBusiness ? <JsonLd data={localBusiness} /> : null}

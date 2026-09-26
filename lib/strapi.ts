@@ -3,8 +3,8 @@
  * Server-side modules only (RSC / Route Handlers). Do not import from client components.
  */
 
+import { ETOH_ARTICLES } from "@/lib/etoh/articles";
 import {
-  articles as mockArticles,
   categories as mockCategories,
   faqs as mockFaqs,
   portfolios as mockPortfolios,
@@ -457,13 +457,13 @@ async function loadArticles(): Promise<Article[]> {
     } catch (error) {
       console.error("[mysql] articles failed", error);
       if (shouldFetchStrapiEditorial()) {
-        return withFallback("articles", fetchStrapiArticles, mockArticles);
+        return withFallback("articles", fetchStrapiArticles, ETOH_ARTICLES);
       }
       return [];
     }
   }
 
-  return withFallback("articles", fetchStrapiArticles, mockArticles);
+  return withFallback("articles", fetchStrapiArticles, ETOH_ARTICLES);
 }
 
 export const getArticles = cache(loadArticles);
@@ -487,7 +487,7 @@ async function fetchStrapiArticleBySlug(slug: string): Promise<Article | null> {
 async function loadArticleBySlug(
   slug: string,
 ): Promise<Article | null> {
-  const mockHit = () => mockArticles.find((item) => item.slug === slug) ?? null;
+  const mockHit = () => ETOH_ARTICLES.find((item) => item.slug === slug) ?? null;
 
   if (getCmsMode() === "mysql") {
     try {

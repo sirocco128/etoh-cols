@@ -28,6 +28,7 @@ const config: Config = {
           soft: "rgb(var(--color-brass-soft-rgb) / <alpha-value>)",
         },
         ink: "rgb(var(--color-ink-rgb) / <alpha-value>)",
+        leaf: "rgb(var(--color-leaf-rgb, 31 157 85) / <alpha-value>)",
         paper: "rgb(var(--color-paper-rgb) / <alpha-value>)",
         background: "var(--background)",
         foreground: "var(--foreground)",

@@ -23,22 +23,19 @@ describe("nav helpers (UX)", () => {
     );
     assert.equal(links.some((l) => l.href === "/ideas"), false);
     assert.equal(links.some((l) => l.href === "/catalog"), false);
-    assert.equal(
-      links.find((l) => l.href === "/premium-giftset")?.label,
-      "ชุดของขวัญองค์กร",
-    );
+    assert.equal(links.find((l) => l.href === "/applications")?.label, "การใช้งาน");
+    assert.equal(links.some((l) => l.href === "/packaging"), true);
     assert.match(
       links.find((l) => l.href === "/products")?.hint || "",
       /ขอราคา/,
     );
   });
 
-  it("parks flipbook and ideas under more nav", () => {
+  it("parks documents and blog under more nav", () => {
     const more = moreNavLinks();
-    assert.equal(more.find((l) => l.href === "/ideas")?.label, "ไอเดียชุดของขวัญ");
-    assert.equal(more.find((l) => l.href === "/catalog")?.label, "สมุดพลิกดู");
-    assert.match(more.find((l) => l.href === "/catalog")?.hint || "", /พลิกดู/);
-    assert.equal(isMoreNavActive("/catalog"), true);
+    assert.equal(more.find((l) => l.href === "/documents")?.label, "เอกสาร CoA / SDS");
+    assert.equal(more.some((l) => l.href === "/blog"), true);
+    assert.equal(isMoreNavActive("/documents"), true);
     assert.equal(isMoreNavActive("/products"), false);
   });
 

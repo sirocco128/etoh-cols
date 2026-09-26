@@ -84,10 +84,10 @@ describe("seo draft + assistant routing", () => {
     assert.ok(isValidSeoDescription(fitted), fitted.length.toString());
   });
 
-  it("drafts a valid template for a theme page without an LLM", async () => {
+  it("drafts a valid template for a storefront page without an LLM", async () => {
     const result = await draftPageSeo({
-      path: "/ideas/health",
-      brief: "เน้นกระบอกน้ำพนักงาน",
+      path: "/packaging",
+      brief: "เน้นถัง 200 ลิตรและ IBC",
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;

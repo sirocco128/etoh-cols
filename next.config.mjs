@@ -182,6 +182,22 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
     remotePatterns,
   },
+  // Smart Gift routes retired in the Etoh Cols fork — keep old links alive.
+  async redirects() {
+    return [
+      { source: "/premium-giftset", destination: "/products", permanent: true },
+      { source: "/giftset/:path*", destination: "/products", permanent: true },
+      { source: "/catalog/:path*", destination: "/products", permanent: true },
+      { source: "/catalog", destination: "/products", permanent: true },
+      { source: "/album/:path*", destination: "/products", permanent: true },
+      { source: "/ideas/:path*", destination: "/applications", permanent: true },
+      { source: "/ideas", destination: "/applications", permanent: true },
+      { source: "/customize-gift-set", destination: "/contact", permanent: true },
+      { source: "/quote-basket", destination: "/contact", permanent: true },
+      { source: "/portfolio/:path*", destination: "/about", permanent: true },
+      { source: "/portfolio", destination: "/about", permanent: true },
+    ];
+  },
   async headers() {
     /** @type {{ key: string; value: string }[]} */
     const securityHeaders = [
