@@ -190,24 +190,26 @@ function maybeIssueTaxInvoice(order: OrderRecord, now: string, actor: string | n
       lineDescription: `${fresh.productSummary} จำนวน ${fresh.quantity} ชุด`,
       now,
     });
-    if (!repo.hasDocument(fresh.orderId, "receipt")) {
-      issueDocument({
-        type: "receipt",
-        order: fresh,
-        paymentId: null,
-        subtotalExVat: fresh.subtotalExVat,
-        vatAmount: fresh.vatAmount,
-        grandTotal: fresh.totalAmount,
-        lineDescription: `รับชำระค่าสินค้าครบจำนวน — ${fresh.productSummary}`,
-        now,
-      });
-    }
     repo.insertEvent({
       orderId: fresh.orderId,
       eventType: "document_issued",
       message: `ออกใบกำกับภาษีและใบเสร็จรับเงิน (รับรู้รายได้เมื่อสินค้าพร้อมส่งมอบ) · ${sellerLine()}`,
       actor,
       createdAt: now,
+    });
+  }
+  // Credit sales get the tax invoice at delivery and the receipt when paid later,
+  // so the receipt is issued independently of the tax invoice.
+  if (!repo.hasDocument(fresh.orderId, "receipt")) {
+    issueDocument({
+      type: "receipt",
+      order: fresh,
+      paymentId: null,
+      subtotalExVat: fresh.subtotalExVat,
+      vatAmount: fresh.vatAmount,
+      grandTotal: fresh.totalAmount,
+      lineDescription: `รับชำระค่าสินค้าครบจำนวน — ${fresh.productSummary}`,
+      now,
     });
   }
   postRevenueRecognition({
@@ -699,3 +701,10 @@ export function paymentStatusLabelForOrder(order: OrderRecord): string {
 }
 
 export { currentDueAmount, currentDueKind, sellerLine };
+
+/** Building blocks for other sales desks (e.g. Etoh Cols ethanol orders). */
+export {
+  createOpenPayment as openOrderPayment,
+  issueDocument as issueOrderDocument,
+  maybeIssueTaxInvoice as issueTaxDocumentsIfDue,
+};

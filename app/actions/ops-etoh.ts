@@ -41,6 +41,8 @@ import {
   updateLotCoa,
 } from "@/lib/etoh/repository";
 import { getCustomerById } from "@/lib/customer-repository";
+import { convertQuoteToOrder, markDelivered, shipOrder } from "@/lib/etoh/sales";
+import { logFollowup } from "@/lib/etoh/followups";
 
 function text(form: FormData, key: string): string {
   return String(form.get(key) ?? "").trim();
@@ -473,5 +475,119 @@ export async function pushNexterpNowAction(): Promise<OpsActionResult> {
   revalidatePath("/ops/etoh/sync");
   if (result.skipped) return { ok: false, error: result.skipped };
   if (result.failed) return { ok: false, error: `ส่งสำเร็จ ${result.sent} / ล้มเหลว ${result.failed}` };
+  return { ok: true };
+}
+
+/* ------------------------------------------------ orders / shipments */
+
+export async function convertQuoteToOrderAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("orders.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์เปิดออเดอร์" };
+  const meta = await requestMeta();
+  const quoteId = Number(text(formData, "quoteId"));
+  const override = formData.get("overrideCreditLimit") === "on";
+  if (override && !actorMay(actor, "catalog.write")) {
+    return { ok: false, error: "อนุมัติเกินวงเงินได้เฉพาะหัวหน้าฝ่ายขาย / ผู้ดูแล" };
+  }
+  let orderId = "";
+  try {
+    const order = convertQuoteToOrder({
+      quoteId,
+      shipToAddress: text(formData, "shipToAddress") || undefined,
+      shipToProvince: text(formData, "shipToProvince") || undefined,
+      overrideCreditLimit: override,
+      actor: actor.email,
+    });
+    orderId = order.orderId;
+  } catch (error) {
+    return failure(error, "เปิดออเดอร์ไม่สำเร็จ");
+  }
+  writeOpsAudit({
+    actor,
+    action: "etoh.order.create",
+    status: "ok",
+    resourceType: "order",
+    resourceId: orderId,
+    detail: { quoteId, overrideCreditLimit: override || undefined },
+    ...meta,
+  });
+  revalidatePath("/ops/etoh/orders");
+  revalidatePath(`/ops/etoh/quotes/${quoteId}`);
+  redirect(`/ops/etoh/orders/${orderId}`);
+}
+
+export async function shipOrderAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("stock.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์ออกใบส่งของ" };
+  const meta = await requestMeta();
+  const orderId = text(formData, "orderId");
+  let dnNo = "";
+  try {
+    const shipment = shipOrder({
+      orderId,
+      shipTo: text(formData, "shipTo") || undefined,
+      vehicle: text(formData, "vehicle") || undefined,
+      driver: text(formData, "driver") || undefined,
+      actor: actor.email,
+    });
+    dnNo = shipment.dnNo;
+  } catch (error) {
+    return failure(error, "ออกใบส่งของไม่สำเร็จ");
+  }
+  writeOpsAudit({ actor, action: "etoh.shipment.create", status: "ok", resourceType: "order", resourceId: orderId, detail: { dnNo }, ...meta });
+  revalidatePath("/ops/etoh/orders");
+  revalidatePath(`/ops/etoh/orders/${orderId}`);
+  revalidatePath("/ops/etoh/lots");
+  return { ok: true };
+}
+
+export async function markDeliveredAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("stock.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์" };
+  const meta = await requestMeta();
+  const shipmentId = Number(text(formData, "shipmentId"));
+  let orderId = "";
+  try {
+    orderId = markDelivered(shipmentId, text(formData, "receivedBy"), actor.email).orderId;
+  } catch (error) {
+    return failure(error, "บันทึกส่งถึงไม่สำเร็จ");
+  }
+  writeOpsAudit({ actor, action: "etoh.shipment.delivered", status: "ok", resourceType: "order", resourceId: orderId, ...meta });
+  revalidatePath("/ops/etoh/orders");
+  revalidatePath(`/ops/etoh/orders/${orderId}`);
+  return { ok: true };
+}
+
+/* ------------------------------------------------------- follow-ups */
+
+export async function logFollowupAction(
+  _prev: OpsActionResult | null,
+  formData: FormData,
+): Promise<OpsActionResult> {
+  const actor = await requireOpsActor("customers.write");
+  if (!actor) return { ok: false, error: "ไม่มีสิทธิ์" };
+  const customerId = Number(text(formData, "customerId"));
+  if (!getCustomerById(customerId)) return { ok: false, error: "ไม่พบลูกค้า" };
+  try {
+    logFollowup({
+      customerId,
+      outcome: text(formData, "outcome"),
+      note: text(formData, "note"),
+      nextDate: text(formData, "nextDate") || null,
+      actor: actor.email,
+    });
+  } catch (error) {
+    return failure(error, "บันทึกการติดตามไม่สำเร็จ");
+  }
+  revalidatePath("/ops/etoh/followups");
   return { ok: true };
 }

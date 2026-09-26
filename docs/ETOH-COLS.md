@@ -27,6 +27,23 @@ Code: `lib/etoh/` (catalog, pricing engine, repository, NEXTERP sync),
 `app/actions/ops-etoh.ts`, `components/etoh/`, migration `031_etoh_core.sql`.
 Tests: `tests/etoh-pricing.test.ts`, `tests/etoh-repository.test.ts`.
 
+## Phase 2 — sales flow and follow-ups
+
+| Step | Where | What happens |
+| --- | --- | --- |
+| Accept quote → order | `/ops/etoh/quotes/[id]` (`orders.write`) | Creates an `orders` row (ORD-…) from the frozen quote. **Cash** customers get a full-amount invoice + PromptPay voucher and must pay before shipping. **Credit** customers are checked against their credit limit (override needs `catalog.write`, audited). |
+| Ship | `/ops/etoh/orders/[orderId]` (`stock.write`) | Allocates **released, unexpired lots FIFO** (expiry, then arrival), issues the **ใบกำกับภาษี** at delivery, posts revenue + output VAT (AR for credit), opens the payment voucher, records drums/IBC out, marks empty lots `depleted`. A stock shortage aborts with nothing written. |
+| Delivery note | `/ops/etoh/orders/[orderId]/dn` | Printable DN-YYMM-NNNN with lot numbers, CoA purity, weights and three signature boxes. |
+| Delivered | same page | Receiver name → order `delivered`. |
+| Paid later | existing `/ops/orders` / approvals | Confirming the voucher marks the order paid and now issues the **receipt** even when the tax invoice was issued earlier (credit sales). |
+| Follow-ups | `/ops/etoh/followups` (`customers.read`) | Customers whose next order is due/late (cycle from terms or average order gap), call log with snooze date, quick link to a pre-filled quote, and credit invoices past due. |
+
+Shared-engine changes: `lib/db-transaction.ts` (nest-safe transactions via
+SAVEPOINT) is now used by document numbering and journal posting so the whole
+shipment commits atomically; `maybeIssueTaxInvoice` issues the receipt
+independently of the tax invoice. Container deposits stay outside the VAT
+order total and live in the drum ledger.
+
 ### Pricing rules
 
 - Price of one pack = base ฿/L × litres × (1 − tier %) × (1 + small-pack markup, jerrycans only) + container + repack (jerrycans only).
@@ -71,5 +88,5 @@ Schedule: `POST /api/jobs/etoh-nexterp-sync` with `Authorization: Bearer $CRON_S
 ## Not yet converted (next phases)
 
 - Public storefront, blog, AI assistant copy and SEO still carry Smart Gift gift-set content (≈ 20 files under `app/`, `lib/data.ts`, `lib/ux-copy.ts`, assistant prompts). Phase 2 replaces them with ethanol product / end-use pages and an RFQ form.
-- Quote → order → tax invoice hand-off into the existing order/billing cycle, and lot allocation on shipment (WMS product keys `ETH-<GRADE>-<PACK>`).
-- Reorder reminders from `reorder_cycle_days`, dealer portal, import forecast.
+- Partial shipments (one delivery note per order today), deposit refunds as credit notes, WMS bin-level stock for drums.
+- LINE notification for new RFQs, sales dashboard vs the 12-container target, dealer portal, import forecast.

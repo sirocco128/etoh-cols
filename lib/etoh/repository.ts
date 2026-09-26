@@ -5,6 +5,7 @@
  */
 
 import { getDb } from "@/lib/database";
+import { withTransaction } from "@/lib/db-transaction";
 import {
   ETOH_PACKS,
   ETOH_TIERS,
@@ -39,20 +40,7 @@ function isIsoDate(value: string): boolean {
 }
 
 function inTransaction<T>(fn: () => T): T {
-  const db = getDb();
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    const out = fn();
-    db.exec("COMMIT");
-    return out;
-  } catch (error) {
-    try {
-      db.exec("ROLLBACK");
-    } catch {
-      // ignore rollback failure; original error wins
-    }
-    throw error;
-  }
+  return withTransaction(fn);
 }
 
 function enqueueSync(entity: string, entityId: string, event: string, payload: unknown): void {
@@ -752,6 +740,8 @@ export type EtohSavedQuote = {
   status: EtohQuoteStatus;
   validUntil: string | null;
   note: string | null;
+  /** Order opened from this quote (ORD-…), once converted. */
+  orderId: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -771,6 +761,7 @@ type QuoteRow = {
   status: string;
   valid_until: string | null;
   note: string | null;
+  order_id?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -791,6 +782,7 @@ function mapQuote(row: QuoteRow): EtohSavedQuote {
     status: row.status as EtohQuoteStatus,
     validUntil: row.valid_until,
     note: row.note,
+    orderId: row.order_id ?? null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

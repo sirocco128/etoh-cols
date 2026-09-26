@@ -43,18 +43,21 @@ export function EtohQuoteCalculator({
   pricedGrades,
   canSave,
   canOverride,
+  initialCustomerId,
 }: {
   customers: EtohCalcCustomer[];
   pricedGrades: EtohGradeCode[];
   canSave: boolean;
   canOverride: boolean;
+  initialCustomerId?: number;
 }) {
   const router = useRouter();
-  const [customerId, setCustomerId] = useState<number | null>(null);
-  const [customerName, setCustomerName] = useState("");
-  const [customerTaxId, setCustomerTaxId] = useState("");
-  const [contact, setContact] = useState("");
-  const [tier, setTier] = useState<EtohTierCode>("standard");
+  const initial = customers.find((c) => c.id === initialCustomerId) ?? null;
+  const [customerId, setCustomerId] = useState<number | null>(initial?.id ?? null);
+  const [customerName, setCustomerName] = useState(initial?.name ?? "");
+  const [customerTaxId, setCustomerTaxId] = useState(initial?.taxId ?? "");
+  const [contact, setContact] = useState(initial?.contact ?? "");
+  const [tier, setTier] = useState<EtohTierCode>(initial?.tier ?? "standard");
   const [deliveryFeeThb, setDeliveryFeeThb] = useState(0);
   const [extraDiscountThb, setExtraDiscountThb] = useState(0);
   const [validDays, setValidDays] = useState(7);

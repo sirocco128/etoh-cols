@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/database";
+import { withTransaction } from "@/lib/db-transaction";
 import { parseOpsTags, serializeOpsTags } from "@/lib/ops-tags";
 import { replaceEntityTags } from "@/lib/ops-tag-links";
 import { buddhistPeriod } from "@/lib/th-billing";
@@ -575,8 +576,7 @@ export class SqliteOrderRepository {
     const prefix = DOCUMENT_PREFIX[type];
     const period = buddhistPeriod(now);
     const db = getDb();
-    db.exec("BEGIN IMMEDIATE");
-    try {
+    return withTransaction(() => {
       const existing = db
         .prepare(
           `SELECT last_value FROM document_sequences WHERE kind = ? AND period = ?`,
@@ -592,16 +592,8 @@ export class SqliteOrderRepository {
           `INSERT INTO document_sequences (kind, period, last_value) VALUES (?, ?, ?)`,
         ).run(prefix, period, next);
       }
-      db.exec("COMMIT");
       return `${prefix}-${period.slice(2)}-${String(next).padStart(4, "0")}`;
-    } catch (error) {
-      try {
-        db.exec("ROLLBACK");
-      } catch {
-        // ignore
-      }
-      throw error;
-    }
+    }, db);
   }
 
   insertDocument(params: InsertDocumentParams): BillingDocumentRecord {

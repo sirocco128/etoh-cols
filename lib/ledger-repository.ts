@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/database";
+import { withTransaction } from "@/lib/db-transaction";
 import {
   bookTypeFromSourceKey,
   isJournalBookType,
@@ -163,19 +164,10 @@ export function deleteJournalBySourceKey(sourceKey: string): void {
   const existing = getJournalBySourceKey(sourceKey);
   if (!existing) return;
   const db = getDb();
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  withTransaction(() => {
     db.prepare(`DELETE FROM journal_lines WHERE entry_id = ?`).run(existing.entryId);
     db.prepare(`DELETE FROM journal_entries WHERE entry_id = ?`).run(existing.entryId);
-    db.exec("COMMIT");
-  } catch (error) {
-    try {
-      db.exec("ROLLBACK");
-    } catch {
-      // ignore
-    }
-    throw error;
-  }
+  }, db);
 }
 
 export function insertJournal(params: {
@@ -192,8 +184,7 @@ export function insertJournal(params: {
 }): JournalEntryRecord {
   const bookType = params.bookType ?? bookTypeFromSourceKey(params.sourceKey);
   const db = getDb();
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  withTransaction(() => {
     db.prepare(
       `INSERT INTO journal_entries (
         entry_id, source_key, entry_date, memo, order_id, po_id, posted_by, created_at, book_type
@@ -223,15 +214,7 @@ export function insertJournal(params: {
         line.memo ?? null,
       );
     });
-    db.exec("COMMIT");
-  } catch (error) {
-    try {
-      db.exec("ROLLBACK");
-    } catch {
-      // ignore
-    }
-    throw error;
-  }
+  }, db);
   const row = getJournalByEntryId(params.entryId);
   if (!row) throw new Error("journal_insert_failed");
   return row;

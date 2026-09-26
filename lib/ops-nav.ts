@@ -53,6 +53,12 @@ export function buildOpsNavLinks(actor: OpsActor): OpsNavLink[] {
     { href: "/ops/etoh", label: "คิดราคาเอทานอล", group: "etoh" },
     { href: "/ops/etoh/quotes", label: "ใบเสนอราคาเอทานอล", group: "etoh" },
   );
+  if (actorMay(actor, "orders.read")) {
+    links.push({ href: "/ops/etoh/orders", label: "ออเดอร์ / ส่งของ", group: "etoh" });
+  }
+  if (actorMay(actor, "customers.read")) {
+    links.push({ href: "/ops/etoh/followups", label: "ตามขาย (ถึงรอบสั่ง)", group: "etoh" });
+  }
   if (actorMay(actor, "customers.read")) {
     links.push({ href: "/ops/etoh/customers", label: "เงื่อนไขลูกค้า", group: "etoh" });
   }

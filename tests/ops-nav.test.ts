@@ -150,6 +150,8 @@ describe("ops nav", () => {
     assert.deepEqual(etoh, [
       "/ops/etoh",
       "/ops/etoh/quotes",
+      "/ops/etoh/orders",
+      "/ops/etoh/followups",
       "/ops/etoh/customers",
       "/ops/etoh/prices",
       "/ops/etoh/lots",

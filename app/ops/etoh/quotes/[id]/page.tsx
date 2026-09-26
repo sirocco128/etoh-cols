@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EtohForm } from "@/components/etoh/EtohForm";
 import { EtohPrintButton } from "@/components/etoh/EtohPrintButton";
-import { setEtohQuoteStatusAction } from "@/app/actions/ops-etoh";
+import { convertQuoteToOrderAction, setEtohQuoteStatusAction } from "@/app/actions/ops-etoh";
+import { creditPosition } from "@/lib/etoh/sales";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
 import { ETOH_QUOTE_STATUS_LABELS, getQuote, type EtohQuoteStatus } from "@/lib/etoh/repository";
 import { ETOH_DOCUMENT_LABELS, getGrade, getTier } from "@/lib/etoh/catalog";
@@ -185,6 +186,73 @@ export default async function EtohQuoteDetailPage({ params }: { params: Promise<
           ))}
         </div>
       ) : null}
+
+      {quote.orderId ? (
+        <div className="mx-auto mt-6 max-w-4xl rounded-xl border border-forest/20 bg-forest-mist px-5 py-4 text-sm print:hidden">
+          เปิดออเดอร์แล้ว{" "}
+          <Link href={`/ops/etoh/orders/${quote.orderId}`} className="font-mono font-semibold text-forest underline">
+            {quote.orderId}
+          </Link>
+        </div>
+      ) : quote.status === "accepted" && actorMay(actor, "orders.write") ? (
+        <ConvertPanel quoteId={quote.id} customerId={quote.customerId} total={result.vatBaseThb + result.vatThb} canOverride={actorMay(actor, "catalog.write")} />
+      ) : null}
+    </div>
+  );
+}
+
+function ConvertPanel({
+  quoteId,
+  customerId,
+  total,
+  canOverride,
+}: {
+  quoteId: number;
+  customerId: number | null;
+  total: number;
+  canOverride: boolean;
+}) {
+  if (!customerId) {
+    return (
+      <div className="mx-auto mt-6 max-w-4xl rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 print:hidden">
+        ใบเสนอราคานี้ไม่ได้ผูกลูกค้าใน CRM — สร้างลูกค้าที่ <Link href="/ops/customers/new" className="underline">CRM</Link> แล้วทำใบเสนอราคาใหม่โดยเลือกลูกค้า
+      </div>
+    );
+  }
+  const pos = creditPosition(customerId);
+  const credit = pos.creditTermDays > 0;
+  const over = credit && pos.creditLimitThb > 0 && total > pos.availableThb;
+  return (
+    <div className="mx-auto mt-6 max-w-4xl rounded-xl border border-forest/15 bg-paper p-5 print:hidden">
+      <h2 className="font-semibold text-forest">เปิดออเดอร์จากใบเสนอราคานี้</h2>
+      <p className="mt-1 text-sm text-ink/70">
+        {credit
+          ? `ลูกค้าเครดิต ${pos.creditTermDays} วัน — ส่งของได้ก่อน ใบกำกับภาษีออกตอนส่งของ`
+          : "ลูกค้าเงินสด — ระบบออกใบแจ้งหนี้เต็มจำนวนพร้อม QR พร้อมเพย์ ต้องรับชำระก่อนส่งของ"}
+      </p>
+      {credit && pos.creditLimitThb > 0 ? (
+        <p className={`mt-2 text-sm ${over ? "text-red-700" : "text-ink/70"}`}>
+          วงเงิน {formatThb(pos.creditLimitThb)} · ค้างชำระ {formatThb(pos.outstandingThb)} · คงเหลือ {formatThb(pos.availableThb)} · ออเดอร์นี้ {formatThb(total)} บาท
+        </p>
+      ) : null}
+      <EtohForm action={convertQuoteToOrderAction} submitLabel="เปิดออเดอร์" className="mt-4 space-y-3">
+        <input type="hidden" name="quoteId" value={quoteId} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="font-medium">ที่อยู่จัดส่ง</span>
+            <input name="shipToAddress" className="mt-1 w-full rounded border border-forest/20 px-3 py-2 text-sm" />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">จังหวัด</span>
+            <input name="shipToProvince" className="mt-1 w-full rounded border border-forest/20 px-3 py-2 text-sm" />
+          </label>
+        </div>
+        {over && canOverride ? (
+          <label className="flex items-center gap-2 text-sm text-red-700">
+            <input type="checkbox" name="overrideCreditLimit" /> อนุมัติเกินวงเงิน (บันทึกใน audit log)
+          </label>
+        ) : null}
+      </EtohForm>
     </div>
   );
 }

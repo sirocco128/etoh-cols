@@ -9,8 +9,13 @@ import { ETOH_GRADES, type EtohGradeCode } from "@/lib/etoh/catalog";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export default async function EtohCalculatorPage() {
+export default async function EtohCalculatorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ customer?: string }>;
+}) {
   const actor = await requireOpsPage("quotes.read");
+  const sp = await searchParams;
   const prices = currentPrices();
   const pricedGrades = ETOH_GRADES.map((g) => g.code).filter((code) => prices[code]) as EtohGradeCode[];
   const customers = listEtohCustomerOptions();
@@ -46,6 +51,7 @@ export default async function EtohCalculatorPage() {
             pricedGrades={pricedGrades}
             canSave={actorMay(actor, "quotes.write")}
             canOverride={actorMay(actor, "quotes.write")}
+            initialCustomerId={Number(sp.customer) || undefined}
           />
         </div>
       )}
