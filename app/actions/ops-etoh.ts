@@ -13,6 +13,7 @@ import {
   isGradeCode,
   isPackCode,
   isTierCode,
+  perLitreFromPerKg,
   type EtohGradeCode,
   type EtohPackCode,
   type EtohTierCode,
@@ -88,11 +89,16 @@ export async function savePriceEntryAction(
   const meta = await requestMeta();
   let entryId = 0;
   try {
+    // Bulk ethanol is traded in THB/kg; the price book stores THB/L.
+    const perKg = text(formData, "priceUnit") === "kg";
+    const toLitre = (v: number) => (perKg ? perLitreFromPerKg(v) : v);
+    const rawBase = formData.has("basePrice") ? num(formData, "basePrice", Number.NaN) : num(formData, "basePricePerLitre", Number.NaN);
+    const rawCost = formData.has("landedCost") ? optNum(formData, "landedCost") : optNum(formData, "landedCostPerLitre");
     const entry = addPriceEntry({
       gradeCode: text(formData, "gradeCode"),
-      basePricePerLitre: num(formData, "basePricePerLitre", Number.NaN),
+      basePricePerLitre: Number.isFinite(rawBase) ? toLitre(rawBase) : rawBase,
       // Only roles that may see cost may set it.
-      landedCostPerLitre: actorMay(actor, "factory.read") ? optNum(formData, "landedCostPerLitre") : null,
+      landedCostPerLitre: actorMay(actor, "factory.read") && rawCost != null ? toLitre(rawCost) : null,
       effectiveFrom: text(formData, "effectiveFrom") || undefined,
       note: text(formData, "note"),
       actor: actor.email,
@@ -107,7 +113,11 @@ export async function savePriceEntryAction(
     status: "ok",
     resourceType: "etoh_price",
     resourceId: String(entryId),
-    detail: { gradeCode: text(formData, "gradeCode"), base: text(formData, "basePricePerLitre") },
+    detail: {
+      gradeCode: text(formData, "gradeCode"),
+      base: text(formData, "basePrice") || text(formData, "basePricePerLitre"),
+      unit: text(formData, "priceUnit") || "litre",
+    },
     ...meta,
   });
   revalidatePath("/ops/etoh");
@@ -139,11 +149,13 @@ export async function savePackAndTierSettingsAction(
     for (const tier of ETOH_TIERS) {
       saveTierDiscount(tier.code, num(formData, `tier.${tier.code}`), actor.email);
     }
-    const drums = num(formData, "drumsPerContainer", 80);
-    if (!Number.isInteger(drums) || drums < 1 || drums > 200) {
-      return { ok: false, error: "จำนวนถังต่อตู้ต้องเป็น 1–200" };
+    if (formData.has("litresPerContainer")) {
+      const litres = num(formData, "litresPerContainer", 25000);
+      if (!Number.isInteger(litres) || litres < 1000 || litres > 40000) {
+        return { ok: false, error: "ขนาดตู้ต้องเป็น 1,000–40,000 ลิตร" };
+      }
+      setSetting("litres_per_container", String(litres), actor.email);
     }
-    setSetting("drums_per_container", String(drums), actor.email);
   } catch (error) {
     return failure(error, "บันทึกค่าบรรจุภัณฑ์ไม่สำเร็จ");
   }

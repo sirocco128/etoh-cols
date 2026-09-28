@@ -87,7 +87,7 @@ export default function HomePage() {
             <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-forest/10 pt-6">
               <div>
                 <dt className="text-xs text-ink/55">ความบริสุทธิ์</dt>
-                <dd className="font-display text-2xl font-bold text-forest">95–99.9%</dd>
+                <dd className="font-display text-2xl font-bold text-forest">75–99%</dd>
               </div>
               <div>
                 <dt className="text-xs text-ink/55">บรรจุภัณฑ์</dt>

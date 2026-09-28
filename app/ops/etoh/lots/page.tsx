@@ -7,7 +7,7 @@ import {
   bangkokToday,
   ETOH_LOT_STATUS_LABELS,
   ETOH_LOT_STATUSES,
-  getSetting,
+  litresPerContainer,
   listLots,
   type EtohLotStatus,
 } from "@/lib/etoh/repository";
@@ -32,8 +32,8 @@ export default async function EtohLotsPage({ searchParams }: { searchParams: Sea
   const canWrite = actorMay(actor, "stock.write");
   const today = bangkokToday();
   const releasedLitres = lots.filter((l) => l.status === "released").reduce((s, l) => s + l.receivedLitres, 0);
-  const drumsPerContainer = Number(getSetting("drums_per_container", "80")) || 80;
-  const plan = planContainers(releasedLitres, drumsPerContainer);
+  const perContainer = litresPerContainer();
+  const plan = planContainers(releasedLitres, perContainer);
 
   return (
     <div>
@@ -46,7 +46,7 @@ export default async function EtohLotsPage({ searchParams }: { searchParams: Sea
 
       <p className="mt-4 text-sm text-ink/70">
         ล็อตที่ปล่อยขายในรายการนี้รวม {releasedLitres.toLocaleString("th-TH")} ลิตร ≈ {plan.drums.toLocaleString("th-TH")} ถัง
-        ({plan.containers} ตู้ ที่ {drumsPerContainer} ถัง/ตู้)
+        ≈ {(releasedLitres / perContainer).toLocaleString("th-TH", { maximumFractionDigits: 1 })} ตู้ ISO ({perContainer.toLocaleString("th-TH")} ลิตร/ตู้)
       </p>
 
       <div className="mt-4 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -146,7 +146,7 @@ export default async function EtohLotsPage({ searchParams }: { searchParams: Sea
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm">
                   <span className="font-medium">เลขล็อต</span>
-                  <input name="lotNo" required placeholder="L6909-IND95-01" className={`${inputCls} font-mono`} />
+                  <input name="lotNo" required placeholder="L6909-MM-01" className={`${inputCls} font-mono`} />
                 </label>
                 <label className="block text-sm">
                   <span className="font-medium">เกรด</span>

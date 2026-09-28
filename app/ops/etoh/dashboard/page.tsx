@@ -170,7 +170,7 @@ export default async function EtohDashboardPage({ searchParams }: { searchParams
         {actorMay(actor, "catalog.write") ? (
           <div className="rounded-2xl border border-forest/15 bg-paper p-5">
             <h2 className="font-semibold text-forest">ตั้งเป้ายอดขาย</h2>
-            <p className="mt-1 text-xs text-ink/60">ตู้ละ {d.target.drumsPerContainer} ถัง × 200 ลิตร (แก้จำนวนถังต่อตู้ที่หน้า &quot;ราคา / บรรจุภัณฑ์&quot;)</p>
+            <p className="mt-1 text-xs text-ink/60">ตู้ละ {n(d.target.litresPerContainer)} ลิตร (ISO Tank ≈ {n(d.target.litresPerContainer * 0.8)} กก.) — แก้ขนาดตู้ที่หน้า &quot;ราคา / บรรจุภัณฑ์&quot;</p>
             <EtohForm action={saveTargetAction} submitLabel="บันทึกเป้า" className="mt-4 space-y-3">
               <label className="block text-sm">
                 <span className="font-medium">เป้าตู้ต่อเดือน</span>

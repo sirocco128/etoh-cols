@@ -5,6 +5,8 @@ import {
   ETOH_PACKS,
   listSkus,
   parseSkuCode,
+  perKgFromPerLitre,
+  perLitreFromPerKg,
   skuCode,
 } from "../lib/etoh/catalog";
 import {
@@ -177,15 +179,24 @@ describe("etoh pricing engine", () => {
 });
 
 describe("container planning", () => {
-  it("rounds drums and containers up", () => {
-    assert.deepEqual(planContainers(128000, 80), {
+  it("plans ISO tanks by litres and rounds up", () => {
+    assert.deepEqual(planContainers(200000, 25000), {
       containers: 8,
-      drums: 640,
-      litres: 128000,
+      drums: 1000,
+      litres: 200000,
       fillPct: 100,
     });
-    const p = planContainers(16100, 80);
-    assert.equal(p.drums, 81);
+    const p = planContainers(25100);
     assert.equal(p.containers, 2);
+    assert.equal(p.drums, 126);
+    assert.equal(p.fillPct, 50.2);
+  });
+
+  it("converts THB/kg ↔ THB/L at the trade factor 0.80 kg/L", () => {
+    assert.equal(perLitreFromPerKg(34), 27.2);
+    assert.equal(perLitreFromPerKg(38.5), 30.8);
+    assert.equal(perKgFromPerLitre(27.2), 34);
+    // 20,000 kg ISO tank = 25,000 L; same money either way.
+    assert.equal(Math.round(perLitreFromPerKg(34) * 25000), 34 * 20000);
   });
 });

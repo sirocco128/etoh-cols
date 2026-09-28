@@ -7,7 +7,7 @@
 import { getDb } from "@/lib/database";
 import { roundSatang } from "@/lib/th-billing";
 import { ETOH_GRADES, type EtohGradeCode } from "@/lib/etoh/catalog";
-import { bangkokToday, getSetting } from "@/lib/etoh/repository";
+import { bangkokToday, getSetting, litresPerContainer } from "@/lib/etoh/repository";
 import { availableLitresByGrade, overdueInvoices } from "@/lib/etoh/sales";
 import { listFollowups } from "@/lib/etoh/followups";
 
@@ -29,10 +29,10 @@ export function shiftMonth(month: MonthKey, delta: number): MonthKey {
   return d.toISOString().slice(0, 7);
 }
 
-export function targetSettings(): { containers: number; drumsPerContainer: number; litres: number } {
+export function targetSettings(): { containers: number; litresPerContainer: number; litres: number } {
   const containers = Number(getSetting("monthly_target_containers", String(DEFAULT_TARGET_CONTAINERS))) || DEFAULT_TARGET_CONTAINERS;
-  const drumsPerContainer = Number(getSetting("drums_per_container", "80")) || 80;
-  return { containers, drumsPerContainer, litres: containers * drumsPerContainer * 200 };
+  const perContainer = litresPerContainer();
+  return { containers, litresPerContainer: perContainer, litres: containers * perContainer };
 }
 
 function deliveredIn(from: string, to: string): { litres: number; subtotal: number; shipments: number } {
@@ -51,7 +51,7 @@ function deliveredIn(from: string, to: string): { litres: number; subtotal: numb
 export type EtohDashboard = {
   month: MonthKey;
   today: string;
-  target: { containers: number; drumsPerContainer: number; litres: number };
+  target: { containers: number; litresPerContainer: number; litres: number };
   delivered: { litres: number; containers: number; subtotal: number; shipments: number; pct: number };
   /** Where the month should be by today if volume were spread evenly. */
   paceLitres: number;
@@ -71,7 +71,7 @@ export function buildDashboard(month?: MonthKey): EtohDashboard {
   const current = month ?? today.slice(0, 7);
   const { from, to } = monthBounds(current);
   const target = targetSettings();
-  const litresPerContainer = target.drumsPerContainer * 200;
+  const perContainer = target.litresPerContainer;
 
   const delivered = deliveredIn(from, to);
   const [y, m] = current.split("-").map(Number) as [number, number];
@@ -84,7 +84,7 @@ export function buildDashboard(month?: MonthKey): EtohDashboard {
   const history = Array.from({ length: 6 }, (_, i) => shiftMonth(current, i - 5)).map((mk) => {
     const b = monthBounds(mk);
     const d = deliveredIn(b.from, b.to);
-    return { month: mk, litres: d.litres, containers: Math.round((d.litres / litresPerContainer) * 10) / 10 };
+    return { month: mk, litres: d.litres, containers: Math.round((d.litres / perContainer) * 10) / 10 };
   });
 
   const open = db
@@ -162,7 +162,7 @@ export function buildDashboard(month?: MonthKey): EtohDashboard {
     target,
     delivered: {
       ...delivered,
-      containers: Math.round((delivered.litres / litresPerContainer) * 10) / 10,
+      containers: Math.round((delivered.litres / perContainer) * 10) / 10,
       pct: target.litres > 0 ? Math.round((delivered.litres / target.litres) * 1000) / 10 : 0,
     },
     paceLitres,

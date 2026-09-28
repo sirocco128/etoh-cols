@@ -7,6 +7,7 @@
 import { getDb } from "@/lib/database";
 import { withTransaction } from "@/lib/db-transaction";
 import {
+  ETOH_DEFAULT_LITRES_PER_CONTAINER,
   ETOH_PACKS,
   ETOH_TIERS,
   isGradeCode,
@@ -946,6 +947,12 @@ export function getSetting(key: string, fallback: string): string {
     | { value: string }
     | undefined;
   return row?.value ?? fallback;
+}
+
+/** Litres in one imported container (ISO tank). Default 25,000 L ≈ 20,000 kg. */
+export function litresPerContainer(): number {
+  const v = Number(getSetting("litres_per_container", String(ETOH_DEFAULT_LITRES_PER_CONTAINER)));
+  return Number.isFinite(v) && v >= 1000 ? v : ETOH_DEFAULT_LITRES_PER_CONTAINER;
 }
 
 export function setSetting(key: string, value: string, actor: string): void {

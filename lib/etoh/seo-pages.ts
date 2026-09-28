@@ -51,14 +51,14 @@ export function etohStaticSeoPages(): EtohSeoPage[] {
       "static",
       "Etoh Cols จัดหาเอทานอลอุตสาหกรรม จัดส่งทั่วประเทศ",
       "Etoh Cols ผู้นำเข้าและจัดหาเอทานอลสำหรับผู้ใช้งานจริง Industrial, Denatured, TBA & Bitrex และ Food Grade บรรจุ ISO Tank IBC ถัง 200 ลิตร พร้อม CoA และ SDS จัดส่งทั่วประเทศ",
-      [...BASE_KEYWORDS, "เอทานอล 95%", "เอทานอล 200 ลิตร"],
+      [...BASE_KEYWORDS, "เอทานอล 96%", "เอทานอล 99%", "เอทานอล 200 ลิตร"],
     ),
     page(
       "/products",
       "ผลิตภัณฑ์",
       "static",
       "ผลิตภัณฑ์เอทานอล Industrial Denatured Food Grade",
-      "เลือกเอทานอลตามการใช้งาน Industrial Ethanol 95–99.9% Denatured Ethanol TBA & Bitrex และ Food / Registered Grade ผ่าน อย. พร้อมเอกสาร CoA SDS Specification ขอใบเสนอราคาได้ทันที",
+      "เลือกเอทานอลตามการใช้งาน Industrial Ethanol 96% · 99% · 75% Denatured Ethanol TBA & Bitrex และ Food / Registered Grade ผ่าน อย. พร้อมเอกสาร CoA SDS Specification ขอใบเสนอราคาได้ทันที",
       [...BASE_KEYWORDS, "denatured ethanol", "food grade ethanol"],
     ),
     page(

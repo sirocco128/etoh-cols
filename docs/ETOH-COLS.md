@@ -64,7 +64,14 @@ Printable receipt/refund slip: `/ops/etoh/deposits/[id]` (not a tax invoice — 
 - New web RFQ → pushed immediately to `ETOH_SALES_LINE_TO`.
 - Daily digest: `POST /api/jobs/etoh-daily-digest` with `Authorization: Bearer $CRON_SECRET` (suggested 08:15 Asia/Bangkok) — month-to-date litres vs target, open quotes, customers due to reorder, overdue invoices.
 
-**Dashboard** `/ops/etoh/dashboard` (`reports.read`): delivered litres/containers vs target (default 12 containers × drums-per-container × 200 L, editable), pace line and month-end projection, 6-month history, RFQs, open quotes, 90-day win rate, receivables, reorder calls due, stock cover by grade, top customers.
+**Dashboard** `/ops/etoh/dashboard` (`reports.read`): delivered litres/containers vs target (default 12 ISO tanks × 25,000 L; tank size and target editable), pace line and month-end projection, 6-month history, RFQs, open quotes, 90-day win rate, receivables, reorder calls due, stock cover by grade, top customers.
+
+### Real operating model (Sep 2026)
+
+- Imports are ISO tanks only: Myanmar 6 × 20,000 kg and Pakistan 2 × 19,500 kg per month; trade factor 1 kg = 1.25 L (0.80 kg/L).
+- Grades sold: industrial 96% (`IND95`), 99% (`IND999`) and 75% (`IND75`). Codes are historical database keys.
+- Prices can be entered in THB/kg on `/ops/etoh/prices`; the price book stores THB/L (THB/kg × 0.8) and shows both.
+- Container planning / dashboard use `litres_per_container` (default 25,000 L).
 
 ### Pricing rules
 

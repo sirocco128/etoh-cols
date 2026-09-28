@@ -13,6 +13,7 @@
  */
 
 import {
+  ETOH_DEFAULT_LITRES_PER_CONTAINER,
   ETOH_PACKS,
   ETOH_TIERS,
   getGrade,
@@ -343,18 +344,19 @@ export type EtohContainerPlan = {
 };
 
 /**
- * Import planning helper: how many 20ft containers of 200 L drums cover a
- * litre demand. drumsPerContainer is an Ops setting (typically ~80).
+ * Import planning helper: how many ISO tanks (and 200 L drum equivalents) cover a
+ * litre demand. litresPerContainer is an Ops setting (one ISO tank ≈ 25,000 L).
  */
-export function planContainers(litres: number, drumsPerContainer = 80): EtohContainerPlan {
-  if (!(drumsPerContainer > 0)) throw new EtohPricingError("จำนวนถังต่อตู้ต้องมากกว่า 0");
-  const drums = Math.ceil(Math.max(0, litres) / 200);
-  const containers = Math.ceil(drums / drumsPerContainer);
-  const capacity = containers * drumsPerContainer;
+export function planContainers(litres: number, litresPerContainer = ETOH_DEFAULT_LITRES_PER_CONTAINER): EtohContainerPlan {
+  if (!(litresPerContainer > 0)) throw new EtohPricingError("ขนาดตู้ (ลิตร/ตู้) ต้องมากกว่า 0");
+  const need = Math.max(0, litres);
+  const drums = Math.ceil(need / 200);
+  const containers = Math.ceil(need / litresPerContainer);
+  const capacity = containers * litresPerContainer;
   return {
     containers,
     drums,
-    litres: drums * 200,
-    fillPct: capacity === 0 ? 0 : round2((drums / capacity) * 100),
+    litres: need,
+    fillPct: capacity === 0 ? 0 : round2((need / capacity) * 100),
   };
 }

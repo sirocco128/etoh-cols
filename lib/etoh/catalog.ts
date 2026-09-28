@@ -7,7 +7,31 @@
 
 export const ETOH_DEFAULT_DENSITY_KG_PER_L = 0.8;
 
-export const ETOH_GRADE_CODES = ["IND95", "IND999", "DEN", "TBA", "FOOD"] as const;
+/**
+ * Commercial kg ↔ litre factor used in the ethanol trade and on the company's
+ * own plan (1 kg = 1.25 L, i.e. 0.80 kg/L). Bulk (ISO) business is priced in
+ * THB/kg; the price book stores THB/L, so conversions go through this one
+ * constant to keep quotes identical to the sales team's own arithmetic.
+ */
+export const ETOH_COMMERCIAL_KG_PER_L = 0.8;
+
+export function perKgFromPerLitre(thbPerLitre: number): number {
+  return Math.round((thbPerLitre / ETOH_COMMERCIAL_KG_PER_L) * 100) / 100;
+}
+
+export function perLitreFromPerKg(thbPerKg: number): number {
+  return Math.round(thbPerKg * ETOH_COMMERCIAL_KG_PER_L * 10000) / 10000;
+}
+
+/** Default size of one imported ISO tank (≈ 20,000 kg). Ops can override. */
+export const ETOH_DEFAULT_LITRES_PER_CONTAINER = 25000;
+
+/**
+ * Codes are stable database keys (prices, lots, quotes). IND95 / IND999 are
+ * historical code names: they now carry the grades actually imported
+ * (96% and 99%). IND75 is the 75% cleaning grade.
+ */
+export const ETOH_GRADE_CODES = ["IND95", "IND999", "IND75", "DEN", "TBA", "FOOD"] as const;
 export type EtohGradeCode = (typeof ETOH_GRADE_CODES)[number];
 
 export type EtohGrade = {
@@ -37,9 +61,9 @@ export const ETOH_DOCUMENT_LABELS: Record<EtohDocumentKind, string> = {
 export const ETOH_GRADES: readonly EtohGrade[] = [
   {
     code: "IND95",
-    nameTh: "เอทานอลอุตสาหกรรม 95%",
-    nameEn: "Industrial Ethanol 95%",
-    purity: "95%",
+    nameTh: "เอทานอลอุตสาหกรรม 96%",
+    nameEn: "Industrial Ethanol 96%",
+    purity: "96%",
     densityKgPerL: 0.81,
     suitableFor: "งานอุตสาหกรรมทั่วไป ตัวทำละลาย งานทำความสะอาด",
     documents: ["COA", "SDS", "SPEC"],
@@ -47,11 +71,21 @@ export const ETOH_GRADES: readonly EtohGrade[] = [
   },
   {
     code: "IND999",
-    nameTh: "เอทานอลอุตสาหกรรม 99.9%",
-    nameEn: "Industrial Ethanol 99.9% (Anhydrous)",
-    purity: "99.9%",
+    nameTh: "เอทานอลอุตสาหกรรม 99%",
+    nameEn: "Industrial Ethanol 99%",
+    purity: "99%",
     densityKgPerL: 0.79,
-    suitableFor: "งานที่ต้องการความชื้นต่ำ อิเล็กทรอนิกส์ เคมีภัณฑ์",
+    suitableFor: "งานที่ต้องการความชื้นต่ำ อิเล็กทรอนิกส์ เคมีภัณฑ์ ตัวทำละลาย",
+    documents: ["COA", "SDS", "SPEC"],
+    requiresFdaDocs: false,
+  },
+  {
+    code: "IND75",
+    nameTh: "เอทานอลอุตสาหกรรม 75%",
+    nameEn: "Industrial Ethanol 75%",
+    purity: "75%",
+    densityKgPerL: 0.87,
+    suitableFor: "น้ำยาทำความสะอาด เช็ดกระจก เช็ดพื้นผิว งานแม่บ้านและอาคาร",
     documents: ["COA", "SDS", "SPEC"],
     requiresFdaDocs: false,
   },
@@ -116,7 +150,7 @@ export type EtohPack = {
 export const ETOH_PACKS: readonly EtohPack[] = [
   {
     code: "ISO25000",
-    nameTh: "ISO Tank 25,000 ลิตร",
+    nameTh: "ISO Tank ~25,000 ลิตร (≈ 20,000 กก.)",
     litres: 25000,
     kind: "bulk",
     defaultContainerCostThb: 0,

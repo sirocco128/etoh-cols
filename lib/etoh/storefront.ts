@@ -12,7 +12,7 @@ export const ETOH_PILLARS = [
     key: "quality",
     title: "Quality Products",
     titleTh: "สินค้าคุณภาพ",
-    body: "ความบริสุทธิ์ 95% – 99.9% ความชื้นต่ำ คุณภาพสม่ำเสมอทุกล็อต พร้อม CoA",
+    body: "ความเข้มข้น 96% · 99% และ 75% ความชื้นต่ำ คุณภาพสม่ำเสมอทุกล็อต พร้อม CoA",
   },
   {
     key: "supply",
@@ -44,14 +44,14 @@ export type EtohGradeStory = {
   accent: "blue" | "leaf" | "orange" | "rose";
 };
 
-/** Four product families shown on the poster (IND95 / IND999 grouped as Industrial). */
+/** Four product families shown on the poster (96% / 99% / 75% grouped as Industrial). */
 export const ETOH_PRODUCT_FAMILIES: readonly EtohGradeStory[] = [
   {
     code: "IND95",
     slug: "industrial-ethanol",
     title: "Industrial Ethanol",
     titleTh: "เอทานอลอุตสาหกรรม",
-    highlights: ["Purity 95% – 99.9%", "Low water content", "Consistent quality"],
+    highlights: ["96% · 99% · 75%", "Low water content", "Consistent quality"],
     bestFor: "งานอุตสาหกรรมทั่วไป",
     accent: "blue",
   },
@@ -165,9 +165,9 @@ export const ETOH_RFQ_FREQUENCIES = [
   { value: "weekly", label: "ทุกสัปดาห์" },
 ] as const;
 
-/** Grades shown on each product-family page (Industrial covers 95% and 99.9%). */
+/** Grades shown on each product-family page (Industrial covers 96%, 99% and 75%). */
 export const ETOH_FAMILY_GRADES: Record<string, readonly EtohGradeCode[]> = {
-  "industrial-ethanol": ["IND95", "IND999"],
+  "industrial-ethanol": ["IND95", "IND999", "IND75"],
   "denatured-ethanol": ["DEN"],
   "tba-bitrex": ["TBA"],
   "food-grade": ["FOOD"],

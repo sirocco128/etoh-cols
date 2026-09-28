@@ -2,8 +2,8 @@ import { EtohForm } from "@/components/etoh/EtohForm";
 import { EtohSubnav } from "@/components/etoh/EtohSubnav";
 import { savePackAndTierSettingsAction, savePriceEntryAction } from "@/app/actions/ops-etoh";
 import { actorMay, requireOpsPage } from "@/lib/ops-auth";
-import { ETOH_GRADES, ETOH_PACKS, ETOH_TIERS, getGrade } from "@/lib/etoh/catalog";
-import { bangkokToday, currentPrices, getSetting, listPriceHistory, loadPriceBook } from "@/lib/etoh/repository";
+import { ETOH_GRADES, ETOH_PACKS, ETOH_TIERS, getGrade, perKgFromPerLitre } from "@/lib/etoh/catalog";
+import { bangkokToday, currentPrices, listPriceHistory, litresPerContainer, loadPriceBook } from "@/lib/etoh/repository";
 import { formatThaiDate, formatThb } from "@/lib/etoh/ops-data";
 
 export const dynamic = "force-dynamic";
@@ -17,14 +17,14 @@ export default async function EtohPricesPage() {
   const prices = currentPrices();
   const history = listPriceHistory(undefined, 50);
   const book = loadPriceBook();
-  const drumsPerContainer = getSetting("drums_per_container", "80");
+  const perContainer = litresPerContainer();
   const today = bangkokToday();
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-forest">ราคา / บรรจุภัณฑ์ / ระดับราคา</h1>
       <p className="mt-1 max-w-3xl text-sm text-ink/70">
-        ราคาฐานต่อลิตร (ไม่รวม VAT) มีผลตามวันที่ ราคาเก่าเก็บไว้ในประวัติ ใบเสนอราคาที่บันทึกแล้วไม่เปลี่ยนตาม
+        ราคาฐานเก็บเป็นบาท/ลิตร (ไม่รวม VAT) ตั้งเป็นบาท/กก. ได้ — ระบบแปลงด้วย 1 กก. = 1.25 ลิตร (0.80 กก./ลิตร) มีผลตามวันที่ ราคาเก่าเก็บไว้ในประวัติ ใบเสนอราคาที่บันทึกแล้วไม่เปลี่ยนตาม
       </p>
       <EtohSubnav current="prices" />
 
@@ -36,6 +36,7 @@ export default async function EtohPricesPage() {
               <tr className="border-b border-forest/15 text-left text-forest">
                 <th className="py-2 pr-2 font-semibold">เกรด</th>
                 <th className="py-2 pr-2 text-right font-semibold">บาท/ลิตร</th>
+                <th className="py-2 pr-2 text-right font-semibold">บาท/กก.</th>
                 {canSeeCost ? <th className="py-2 pr-2 text-right font-semibold">ต้นทุน/ลิตร</th> : null}
                 <th className="py-2 text-right font-semibold">มีผล</th>
               </tr>
@@ -50,6 +51,7 @@ export default async function EtohPricesPage() {
                       <span className="ml-1 font-mono text-xs text-ink/50">{g.code}</span>
                     </td>
                     <td className="py-2 pr-2 text-right tabular-nums">{p ? formatThb(p.basePricePerLitre) : "—"}</td>
+                    <td className="py-2 pr-2 text-right tabular-nums text-ink/70">{p ? formatThb(perKgFromPerLitre(p.basePricePerLitre)) : "—"}</td>
                     {canSeeCost ? (
                       <td className="py-2 pr-2 text-right tabular-nums">
                         {p?.landedCostPerLitre != null ? formatThb(p.landedCostPerLitre) : "—"}
@@ -78,13 +80,20 @@ export default async function EtohPricesPage() {
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="font-medium">ราคาขายฐาน (บาท/ลิตร, ไม่รวม VAT)</span>
-                <input name="basePricePerLitre" type="number" step="0.01" min="0.01" required className={inputCls} />
+                <span className="font-medium">หน่วยราคาที่กรอก</span>
+                <select name="priceUnit" defaultValue="kg" className={inputCls}>
+                  <option value="kg">บาท/กก. (แบบขายยกตู้)</option>
+                  <option value="litre">บาท/ลิตร</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium">ราคาขายฐาน (ไม่รวม VAT)</span>
+                <input name="basePrice" type="number" step="0.0001" min="0.01" required placeholder="เช่น 34.00" className={inputCls} />
               </label>
               {canSeeCost ? (
                 <label className="block text-sm">
-                  <span className="font-medium">ต้นทุนถึงคลัง (บาท/ลิตร)</span>
-                  <input name="landedCostPerLitre" type="number" step="0.01" min="0" className={inputCls} />
+                  <span className="font-medium">ต้นทุนถึงคลัง (หน่วยเดียวกัน)</span>
+                  <input name="landedCost" type="number" step="0.0001" min="0" placeholder="เช่น 30.00" className={inputCls} />
                 </label>
               ) : null}
               <label className="block text-sm">
@@ -168,8 +177,9 @@ export default async function EtohPricesPage() {
             ))}
           </div>
           <label className="block max-w-xs text-sm">
-            <span className="font-medium">ถัง 200 ลิตรต่อตู้ (ใช้วางแผนนำเข้า)</span>
-            <input name="drumsPerContainer" type="number" min="1" max="200" defaultValue={drumsPerContainer} className={inputCls} />
+            <span className="font-medium">ขนาดตู้นำเข้า (ลิตร/ตู้ ISO)</span>
+            <input name="litresPerContainer" type="number" min="1000" max="40000" step="1" defaultValue={perContainer} className={inputCls} />
+            <span className="mt-1 block text-xs text-ink/55">ใช้คิดเป้า/แดชบอร์ดและวางแผนนำเข้า · 20,000 กก. = 25,000 ลิตร</span>
           </label>
         </EtohForm>
       </section>
